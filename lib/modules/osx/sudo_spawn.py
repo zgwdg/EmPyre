@@ -112,6 +112,7 @@ class Module:
             password = password.replace('!', '\!')
 
             launcher = launcher.replace('"','\\"')
+            launcher = launcher.replace ('echo','')
 
             parts = launcher.split("|")
             launcher = "python -c %s" %(parts[0])
