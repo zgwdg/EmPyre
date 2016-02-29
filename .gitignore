@@ -1,0 +1,7 @@
+data/empyre.db
+./data/empyre.pem
+empyre.debug
+*.pyc
+downloads/*
+LastTask.py
+
