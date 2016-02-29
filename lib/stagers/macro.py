@@ -88,7 +88,7 @@ Private Declare Function system Lib "libc.dylib" (ByVal command As String) As Lo
 
 Private Sub Workbook_Open()
     Dim result As Long
-    result = system("%s&")
+    result = system("%s")
 End Sub
 """ %(launcher)
 

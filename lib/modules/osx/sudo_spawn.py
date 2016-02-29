@@ -111,10 +111,11 @@ class Module:
             password = password.replace('!', '\!')
             password = password.replace('!', '\!')
 
-            launcher = launcher.replace('"', '\\"')
-            launcher = launcher.replace("base64.b64decode('", 'base64.b64decode(\\\\\\\"')
-            launcher = launcher.replace("'));", '\\\\\\\"));')
+            launcher = launcher.replace('"','\\"')
 
-            script = 'os.system("echo \\"%s\\" | sudo -S bash -c \\\'%s\\\'")' %(password, launcher)
+            parts = launcher.split("|")
+            launcher = "python -c %s" %(parts[0])
+
+            script = 'os.system("echo \\"%s\\" | sudo -S %s")' %(password, launcher)
 
             return script
