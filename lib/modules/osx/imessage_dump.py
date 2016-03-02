@@ -105,14 +105,14 @@ def func():
                                 Type = str(rowid[3])
 
                 epoch = TimeConv(item[0])
-                line =  " \nROWID: " + str(item[4])
-                line += " \nService: " + item[2]
-                line += " \nAccount: " + item[3]
-                line += " \nDate: " + epoch
-                line += " \nNumber: " + Number
-                line += " \nCountry: " + Country
-                line += " \nType: " + Type 
-                line += " \nMessage: " + str(RemoveUnicode(item[1]))
+                line =  " \\nROWID: " + str(item[4])
+                line += " \\nService: " + item[2]
+                line += " \\nAccount: " + item[3]
+                line += " \\nDate: " + epoch
+                line += " \\nNumber: " + Number
+                line += " \\nCountry: " + Country
+                line += " \\nType: " + Type 
+                line += " \\nMessage: " + str(RemoveUnicode(item[1]))
                 print line
             except Exception as e:
                 print e
