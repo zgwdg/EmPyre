@@ -105,15 +105,15 @@ def func():
                                 Type = str(rowid[3])
 
                 epoch = TimeConv(item[0])
-                print " ROWID: " + str(item[4])
-                print " Service: " + item[2]
-                print " Account: " + item[3]
-                print " Date: " + epoch
-                print " Number: " + Number
-                print " Country: " + Country
-                print " Type: " + Type 
-                print " Message: " + str(RemoveUnicode(item[1]))
-                print " "
+                line =  " \nROWID: " + str(item[4])
+                line += " \nService: " + item[2]
+                line += " \nAccount: " + item[3]
+                line += " \nDate: " + epoch
+                line += " \nNumber: " + Number
+                line += " \nCountry: " + Country
+                line += " \nType: " + Type 
+                line += " \nMessage: " + str(RemoveUnicode(item[1]))
+                print line
             except Exception as e:
                 print e
         conn.close()
@@ -142,11 +142,7 @@ def RemoveUnicode(string):
         except Exception as e:
             p = '[!] UTF8 Decoding issues Matching: ' + str(e)
             print p
-
-try:
-    func()
-except Exception as e:
-    print e
+func()
 """
         return script
         
