@@ -63,13 +63,10 @@ class Module:
 
     def generate(self):
         script = """
-try:
-    import sqlite3
-    import datetime
-    import re
-    from os.path import expanduser
-except Exception as e:
-    print e
+from os.path import expanduser
+import sqlite3
+import datetime
+import re
 
 def func():
     try:
