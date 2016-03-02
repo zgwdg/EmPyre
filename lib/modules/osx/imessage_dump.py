@@ -112,7 +112,8 @@ def func():
                 print " Number: " + Number
                 print " Country: " + Country
                 print " Type: " + Type 
-                print " Message: " + str(RemoveUnicode(item[1])) + "\n"
+                print " Message: " + str(RemoveUnicode(item[1]))
+                print " "
             except Exception as e:
                 print e
         conn.close()
