@@ -62,17 +62,6 @@ class Module:
                     self.options[option]['Value'] = value
 
     def generate(self):
-        login = self.options['Login']['Value']
-        parts = login.split('@')
-        if len(parts) != 2:
-            print "please enter login in 'user@host' format"
-            return ""
-        user = parts[0]
-        host = parts[1]
-
-        password = self.options['Password']['Value']
-        command = self.options['Command']['Value']
-        
         script = """
 try:
     import sqlite3
