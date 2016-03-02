@@ -32,7 +32,7 @@ class Module:
             # list of any references/other comments
             'Comments': [
                 'Using SQLite3 iMessage has a decent standard to correlate users to messages and isnt encrypted.'
-                            ]
+            ]
         }
 
         # any options needed by the module, settable during runtime
