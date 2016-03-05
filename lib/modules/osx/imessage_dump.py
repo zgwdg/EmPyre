@@ -50,7 +50,20 @@ class Module:
                 'Description'   :   'The number of messages to enumerate from most recent.',
                 'Required'      :   True,
                 'Value'         :   '10'
+            },
+            'Search' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'Enable a find keyword to search for within the iMessage Database.',
+                'Required'      :   False,
+                'Value'         :   ''
+            },
+            'Debug' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'Enable a find keyword to search for within the iMessage Database.',
+                'Required'      :   True,
+                'Value'         :   'False'
             }
+
         }
         # save off a copy of the mainMenu object to access external functionality
         #   like listeners/agent handlers/etc.
@@ -69,20 +82,30 @@ class Module:
 
     def generate(self):
         count = self.options['Messages']['Value']
-        script = "count = " + str(count)
+        script = "count = " + str(count) + '\n'
+        if self.options['Debug']['Value']:
+            debug = self.options['Debug']['Value']
+            script += "debug = " + str(debug) + '\n'
+        if self.options['Search']['Value']:
+            search = self.options['Search']['Value']
+            script += 'searchPhrase = "' + str(search) + '"\n'
+
         script += """
+try:
+    if searchPhrase:
+        searchMessage = True
+except:
+    searchMessage = False
+    searchPhrase = ""
 try:
     
     class imessage_dump():
-
         def __init__(self):
             try:
-                print " [*] Message Enumeration Started!"
+                print "[*] Message Enumeration Started!"
             except Exception as e:
                 print e
-
-
-        def func(self, count):
+        def func(self, count, searchMessage, debug, searchPhrase):
             try:
                 import sqlite3
                 from os.path import expanduser
@@ -106,43 +129,96 @@ try:
                 #cur.execute("SELECT account_id,service_center,chat_identifier FROM chat")
                 #GuidData = cur.fetchall()
                 # Itterate over data
+                dictList = []
                 count = count * -1
                 for item in statment[count:]:
                     try:
                         for messageid in messageLink:
+                        # simple declare to prvent empty values
                             if str(messageid[1]) == str(item[4]):
                                 chatid =  messageid[0]
                                 for rowid in handle:
                                     if str(rowid[0]) == str(chatid):
-                                        Number = str(rowid[1])
-                                        Country = str(rowid[2])
-                                        Type = str(rowid[3])
-
-                        epoch = self.TimeConv(item[0])
-                        print " ROWID: " + str(item[4])
-                        print " Service: " + item[2]
-                        print " Account: " + item[3]
-                        print " Date: " + epoch
-                        print " Number: " + Number
-                        print " Country: " + Country
-                        print " Type: " + Type 
-                        print " Message: " + str(self.RemoveUnicode(item[1])) 
-                        print ""
+                                        if rowid[1]:
+                                            Number = str(rowid[1])
+                                        if rowid[2]:
+                                            Country = str(rowid[2])
+                                        if rowid[3]:
+                                            Type = str(rowid[3])
+                        epoch = self.TimeConv(item[0], debug)
+                        line = {}
+                        try:
+                            if item[4]:
+                                line['ROWID'] = str(item[4])
+                            if item[2]:
+                                line['Service'] = str(item[2])
+                            if item[3]:
+                                line['Account'] = str(item[3])
+                            if epoch:
+                                line['Date'] = str(epoch)
+                            if Number:
+                                line['Number'] = str(Number)
+                            if Country:
+                                line['Country'] = str(Country)
+                            if Type:
+                                line['Type'] = str(Type)
+                            if item[1]:
+                                line['Message'] = str(self.RemoveUnicode(item[1]))
+                        except Exception as e:
+                            if debug:
+                                print " [Debug] Issues with object creation (line 55): " + str(e)
+                        dictList.append(line)
                     except Exception as e:
-                        print e
+                        if debug:
+                            print " [Debug] Isssue at object creation (line 40): " + str(e)
+                        pass
+                        #print e
                 conn.close()
+                x = 0
+                for dic in dictList:
+                    try:
+                        if searchMessage:
+                            # check for phrase in message
+                            try:
+                                if dic['Message']:
+                                    Msg = dic['Message'].lower()
+                                    if Msg.find(searchPhrase.lower()) != -1:
+                                        for key in dic.keys():
+                                            print " %s : %s" %(key, dic[key])
+                                        x += 1
+                                        print ''
+                            except Exception as e:
+                                if debug:
+                                    print " [Debug] At Decode of Dict item for Message search (line 180): " + str(e)
+                                pass
+                        else:
+                            for key in dic.keys():
+                                try:
+                                    print " %s : %s" %(key, dic[key])
+                                except Exception as e:
+                                    if debug:
+                                        print " [Debug] At Decode of Dict item (line 180): " + str(e) 
+                                    pass
+                            print ''
+                    except Exception as e:
+                        print "[!] Issue Decoding Dict Item: " + str(e)
+                if searchMessage:
+                    print "[!] Messages Matching Phrase: " + str(x)
                 print "[!] Messages in DataStore: " + str(len(statment)) 
                 count = count * -1
                 print "[!] Messages Enumerated: " + str(count) 
             except Exception as e:
                 print e
             # Close the Database handle
-
-        def TimeConv(self, epoch):
+        def TimeConv(self, epoch, debug):
             import datetime
-            d = datetime.datetime.strptime("01-01-1904", "%m-%d-%Y")
-            time = (d + datetime.timedelta(seconds=epoch)).strftime("%a, %d %b %Y %H:%M:%S GMT")
-            return time
+            try:
+                d = datetime.datetime.strptime("01-01-2001", "%m-%d-%Y")
+                time = (d + datetime.timedelta(seconds=epoch)).strftime("%a, %d %b %Y %H:%M:%S GMT")
+                return time
+            except Exception as e:
+                if debug:
+                    print " [Debug] Issues Decoding epoch time: " + str(e)
             
         def RemoveUnicode(self, string):
                 import re
@@ -161,7 +237,7 @@ try:
                     p = '[!] UTF8 Decoding issues Matching: ' + str(e)
                     print p
     im = imessage_dump()
-    im.func(count)
+    im.func(count, searchMessage, debug, searchPhrase)
 except Exception as e:
     print e""" 
 
