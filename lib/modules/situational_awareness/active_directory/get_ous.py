@@ -7,29 +7,28 @@ class Module:
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': 'Active Directory Enumerator',
+            'Name': Get OUs',
 
             # list of one or more authors for the module
             'Author': ['@424f424f'],
 
             # more verbose multi-line description of the module
-            'Description': ('description line 1'
-                            'description line 2'),
+            'Description': 'This module will list all OUs from active directory',
 
             # True if the module needs to run in the background
             'Background' : False,
 
             # File extension to save the file as
-            'OutputExtension' : None,
+            'OutputExtension' : "",
+
+            # if the module needs administrative privileges
+            'NeedsAdmin' : False,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
             
             # list of any references/other comments
-            'Comments': [
-                'comment',
-                'http://link/'
-            ]
+            'Comments': ['']
         }
 
         # any options needed by the module, settable during runtime
@@ -38,20 +37,28 @@ class Module:
             #   value_name : {description, required, default_value}
             'Agent' : {
                 # The 'Agent' option is the only one that MUST be in a module
-                'Description'   :   'Agent to grab a screenshot from.',
+                'Description'   :   'Agent to grab clipboard from.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'ldap Address' : {
-                'Description'   :   'Address for LDAP Server',
+            'LDAPAddress' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'LDAP IP/Hostname',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            },
-            'Bind DN' : {
-                'Description'   :   'BIND DN username@penlab.local',
+            'BindDN' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'user@penlab.local',
                 'Required'      :   True,
                 'Value'         :   ''
+            },
+            'password' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'Password to connect to LDAP',
+                'Required'      :   False,
+                'Value'         :   ''
+            }
         }
 
         # save off a copy of the mainMenu object to access external functionality
@@ -72,6 +79,10 @@ class Module:
 
     def generate(self):
         
+        LDAPAddress = self.options['LDAPAddress']['Value']
+        BindDN = self.options['BindDN']['Value']
+        password = self.options['password']['Value']
+
         # the Python script itself, with the command to invoke
         #   for execution appended to the end. Scripts should output
         #   everything to the pipeline for proper parsing.
@@ -79,33 +90,26 @@ class Module:
         # the script should be stripped of comments, with a link to any
         #   original reference script included in the comments.
         script = """
-"""
+import sys, os, subprocess, re
+BindDN = "%s"
+LDAPAddress = "%s"
+password = "%s"
+
+regex = re.compile('.+@([^.]+)\..+')
+global tld
+match = re.match(regex, BindDN)
+tld = match.group(1)
+global ext
+ext = BindDN.split('.')[1]
 
 
-        # if you're reading in a large, external script that might be updates,
-        #   use the pattern below
-        # read in the common module source code
-        moduleSource = self.mainMenu.installPath + "/data/module_source/..."
-        try:
-            f = open(moduleSource, 'r')
-        except:
-            print helpers.color("[!] Could not read module source path at: " + str(moduleSource))
-            return ""
+cmd = \"""ldapsearch -x -h {} -b "dc={},dc={}" -D {} -w {} "(OU=*)" ""\".format(hostname, tld, ext, BindDN, password)
+output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+output2 = subprocess.Popen(["grep", "ou:"],stdin=output.stdout, stdout=subprocess.PIPE,universal_newlines=True)
+output.stdout.close()
+out,err = output2.communicate()
+print ""
+print out
 
-        moduleCode = f.read()
-        f.close()
-
-        script = moduleCode
-
-
-        # add any arguments to the end execution of the script
-        for option,values in self.options.iteritems():
-            if option.lower() != "agent":
-                if values['Value'] and values['Value'] != '':
-                    if values['Value'].lower() == "true":
-                        # if we're just adding a switch
-                        script += " -" + str(option)
-                    else:
-                        script += " -" + str(option) + " " + str(values['Value'])
-
+""" % (BindDN, LDAPAddress, password)
         return script
