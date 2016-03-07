@@ -37,7 +37,7 @@ class Module:
             #   value_name : {description, required, default_value}
             'Agent' : {
                 # The 'Agent' option is the only one that MUST be in a module
-                'Description'   :   'Agent to grab clipboard from.',
+                'Description'   :   'Agent to grab run on.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
@@ -59,7 +59,6 @@ class Module:
                 'Required'      :   False,
                 'Value'         :   ''
             }
-        }
         }
 
         # save off a copy of the mainMenu object to access external functionality

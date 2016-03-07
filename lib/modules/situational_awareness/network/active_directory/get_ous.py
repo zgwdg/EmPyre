@@ -7,7 +7,7 @@ class Module:
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': Get OUs',
+            'Name': 'Get OUs',
 
             # list of one or more authors for the module
             'Author': ['@424f424f'],
@@ -37,7 +37,7 @@ class Module:
             #   value_name : {description, required, default_value}
             'Agent' : {
                 # The 'Agent' option is the only one that MUST be in a module
-                'Description'   :   'Agent to grab clipboard from.',
+                'Description'   :   'Agent to grab run on.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
