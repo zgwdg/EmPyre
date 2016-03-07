@@ -7,13 +7,13 @@ class Module:
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': Get OUs',
+            'Name': Get User Information',
 
             # list of one or more authors for the module
             'Author': ['@424f424f'],
 
             # more verbose multi-line description of the module
-            'Description': 'This module will list all OUs from active directory',
+            'Description': 'This module will return the user profile specified',
 
             # True if the module needs to run in the background
             'Background' : False,
@@ -58,7 +58,14 @@ class Module:
                 'Description'   :   'Password to connect to LDAP',
                 'Required'      :   False,
                 'Value'         :   ''
+            },
+            'user' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'User to check group memberships of',
+                'Required'      :   False,
+                'Value'         :   ''
             }
+        }
         }
 
         # save off a copy of the mainMenu object to access external functionality
@@ -82,6 +89,7 @@ class Module:
         LDAPAddress = self.options['LDAPAddress']['Value']
         BindDN = self.options['BindDN']['Value']
         password = self.options['password']['Value']
+        user = self.options['user']['Value']
 
         # the Python script itself, with the command to invoke
         #   for execution appended to the end. Scripts should output
@@ -103,13 +111,9 @@ global ext
 ext = BindDN.split('.')[1]
 
 
-cmd = \"""ldapsearch -x -h {} -b "dc={},dc={}" -D {} -w {} "(OU=*)" ""\".format(hostname, tld, ext, BindDN, password)
-output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-output2 = subprocess.Popen(["grep", "ou:"],stdin=output.stdout, stdout=subprocess.PIPE,universal_newlines=True)
-output.stdout.close()
-out,err = output2.communicate()
-print ""
-print out
+cmd = \"""ldapsearch -x -h {} -b "dc={},dc={}" -D {} -w {}"(samAccountName="{}")" ""\".format(hostname, tld, ext, BindDN, username, password, user)
+    print ""
+    print subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 
 """ % (BindDN, LDAPAddress, password)
         return script

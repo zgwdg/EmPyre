@@ -7,13 +7,13 @@ class Module:
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': Get Computers',
+            'Name': 'Get Groups',
 
             # list of one or more authors for the module
             'Author': ['@424f424f'],
 
             # more verbose multi-line description of the module
-            'Description': 'This module will list all computer objects from active directory',
+            'Description': 'This module will list all groups in active directory',
 
             # True if the module needs to run in the background
             'Background' : False,
@@ -60,6 +60,7 @@ class Module:
                 'Value'         :   ''
             }
         }
+        }
 
         # save off a copy of the mainMenu object to access external functionality
         #   like listeners/agent handlers/etc.
@@ -103,7 +104,7 @@ global ext
 ext = BindDN.split('.')[1]
 
 
-cmd = \"""ldapsearch -x -h {} -b "dc={},dc={}" -D {} -w {} "(objectcategory=Computer)" ""\".format(hostname, tld, ext, BindDN, password)
+cmd = \"""ldapsearch -x -h {} -b "dc={},dc={}" -D {} -w {} "(objectcategory=group)" ""\".format(LDAPAddress, tld, ext, BindDN, password)
 output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 output2 = subprocess.Popen(["grep", "name:"],stdin=output.stdout, stdout=subprocess.PIPE,universal_newlines=True)
 output.stdout.close()
