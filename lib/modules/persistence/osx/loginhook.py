@@ -85,7 +85,7 @@ try:
     result = process.communicate()
     result = result[0].strip()
     if str(result) != "1":
-        print "[!] ERROR to create a LoginHook requires (sudo) privlages!"
+        print "[!] ERROR to create a LoginHook requires (sudo) privileges!"
         sys.exit()
     try:    
         print " [*] Setting script to proper linux permissions"
