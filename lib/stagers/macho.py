@@ -12,7 +12,7 @@ class Stager:
             'Description': ('Generates a macho executable.'),
 
             'Comments': [
-                'Modify the generated payload to be executable with chmod +x [payload]'
+                ''
             ]
         }
 
