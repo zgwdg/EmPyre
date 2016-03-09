@@ -2260,6 +2260,11 @@ class StagerMenu(cmd.Cmd):
                 f = open(savePath, 'wb')
                 f.write(bytearray(stagerOutput))
                 f.close()
+            elif "macho" in self.stager.info['Name']:
+                f = open(savePath, 'wb')
+                f.write(stagerOutput)
+                f.close()
+                os.chmod(savePath, 0777)
             else:
                 # otherwise normal output
                 f = open(savePath, 'w')
