@@ -2265,6 +2265,11 @@ class StagerMenu(cmd.Cmd):
                 f.write(stagerOutput)
                 f.close()
                 os.chmod(savePath, 0777)
+            elif "dylib" in savePath:
+                f = open(savePath, 'wb')
+                f.write(stagerOutput)
+                f.close()
+                os.chmod(savePath, 0777)
             else:
                 # otherwise normal output
                 f = open(savePath, 'w')
