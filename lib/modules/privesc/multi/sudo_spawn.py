@@ -106,11 +106,6 @@ class Module:
             
             password = self.options['Password']['Value']
 
-            password = password.replace('$', '\$')
-            password = password.replace('$', '\$')
-            password = password.replace('!', '\!')
-            password = password.replace('!', '\!')
-
             launcher = launcher.replace('"','\\"')
             launcher = launcher.replace('echo','')
             parts = launcher.split("|")

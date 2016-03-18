@@ -63,7 +63,7 @@ class Module:
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Group to check which users are a member of',
                 'Required'      :   False,
-                'Value'         :   ''
+                'Value'         :   'Domain Admins'
             }
         }
 
