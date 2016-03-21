@@ -20,3 +20,6 @@ rm -rf ./downloads/
 
 # start up EmPyre
 ./empyre --debug
+
+# Support non-root instalation of DB
+chown $(logname):$(logname) ../data/empyre.db
