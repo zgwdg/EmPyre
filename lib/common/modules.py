@@ -84,7 +84,11 @@ class Modules:
                 # check to make sure we've found the specific module
                 if moduleName.lower() == moduleToReload.lower():
                     # instantiate the module and save it to the internal cache
-                    self.modules[moduleName] = imp.load_source(moduleName, filePath).Module(self.mainMenu, [])
+                    try:
+                        self.modules[moduleName] = imp.load_source(moduleName, filePath).Module(self.mainMenu, [])
+                    except Exception as e:
+                        print helpers.color("[!] Error: Failed to reload module, not instantiate new module!")
+                        print helpers.color("[!] Module Error:" + str(e), color="yellow")
 
 
     def search_modules(self, searchTerm):
