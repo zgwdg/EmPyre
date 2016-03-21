@@ -51,6 +51,9 @@ fi
 # generate a cert
 ./cert.sh
 
+# Support non-root instalation of DB
+chown $(logname):$(logname) ../data/empyre.db
+
 cd ..
 
 echo -e '\n [*] Setup complete!\n'
