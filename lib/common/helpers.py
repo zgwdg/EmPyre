@@ -226,6 +226,8 @@ def color(string, color=None):
     if color:
         if color.lower() == "red":
             attr.append('31')
+        elif color.lower() == "yellow":
+            attr.append('33')
         elif color.lower() == "green":
             attr.append('32')
         elif color.lower() == "blue":
