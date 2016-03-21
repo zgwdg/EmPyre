@@ -1955,10 +1955,15 @@ class ModuleMenu(cmd.Cmd):
             return
 
         agentName = self.module.options['Agent']['Value']
-        moduleData = self.module.generate()
+        try:
+            moduleData = self.module.generate()
+        except Exception as e:
+            moduleData = False
+            moduleError = e
 
         if not moduleData or moduleData == "":
             print helpers.color("[!] Error: module produced an empty script")
+            print helpers.color("[!] Error Building module: " + str(e), color="yellow")
             dispatcher.send("[!] Error: module produced an empty script", sender="EmPyre")
             return
 
