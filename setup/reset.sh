@@ -11,6 +11,8 @@ fi
 rm ../data/empyre.db
 ./setup_database.py
 cd ..
+# Support non-root instalation of DB
+chown $(logname):$(logname) ./data/empyre.db
 
 # remove the debug file if it exists
 rm empyre.debug
@@ -21,5 +23,4 @@ rm -rf ./downloads/
 # start up EmPyre
 ./empyre --debug
 
-# Support non-root instalation of DB
-chown $(logname):$(logname) ../data/empyre.db
+
