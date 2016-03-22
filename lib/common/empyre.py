@@ -19,6 +19,7 @@ import sys, cmd, sqlite3, os, hashlib, traceback
 
 # EmPyre imports
 import helpers
+import os
 import http
 import encryption
 import packets
@@ -49,6 +50,12 @@ class MainMenu(cmd.Cmd):
         
         # empty database object
         self.conn = self.database_connect()
+
+        # grab and set the user of the DB
+        cur = self.conn.cursor()
+        cur.execute("SELECT rootuser FROM config")
+        self.isroot = cur.fetchone()[0]
+        cur.close()
 
         # grab the universal install path
         # TODO: combine these into one query
@@ -115,6 +122,35 @@ class MainMenu(cmd.Cmd):
         # start everything up
         self.startup()
 
+    def check_root(self):
+        """
+        Check if EmPyre has been run as root, and alert user.
+        """
+        try:
+
+            if os.geteuid() != 0:
+                if self.isroot:
+                    messages.title(VERSION)
+                    print "[!] Warning: Running EmPyre as non-root, after running as root will likely fail to access prior agents!"
+                    while True:
+                        a = raw_input(helpers.color("[>] Are you sure you want to continue (y) or (n): "))
+                        if a.startswith("y"):
+                            return
+                        if a.startswith("n"):
+                            self.shutdown()
+                            sys.exit()
+                else:
+                    pass
+            if os.geteuid() == 0:
+                if self.isroot:
+                    pass
+                if not self.isroot:
+                    cur = self.conn.cursor()
+                    cur.execute("UPDATE config SET rootuser = 1")
+                    cur.close()
+        except Exception as e:
+            print e
+
 
     def startup(self):
         """
@@ -162,6 +198,8 @@ class MainMenu(cmd.Cmd):
     #     traceback.print_stack()
 
     def cmdloop(self):
+        # check if root user has run empyre before and warn user
+        self.check_root()
         while True:
             try:
                 if self.menu_state == "Agents":

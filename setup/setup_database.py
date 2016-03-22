@@ -104,11 +104,12 @@ c.execute('''CREATE TABLE config (
     "ip_blacklist" text,
     "default_lost_limit" integer,
     "autorun_command" text,
-    "autorun_data" text
+    "autorun_data" text,
+    "rootuser" boolean
     )''')
 
 # kick off the config component of the database
-c.execute("INSERT INTO config VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (STAGING_KEY,STAGE0_URI,STAGE1_URI,STAGE2_URI,DEFAULT_DELAY,DEFAULT_JITTER,DEFAULT_PROFILE,DEFAULT_CERT_PATH,DEFAULT_PORT,INSTALL_PATH,SERVER_VERSION,IP_WHITELIST,IP_BLACKLIST, DEFAULT_LOST_LIMIT, "", ""))
+c.execute("INSERT INTO config VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (STAGING_KEY,STAGE0_URI,STAGE1_URI,STAGE2_URI,DEFAULT_DELAY,DEFAULT_JITTER,DEFAULT_PROFILE,DEFAULT_CERT_PATH,DEFAULT_PORT,INSTALL_PATH,SERVER_VERSION,IP_WHITELIST,IP_BLACKLIST, DEFAULT_LOST_LIMIT, "", "", False))
 
 c.execute('''CREATE TABLE "agents" (
     "id" integer PRIMARY KEY,
