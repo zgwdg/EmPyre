@@ -1,3 +1,14 @@
+from time import localtime, strftime
+from Crypto.Random import random
+import re
+import string
+import base64
+import binascii
+import sys
+import os
+import socket
+import sqlite3
+import iptools
 """
 
 Misc. helper functions used in EmPyre.
@@ -6,19 +17,6 @@ Includes the Python functions that generate the
 randomized stagers.
 
 """
-
-from time import localtime, strftime
-from Crypto.Random import random
-import re
-import string
-import commands
-import base64
-import binascii
-import sys
-import os
-import socket
-import sqlite3
-import iptools
 
 
 ###############################################################
@@ -31,8 +29,10 @@ def validate_hostname(hostname):
     """
     Tries to validate a hostname.
     """
-    if len(hostname) > 255: return False
-    if hostname[-1:] == ".": hostname = hostname[:-1]
+    if len(hostname) > 255:
+        return False
+    if hostname[-1:] == ".":
+        hostname = hostname[:-1]
     allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
     return all(allowed.match(x) for x in hostname.split("."))
 
@@ -46,7 +46,7 @@ def validate_ip(IP):
 
 def generate_ip_list(s):
     """
-    Takes a comma separated list of IP/range/CIDR addresses and 
+    Takes a comma separated list of IP/range/CIDR addresses and
     generates an IP range list.
     """
 
@@ -58,7 +58,7 @@ def generate_ip_list(s):
     ranges = ""
     if s and s != "":
         parts = s.split(",")
-        
+
         for part in parts:
             p = part.split("-")
             if len(p) == 2:
@@ -74,7 +74,7 @@ def generate_ip_list(s):
             return eval("iptools.IpRangeList("+ranges+")")
         else:
             return None
-                
+
     else:
         return None
 
@@ -91,7 +91,8 @@ def random_string(length=-1, charset=string.ascii_letters):
     If no length is specified, resulting string is in between 6 and 15 characters.
     A character set can be specified, defaulting to just alpha letters.
     """
-    if length == -1: length = random.randrange(6,16)
+    if length == -1:
+        length = random.randrange(6, 16)
     random_string = ''.join(random.choice(charset) for x in range(length))
     return random_string
 
@@ -100,7 +101,7 @@ def randomize_capitalization(data):
     """
     Randomize the capitalization of a string.
     """
-    return "".join( random.choice([k.upper(), k ]) for k in data )
+    return "".join(random.choice([k.upper(), k]) for k in data)
 
 
 def chunks(l, n):
@@ -128,7 +129,6 @@ def strip_python_comments(data):
     lines = data.split("\n")
     strippedLines = [line for line in lines if ((not line.strip().startswith("#")) and (line.strip() != ''))]
     return "\n".join(strippedLines)
-
 
 
 ###############################################################
@@ -163,7 +163,7 @@ def get_datetime():
     Return the current date/time
     """
     return strftime("%Y-%m-%d %H:%M:%S", localtime())
-    
+
 
 def get_file_datetime():
     """
@@ -181,6 +181,7 @@ def lhost():
     if os.name != "nt":
         import fcntl
         import struct
+
         def get_interface_ip(ifname):
             try:
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -189,7 +190,7 @@ def lhost():
                         0x8915,  # SIOCGIFADDR
                         struct.pack('256s', ifname[:15])
                     )[20:24])
-            except IOError as e:
+            except IOError:
                 return ""
 
     ip = ""
@@ -202,7 +203,7 @@ def lhost():
         return ip
 
     if (ip == "" or ip.startswith("127.")) and os.name != "nt":
-        interfaces = ["eth0","eth1","eth2","wlan0","wlan1","wifi0","ath0","ath1","ppp0"]
+        interfaces = ["eth0", "eth1", "eth2", "wlan0", "wlan1", "wifi0", "ath0", "ath1", "ppp0"]
         for ifname in interfaces:
             try:
                 ip = get_interface_ip(ifname)
@@ -218,11 +219,11 @@ def color(string, color=None):
     """
     Change text color for the Linux terminal.
     """
-    
+
     attr = []
     # bold
     attr.append('1')
-    
+
     if color:
         if color.lower() == "red":
             attr.append('31')
@@ -260,7 +261,8 @@ def unique(seq, idfun=None):
         # in old Python versions:
         # if seen.has_key(marker)
         # but in new ones:
-        if marker in seen: continue
+        if marker in seen:
+            continue
         seen[marker] = 1
         result.append(item)
     return result
@@ -270,15 +272,7 @@ def uniquify_tuples(tuples):
     # uniquify mimikatz tuples based on the password
     # cred format- (credType, domain, username, password, hostname, sid)
     seen = set()
-    return [item for item in tuples if "%s%s%s%s"%(item[0],item[1],item[2],item[3]) not in seen and not seen.add("%s%s%s%s"%(item[0],item[1],item[2],item[3]))]
-
-
-def urldecode(url):
-    """
-    URL decode a string.
-    """
-    rex=re.compile('%([0-9a-hA-H][0-9a-hA-H])',re.M)
-    return rex.sub(htc,url)
+    return [item for item in tuples if "%s%s%s%s" % (item[0], item[1], item[2], item[3]) not in seen and not seen.add("%s%s%s%s" % (item[0], item[1], item[2], item[3]))]
 
 
 def decode_base64(data):
@@ -288,7 +282,7 @@ def decode_base64(data):
     """
     missing_padding = 4 - len(data) % 4
     if missing_padding:
-        data += b'='* missing_padding
+        data += b'=' * missing_padding
 
     try:
         result = base64.decodestring(data)
@@ -319,7 +313,7 @@ def complete_path(text, line, arg=False):
     else:
         # if we have "command path"
         argData = line.split()[0:]
-    
+
     if not argData or len(argData) == 1:
         completions = os.listdir('./')
     else:
@@ -327,12 +321,12 @@ def complete_path(text, line, arg=False):
         if part == '':
             dir = './'
         elif dir == '':
-            dir = '/'            
+            dir = '/'
 
         completions = []
         for f in os.listdir(dir):
             if f.startswith(base):
-                if os.path.isfile(os.path.join(dir,f)):
+                if os.path.isfile(os.path.join(dir, f)):
                     completions.append(f)
                 else:
                     completions.append(f+'/')
