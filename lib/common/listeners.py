@@ -3,7 +3,7 @@
 Listener handling functionality for EmPyre.
 
 Handles listener startup from the database, listener
-shutdowns, and maintains the current listener 
+shutdowns, and maintains the current listener
 configuration.
 
 """
@@ -13,12 +13,12 @@ import helpers
 
 from pydispatch import dispatcher
 import hashlib
-import sqlite3
+
 
 class Listeners:
 
     def __init__(self, MainMenu, args=None):
-        
+
         # pull out the controller objects
         self.mainMenu = MainMenu
         self.conn = MainMenu.conn
@@ -116,7 +116,6 @@ class Listeners:
             }
         }
 
-
     def start_existing_listeners(self):
         """
         Startup any listeners that are current in the database.
@@ -129,7 +128,7 @@ class Listeners:
 
         # for each listener in the database, add it to the cache
         for result in results:
-            
+
             # don't start the listener unless it's a native one
             if result[11] != "native":
                 self.listeners[result[0]] = None
@@ -152,7 +151,6 @@ class Listeners:
                         # only if the server starts up correctly
                         self.listeners[result[0]] = server
 
-
     def set_listener_option(self, option, value):
         """
         Set a listener option in the listener dictionary.
@@ -162,7 +160,7 @@ class Listeners:
         if option == "Host":
 
             if not value.startswith("http"):
-                # if there's a current ssl cert path set, assume this is https                
+                # if there's a current ssl cert path set, assume this is https
                 if self.options['CertPath']['Value'] != "":
                     self.options['Host']['Value'] = "https://"+str(value)
                 else:
@@ -231,13 +229,11 @@ class Listeners:
         else:
             print helpers.color("[!] Error: invalid option name")
 
-
     def get_listener_options(self):
         """
         Return all currently set listener options.
         """
         return self.options.keys()
-
 
     def kill_listener(self, listenerId):
         """
@@ -245,7 +241,6 @@ class Listeners:
         """
         self.shutdown_listener(listenerId)
         self.delete_listener(listenerId)
-
 
     def delete_listener(self, listenerId):
         """
@@ -255,7 +250,8 @@ class Listeners:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_listener_id(listenerId)
-        if nameid : listenerId = nameid
+        if nameid:
+            listenerId = nameid
 
         # shut the listener down and remove it from the cache
         self.shutdown_listener(listenerId)
@@ -265,18 +261,17 @@ class Listeners:
         cur.execute("DELETE FROM listeners WHERE id=?", [listenerId])
         cur.close()
 
-
     def shutdown_listener(self, listenerId):
         """
-        Shut down the server associated with a listenerId/name, but DON'T 
+        Shut down the server associated with a listenerId/name, but DON'T
         delete it from the database.
 
         If the listener is a pivot, task the associated agent to kill the redirector.
         """
-        
+
         try:
             # get the listener information
-            [ID,name,host,port,cert_path,staging_key,default_delay,default_jitter,default_profile,kill_date,working_hours,listener_type,redirect_target,default_lost_limit] = self.get_listener(listenerId)
+            [ID, name, host, port, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, listener_type, redirect_target, default_lost_limit] = self.get_listener(listenerId)
 
             listenerId = int(ID)
 
@@ -296,18 +291,18 @@ class Listeners:
                 # remove the listener object from the internal cache
                 del self.listeners[listenerId]
 
-        except Exception as e:
+        except Exception:
             dispatcher.send("[!] Error shutting down listener " + str(listenerId), sender="Listeners")
-
 
     def get_listener(self, listenerId):
         """
         Get the a specific listener from the database.
         """
-        
+
         # see if we were passed a name instead of an ID
         nameid = self.get_listener_id(listenerId)
-        if nameid : listenerId = nameid
+        if nameid:
+            listenerId = nameid
 
         cur = self.conn.cursor()
         cur.execute("SELECT id,name,host,port,cert_path,staging_key,default_delay,default_jitter,default_profile,kill_date,working_hours,listener_type,redirect_target,default_lost_limit FROM listeners WHERE id=?", [listenerId])
@@ -315,7 +310,6 @@ class Listeners:
 
         cur.close()
         return listener
-
 
     def get_listeners(self):
         """
@@ -326,7 +320,6 @@ class Listeners:
         results = cur.fetchall()
         cur.close()
         return results
-
 
     def get_listener_names(self):
         """
@@ -339,7 +332,6 @@ class Listeners:
         results = [str(n[0]) for n in results]
         return results
 
-
     def get_listener_ids(self):
         """
         Return all listener IDs in the database.
@@ -351,7 +343,6 @@ class Listeners:
         results = [str(n[0]) for n in results]
         return results
 
-
     def is_listener_valid(self, listenerID):
         """
         Check if this listener name or ID is valid/exists.
@@ -361,7 +352,6 @@ class Listeners:
         results = cur.fetchall()
         cur.close()
         return len(results) > 0
-
 
     def is_listener_empyre(self, listenerID):
         """
@@ -379,7 +369,6 @@ class Listeners:
         else:
             return None
 
-
     def get_listener_id(self, name):
         """
         Resolve a name or port to listener ID.
@@ -393,7 +382,6 @@ class Listeners:
         else:
             return None
 
-
     def get_staging_information(self, listenerId=None, port=None, host=None):
         """
         Resolve a name or port to a agent staging information
@@ -404,7 +392,7 @@ class Listeners:
 
         if(listenerId):
             cur = self.conn.cursor()
-            cur.execute('SELECT host,port,cert_path,staging_key,default_delay,default_jitter,default_profile,kill_date,working_hours,listener_type,redirect_target,default_lost_limit FROM listeners WHERE id=? or name=? limit 1', [listenerID, listenerID])
+            cur.execute('SELECT host,port,cert_path,staging_key,default_delay,default_jitter,default_profile,kill_date,working_hours,listener_type,redirect_target,default_lost_limit FROM listeners WHERE id=? or name=? limit 1', [listenerId, listenerId])
             stagingInformation = cur.fetchone()
             cur.close()
 
@@ -419,10 +407,9 @@ class Listeners:
             cur = self.conn.cursor()
             cur.execute("SELECT host,port,cert_path,staging_key,default_delay,default_jitter,default_profile,kill_date,working_hours,listener_type,redirect_target,default_lost_limit FROM listeners WHERE host=?", [host])
             stagingInformation = cur.fetchone()
-            cur.close()            
+            cur.close()
 
         return stagingInformation
-
 
     def get_stager_config(self, listenerID):
         """
@@ -470,20 +457,19 @@ class Listeners:
             print helpers.color("[!] Error in listeners.get_stager_config(): no listener information returned")
             return None
 
-
     def validate_listener_options(self):
         """
         Validate all currently set listener options.
         """
 
         # make sure all options are set
-        for option,values in self.options.iteritems():
+        for option, values in self.options.iteritems():
             if values['Required'] and (values['Value'] == ''):
                 return False
 
         # make sure the name isn't already taken
         if self.is_listener_valid(self.options['Name']['Value']):
-            for x in xrange(1,20):
+            for x in xrange(1, 20):
                 self.options['Name']['Value'] = self.options['Name']['Value'] + str(x)
                 if not self.is_listener_valid(self.options['Name']['Value']):
                     break
@@ -497,7 +483,6 @@ class Listeners:
                 return False
 
         return True
-
 
     def add_listener_from_config(self):
         """
@@ -521,11 +506,11 @@ class Listeners:
         # validate all of the options
         if self.validate_listener_options():
 
-            # if the listener name already exists, iterate the name 
+            # if the listener name already exists, iterate the name
             # until we have a valid one
             if self.is_listener_valid(name):
                 baseName = name
-                for x in xrange(1,20):
+                for x in xrange(1, 20):
                     name = str(baseName) + str(x)
                     if not self.is_listener_valid(name):
                         break
@@ -543,7 +528,7 @@ class Listeners:
                         return False
 
                 cur = self.conn.cursor()
-                results = cur.execute("INSERT INTO listeners (name, host, port, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, listener_type, redirect_target,default_lost_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [name, host, port, certPath, stagingKey, defaultDelay, defaultJitter, defaultProfile, killDate, workingHours, listenerType, redirectTarget,defaultLostLimit] )
+                cur.execute("INSERT INTO listeners (name, host, port, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, listener_type, redirect_target,default_lost_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [name, host, port, certPath, stagingKey, defaultDelay, defaultJitter, defaultProfile, killDate, workingHours, listenerType, redirectTarget, defaultLostLimit])
 
                 # get the ID for the listener
                 cur.execute("SELECT id FROM listeners where name=?", [name])
@@ -564,7 +549,7 @@ class Listeners:
 
                         # add the listener to the database if start up
                         cur = self.conn.cursor()
-                        results = cur.execute("INSERT INTO listeners (name, host, port, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, listener_type, redirect_target, default_lost_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [name, host, port, certPath, stagingKey, defaultDelay, defaultJitter, defaultProfile, killDate, workingHours, listenerType, redirectTarget,defaultLostLimit] )
+                        cur.execute("INSERT INTO listeners (name, host, port, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, listener_type, redirect_target, default_lost_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [name, host, port, certPath, stagingKey, defaultDelay, defaultJitter, defaultProfile, killDate, workingHours, listenerType, redirectTarget, defaultLostLimit])
 
                         # get the ID for the listener
                         cur.execute("SELECT id FROM listeners where name=?", [name])
@@ -577,7 +562,6 @@ class Listeners:
 
         else:
             print helpers.color("[!] Required listener option missing.")
-
 
     def add_pivot_listener(self, listenerName, sessionID, listenPort):
         """
@@ -599,7 +583,7 @@ class Listeners:
 
         else:
             # get the existing listener options
-            [ID,name,host,port,cert_path,staging_key,default_delay,default_jitter,default_profile,kill_date,working_hours,listener_type,redirect_target,defaultLostLimit] = self.get_listener(listenerName)
+            [ID, name, host, port, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, listener_type, redirect_target, defaultLostLimit] = self.get_listener(listenerName)
 
             cur = self.conn.cursor()
 
@@ -610,7 +594,7 @@ class Listeners:
             pivotHost += internalIP + ":" + str(listenPort)
 
             # insert the pivot listener with name=sessionID for the pivot agent
-            cur.execute("INSERT INTO listeners (name, host, port, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, listener_type, redirect_target,default_lost_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [sessionID, pivotHost, listenPort, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, "pivot", name,defaultLostLimit] )
+            cur.execute("INSERT INTO listeners (name, host, port, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, listener_type, redirect_target,default_lost_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [sessionID, pivotHost, listenPort, cert_path, staging_key, default_delay, default_jitter, default_profile, kill_date, working_hours, "pivot", name, defaultLostLimit])
 
             # get the ID for the listener
             cur.execute("SELECT id FROM listeners where name=?", [sessionID])
@@ -620,7 +604,6 @@ class Listeners:
             # we don't actually have a server object, so just store None
             self.listeners[result[0]] = None
 
-
     def killall(self):
         """
         Kill all active listeners and remove them from the database.
@@ -628,7 +611,6 @@ class Listeners:
         # get all the listener IDs from the cache and delete each
         for listenerId in self.listeners.keys():
             self.kill_listener(listenerId)
-
 
     def shutdownall(self):
         """
