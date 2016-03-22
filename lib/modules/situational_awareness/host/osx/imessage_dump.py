@@ -1,9 +1,4 @@
 #!/usr/bin/python
-import sqlite3
-import datetime
-import re
-from os.path import expanduser
-
 class Module:
     def __init__(self, mainMenu, params=[]):
         # metadata info about the module, not modified during runtime
@@ -98,7 +93,7 @@ except:
     searchMessage = False
     searchPhrase = ""
 try:
-    
+
     class imessage_dump():
         def __init__(self):
             try:
@@ -197,16 +192,16 @@ try:
                                     print " %s : %s" %(key, dic[key])
                                 except Exception as e:
                                     if debug:
-                                        print " [Debug] At Decode of Dict item (line 180): " + str(e) 
+                                        print " [Debug] At Decode of Dict item (line 180): " + str(e)
                                     pass
                             print ''
                     except Exception as e:
                         print "[!] Issue Decoding Dict Item: " + str(e)
                 if searchMessage:
                     print "[!] Messages Matching Phrase: " + str(x)
-                print "[!] Messages in DataStore: " + str(len(statment)) 
+                print "[!] Messages in DataStore: " + str(len(statment))
                 count = count * -1
-                print "[!] Messages Enumerated: " + str(count) 
+                print "[!] Messages Enumerated: " + str(count)
             except Exception as e:
                 print e
             # Close the Database handle
@@ -219,7 +214,7 @@ try:
             except Exception as e:
                 if debug:
                     print " [Debug] Issues Decoding epoch time: " + str(e)
-            
+
         def RemoveUnicode(self, string):
                 import re
                 try:
@@ -239,13 +234,12 @@ try:
     im = imessage_dump()
     im.func(count, searchMessage, debug, searchPhrase)
 except Exception as e:
-    print e""" 
-
+    print e"""
 
         # add any arguments to the end exec
 
         return script
-        
+
 # handle: Table links the number, country, type to the chat ID
 # SELECT * FROM handle
 # chat_message_join: Links the chat ID to the Text ID (sequency number)
@@ -259,16 +253,16 @@ except Exception as e:
 
 # SQLITE3 message laylout:
 
-# (u'table', u'message', u'message', 5, u'CREATE TABLE message (ROWID INTEGER PRIMARY KEY AUTOINCREMENT, 
-# guid TEXT UNIQUE NOT NULL, text TEXT, replace INTEGER DEFAULT 0, service_center TEXT, handle_id INTEGER DEFAULT 0, 
-# subject TEXT, country TEXT, attributedBody BLOB, version INTEGER DEFAULT 0, type INTEGER DEFAULT 0, service TEXT, 
-# account TEXT, account_guid TEXT, error INTEGER DEFAULT 0, date INTEGER, date_read INTEGER, date_delivered INTEGER, 
-# is_delivered INTEGER DEFAULT 0, is_finished INTEGER DEFAULT 0, is_emote INTEGER DEFAULT 0, is_from_me INTEGER DEFAULT 0, 
-# is_empty INTEGER DEFAULT 0, is_delayed INTEGER DEFAULT 0, is_auto_reply INTEGER DEFAULT 0, is_prepared INTEGER DEFAULT 0, 
-# is_read INTEGER DEFAULT 0, is_system_message INTEGER DEFAULT 0, is_sent INTEGER DEFAULT 0, has_dd_results INTEGER DEFAULT 0, 
-# is_service_message INTEGER DEFAULT 0, is_forward INTEGER DEFAULT 0, was_downgraded INTEGER DEFAULT 0, is_archive INTEGER DEFAULT 0, 
-# cache_has_attachments INTEGER DEFAULT 0, cache_roomnames TEXT, was_data_detected INTEGER DEFAULT 0, was_deduplicated INTEGER DEFAULT 0, 
-# is_audio_message INTEGER DEFAULT 0, is_played INTEGER DEFAULT 0, date_played INTEGER, item_type INTEGER DEFAULT 0, 
+# (u'table', u'message', u'message', 5, u'CREATE TABLE message (ROWID INTEGER PRIMARY KEY AUTOINCREMENT,
+# guid TEXT UNIQUE NOT NULL, text TEXT, replace INTEGER DEFAULT 0, service_center TEXT, handle_id INTEGER DEFAULT 0,
+# subject TEXT, country TEXT, attributedBody BLOB, version INTEGER DEFAULT 0, type INTEGER DEFAULT 0, service TEXT,
+# account TEXT, account_guid TEXT, error INTEGER DEFAULT 0, date INTEGER, date_read INTEGER, date_delivered INTEGER,
+# is_delivered INTEGER DEFAULT 0, is_finished INTEGER DEFAULT 0, is_emote INTEGER DEFAULT 0, is_from_me INTEGER DEFAULT 0,
+# is_empty INTEGER DEFAULT 0, is_delayed INTEGER DEFAULT 0, is_auto_reply INTEGER DEFAULT 0, is_prepared INTEGER DEFAULT 0,
+# is_read INTEGER DEFAULT 0, is_system_message INTEGER DEFAULT 0, is_sent INTEGER DEFAULT 0, has_dd_results INTEGER DEFAULT 0,
+# is_service_message INTEGER DEFAULT 0, is_forward INTEGER DEFAULT 0, was_downgraded INTEGER DEFAULT 0, is_archive INTEGER DEFAULT 0,
+# cache_has_attachments INTEGER DEFAULT 0, cache_roomnames TEXT, was_data_detected INTEGER DEFAULT 0, was_deduplicated INTEGER DEFAULT 0,
+# is_audio_message INTEGER DEFAULT 0, is_played INTEGER DEFAULT 0, date_played INTEGER, item_type INTEGER DEFAULT 0,
 # other_handle INTEGER DEFAULT 0, group_title TEXT, group_action_type INTEGER DEFAULT 0, share_status INTEGER DEFAULT 0,
-# share_direction INTEGER DEFAULT 0, is_expirable INTEGER DEFAULT 0, expire_state INTEGER DEFAULT 0, message_action_type INTEGER DEFAULT 0, 
+# share_direction INTEGER DEFAULT 0, is_expirable INTEGER DEFAULT 0, expire_state INTEGER DEFAULT 0, message_action_type INTEGER DEFAULT 0,
 # message_source INTEGER DEFAULT 0)')

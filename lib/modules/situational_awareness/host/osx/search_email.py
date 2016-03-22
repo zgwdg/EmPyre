@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -27,7 +25,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
-            
+
             # list of any references/other comments
             'Comments': [
                 "https://davidkoepi.wordpress.com/2013/07/06/macforensics5/"
@@ -67,7 +65,6 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
 
         searchTerm = self.options['SearchTerm']['Value']
@@ -77,7 +74,7 @@ class Module:
         if searchTerm != "":
             script += "|xargs grep -i '"+searchTerm+"'\""
         else:
-            cmd += "'"
+            script += "\""
 
         script += "\nrun_command(cmd)"
 

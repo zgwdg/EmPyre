@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -28,7 +26,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
-            
+
             # list of any references/other comments
             'Comments': [
                 "https://davidkoepi.wordpress.com/2013/07/06/macforensics5/"
@@ -74,7 +72,6 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
 
         sleep = self.options['Sleep']['Value']
@@ -88,7 +85,7 @@ def downloadFile(path):
     filePath = os.path.expanduser(path)
 
     if os.path.isfile(filePath):
-        
+
         offset = 0
         size = os.path.getsize(filePath)
 
@@ -127,7 +124,7 @@ else:
 
 for userPath in userPaths:
     for searchPath in searchPaths:
-        downloadFile(userPath + searchPath) 
+        downloadFile(userPath + searchPath)
 
 downloadFile('c')
 

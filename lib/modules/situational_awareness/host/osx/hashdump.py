@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -26,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
-            
+
             # list of any references/other comments
             'Comments': [
                 "http://apple.stackexchange.com/questions/186893/os-x-10-9-where-are-password-hashes-stored"
@@ -60,7 +58,6 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
 
         script = """
@@ -86,7 +83,7 @@ def getUserHash(userName):
             saltHex = saltRaw.encode("hex")
 
             return (userName, "ml$%s$%s$%s" %(iterations, saltHex, entropyHex))
-    
+
     except Exception as e:
         print "getUserHash() exception: %s" %(e)
         pass

