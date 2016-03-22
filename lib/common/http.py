@@ -3,7 +3,7 @@
 HTTP related methods used by EmPyre.
 
 Includes URI validation/checksums, as well as the base
-http server (EmPyreServer) and its modified request 
+http server (EmPyreServer) and its modified request
 handler (RequestHandler).
 
 These are the first places URI requests are processed.
@@ -11,15 +11,17 @@ These are the first places URI requests are processed.
 """
 
 from BaseHTTPServer import BaseHTTPRequestHandler
-import BaseHTTPServer, threading, ssl, os, string, random
+import BaseHTTPServer
+import threading
+import ssl
+import os
 from pydispatch import dispatcher
 
 # EmPyre imports
-import encryption
 import helpers
 
 
-#TODO: place this in a config
+# TODO: place this in a config
 def default_page():
     """
     Returns the default page for this server.
@@ -61,7 +63,6 @@ class RequestHandler(BaseHTTPRequestHandler):
     # fake out our server headers base
     BaseHTTPRequestHandler.server_version = serverVersion
     BaseHTTPRequestHandler.sys_version = ""
-
 
     def do_GET(self):
 
@@ -123,12 +124,12 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(responsedata)
         self.wfile.flush()
         # self.wfile.close() # causes an error with HTTP comms
-    
+
     # supress all the stupid default stdout/stderr output
     def log_message(*arg):
         pass
 
- 
+
 class EmPyreServer(threading.Thread):
     """
     Version of a simple HTTP[S] Server with specifiable port and
@@ -147,7 +148,7 @@ class EmPyreServer(threading.Thread):
             self.server = None
 
             self.server = BaseHTTPServer.HTTPServer(('0.0.0.0', int(port)), RequestHandler)
-            
+
             # pass the agent handler object along for the RequestHandler
             self.server.agents = handler
 
@@ -170,15 +171,14 @@ class EmPyreServer(threading.Thread):
             # shoot off an error if the listener doesn't stand up
             dispatcher.send("[!] Error starting listener on port "+str(port)+": "+str(e), sender="EmPyreServer")
 
-
     def base_server(self):
         return self.server
 
-
     def run(self):
-        try: self.server.serve_forever()
-        except: pass
-
+        try:
+            self.server.serve_forever()
+        except:
+            pass
 
     def shutdown(self):
 
@@ -195,4 +195,3 @@ class EmPyreServer(threading.Thread):
                     thread._Thread__stop()
                 except:
                     pass
-
