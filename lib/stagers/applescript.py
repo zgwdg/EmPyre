@@ -1,5 +1,6 @@
 from lib.common import helpers
 
+
 class Stager:
 
     def __init__(self, mainMenu, params=[]):
@@ -62,7 +63,6 @@ class Stager:
             if option in self.options:
                 self.options[option]['Value'] = value
 
-
     def generate(self):
 
         # extract all of our options
@@ -80,9 +80,9 @@ class Stager:
             return ""
 
         else:
-            launcher = launcher.replace('"','\\"')
+            launcher = launcher.replace('"', '\\"')
 
-            applescript = "do shell script \"%s\"" %(launcher)
+            applescript = "do shell script \"%s\"" % (launcher)
 
             if adminPrompt:
                 applescript += " with administrator privileges"
