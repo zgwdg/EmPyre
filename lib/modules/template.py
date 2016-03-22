@@ -1,5 +1,6 @@
 from lib.common import helpers
 
+
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -17,14 +18,14 @@ class Module:
                             'description line 2'),
 
             # True if the module needs to run in the background
-            'Background' : False,
+            'Background': False,
 
             # File extension to save the file as
-            'OutputExtension' : None,
+            'OutputExtension': None,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
-            'OpsecSafe' : True,
-            
+            'OpsecSafe': True,
+
             # list of any references/other comments
             'Comments': [
                 'comment',
@@ -36,22 +37,22 @@ class Module:
         self.options = {
             # format:
             #   value_name : {description, required, default_value}
-            'Agent' : {
+            'Agent': {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Agent to grab a screenshot from.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'ldap Address' : {
+            'ldap Address': {
                 'Description'   :   'Address for LDAP Server',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            },
-            'Bind DN' : {
+            'Bind DN': {
                 'Description'   :   'BIND DN username@penlab.local',
                 'Required'      :   True,
                 'Value'         :   ''
+            }
         }
 
         # save off a copy of the mainMenu object to access external functionality
@@ -69,9 +70,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         # the Python script itself, with the command to invoke
         #   for execution appended to the end. Scripts should output
         #   everything to the pipeline for proper parsing.
@@ -80,8 +80,6 @@ class Module:
         #   original reference script included in the comments.
         script = """
 """
-
-
         # if you're reading in a large, external script that might be updates,
         #   use the pattern below
         # read in the common module source code
@@ -97,9 +95,8 @@ class Module:
 
         script = moduleCode
 
-
         # add any arguments to the end execution of the script
-        for option,values in self.options.iteritems():
+        for option, values in self.options.iteritems():
             if option.lower() != "agent":
                 if values['Value'] and values['Value'] != '':
                     if values['Value'].lower() == "true":
