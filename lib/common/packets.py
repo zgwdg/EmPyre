@@ -15,7 +15,7 @@ builds tasking packets and parses result packets
 
 
     *_SAVE packets have the sub format:
-            
+
             [15 chars] - save prefix
             [5 chars]  - extension
             [X...]     - tasking data
@@ -23,7 +23,8 @@ builds tasking packets and parses result packets
 """
 
 
-import struct, time, base64
+import struct
+import time
 
 
 # 0         -> error
@@ -67,7 +68,8 @@ PACKET_NAMES = {
 
 # build a lookup table for packet IDs
 PACKET_IDS = {}
-for name, ID in PACKET_NAMES.items(): PACKET_IDS[ID] = name
+for name, ID in PACKET_NAMES.items():
+    PACKET_IDS[ID] = name
 
 
 def get_counter():
@@ -96,12 +98,12 @@ def build_task_packet(taskName, data):
         [4 bytes] - length
         [X...]    - tasking data
     """
-    
+
     taskID = struct.pack('=L', PACKET_NAMES[taskName])
     counter = struct.pack('=L', get_counter())
-    length = struct.pack('=L',len(data))
-    return taskID + counter + length + data.encode('ascii',errors='ignore')
-   
+    length = struct.pack('=L', len(data))
+    return taskID + counter + length + data.encode('ascii', errors='ignore')
+
 
 def parse_result_packet(packet, packetOffset=0):
     """
@@ -116,13 +118,13 @@ def parse_result_packet(packet, packetOffset=0):
         length = struct.unpack('=L', packet[8+packetOffset:12+packetOffset])[0]
         data = packet[12+packetOffset:12+packetOffset+length]
 
-        #if isinstance(data, unicode):
+        # if isinstance(data, unicode):
         #    print "UNICODE DATA"
-        #elif isinstance(data, str):
+        # elif isinstance(data, str):
         #    print "ASCII / UTF8"
         remainingData = packet[12+packetOffset+length:]
         return (PACKET_IDS[responseID], counter, length, data, remainingData)
-    except Exception as e:
+    except Exception:
         return (None, None, None, None, None)
 
 
@@ -137,17 +139,16 @@ def parse_result_packets(packets):
     (responseName, counter, length, data, remainingData) = parse_result_packet(packets)
 
     if responseName and responseName != '':
-        resultPackets.append( (responseName, counter, length, data) )
+        resultPackets.append((responseName, counter, length, data))
 
     offset = 12 + length
-    
 
     while (remainingData and remainingData != ""):
         # parse any additional result packets
         (responseName, counter, length, data, remainingData) = parse_result_packet(packets, packetOffset=offset)
 
         if responseName and responseName != '':
-            resultPackets.append( (responseName, counter, length, data) )
+            resultPackets.append((responseName, counter, length, data))
 
         offset += 12 + length
 
