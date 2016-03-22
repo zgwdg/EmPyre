@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -26,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
-            
+
             # list of any references/other comments
             'Comments': ['']
         }
@@ -82,9 +80,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         LDAPAddress = self.options['LDAPAddress']['Value']
         BindDN = self.options['BindDN']['Value']
         password = self.options['password']['Value']
@@ -101,6 +98,7 @@ import sys, os, subprocess, re
 BindDN = "%s"
 LDAPAddress = "%s"
 password = "%s"
+user = "%s"
 
 regex = re.compile('.+@([^.]+)\..+')
 global tld
@@ -118,5 +116,5 @@ out,err = output2.communicate()
 print ""
 print out
 
-""" % (BindDN, LDAPAddress, password)
+""" % (BindDN, LDAPAddress, password, user)
         return script
