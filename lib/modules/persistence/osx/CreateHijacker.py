@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -25,7 +23,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
-            
+
             # list of any references/other comments
             'Comments': [
                 'comment',
@@ -70,9 +68,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         # the Python script itself, with the command to invoke
         #   for execution appended to the end. Scripts should output
         #   everything to the pipeline for proper parsing.
@@ -93,7 +90,7 @@ def run():
     import fcntl
     import shutil
     import struct
-    
+
 
     LC_REQ_DYLD = 0x80000000
     LC_LOAD_WEAK_DYLIB = LC_REQ_DYLD | 0x18
@@ -166,17 +163,17 @@ def run():
 
     def checkPrereqs(attackerDYLIB, targetDYLIB):
 
-        
+
         if not os.path.exists(attackerDYLIB):
 
-            
+
             print 'ERROR: dylib \\'%%s\\' not found' %% (attackerDYLIB)
             return False
 
-       
+
         if not os.path.exists(targetDYLIB):
 
-            
+
             print 'ERROR: dylib \\'%%s\\' not found' %% (targetDYLIB)
             return False
 
@@ -190,7 +187,7 @@ def run():
             print 'ERROR: Architecture mismatch'
             attacker.close()
             target.close()
-            return False 
+            return False
 
         return True
 
@@ -216,7 +213,7 @@ def run():
 
                 offset = current
                 lc = load_command.from_buffer_copy(fileHandle.read(LC_HEADER_SIZE))
-                size = lc.cmdsize 
+                size = lc.cmdsize
                 if lc.cmd == targetLoadCommand:
 
                     matchedOffsets.append(offset)
@@ -416,7 +413,7 @@ def run():
                 print ' [+] updated embedded re-export'
 
                 #wrap
-                
+
         #handle exceptions
         except Exception, e:
 
@@ -460,7 +457,7 @@ def run():
 
     #configured .dylib
     configuredDYLIB = ""
-    
+
     #init output path for configured .dylib
     configuredDYLIB = os.path.split(attackerDYLIB)[0]+'/' + os.path.split(targetDYLIB)[1]
 

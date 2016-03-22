@@ -1,5 +1,6 @@
 from lib.common import helpers
 
+
 class Stager:
 
     def __init__(self, mainMenu, params=[]):
@@ -61,7 +62,6 @@ class Stager:
             option, value = param
             if option in self.options:
                 self.options[option]['Value'] = value
-
 
     def generate(self):
 

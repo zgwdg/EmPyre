@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 class Module:
     def __init__(self, mainMenu, params=[]):
         # metadata info about the module, not modified during runtime
@@ -85,7 +84,7 @@ try:
     import sys
     import os
     from os.path import expanduser
-    # Get Home User 
+    # Get Home User
     home = str(expanduser("~"))
     sudo = True
     # Check for sudo privs, if true than set true
@@ -96,7 +95,7 @@ try:
         print "[!] ERROR some shit requires (sudo) privileges!"
         sudo = False
         sys.exit()
-    # Enum Hostname 
+    # Enum Hostname
     try:
         process = subprocess.Popen('hostname', stdout=subprocess.PIPE, shell=True)
         hostname = process.communicate()
@@ -208,7 +207,7 @@ try:
         if Debug:
             print "[!] Error Enumerating Hosts File: " + str(e)
         pass
-    
+
     # Enum bash history
     try:
         location = home + "/.bash_history"
@@ -228,12 +227,10 @@ try:
             print "[!] Error enumerating user bash_history: " + str(e)
         pass
     # Enum AV / Protection Software
-    
-except Exception as e:
-    print e""" 
 
+except Exception as e:
+    print e"""
 
         # add any arguments to the end exec
 
         return script
-        

@@ -7,7 +7,6 @@ install path in the common config.
 
 """
 
-import sqlite3
 import fnmatch
 import os
 import imp
@@ -38,22 +37,22 @@ class Modules:
 
         self.load_modules()
 
-
     def load_modules(self):
         """
         Load modules from the install + "/lib/modules/*" path
         """
-        
+
         rootPath = self.installPath + 'lib/modules/'
         pattern = '*.py'
-         
+
         for root, dirs, files in os.walk(rootPath):
             for filename in fnmatch.filter(files, pattern):
                 filePath = os.path.join(root, filename)
 
                 # don't load up the template
-                if filename == "template.py": continue
-                
+                if filename == "template.py":
+                    continue
+
                 # extract just the module name from the full path
                 moduleName = filePath.split("/lib/modules/")[-1][0:-3]
 
@@ -62,7 +61,6 @@ class Modules:
                 # instantiate the module and save it to the internal cache
                 self.modules[moduleName] = imp.load_source(moduleName, filePath).Module(self.mainMenu, [])
 
-
     def reload_module(self, moduleToReload):
         """
         Reload a specific module from the install + "/lib/modules/*" path
@@ -70,14 +68,15 @@ class Modules:
 
         rootPath = self.installPath + 'lib/modules/'
         pattern = '*.py'
-         
+
         for root, dirs, files in os.walk(rootPath):
             for filename in fnmatch.filter(files, pattern):
                 filePath = os.path.join(root, filename)
 
                 # don't load up the template
-                if filename == "template.py": continue
-                
+                if filename == "template.py":
+                    continue
+
                 # extract just the module name from the full path
                 moduleName = filePath.split("/lib/modules/")[-1][0:-3]
 
@@ -90,7 +89,6 @@ class Modules:
                         print helpers.color("[!] Error: Failed to reload module, not instantiate new module!")
                         print helpers.color("[!] Module Error:" + str(e), color="yellow")
 
-
     def search_modules(self, searchTerm):
         """
         Search currently loaded module names and descriptions.
@@ -98,7 +96,7 @@ class Modules:
 
         print ""
 
-        for moduleName,module in self.modules.iteritems():
+        for moduleName, module in self.modules.iteritems():
             if searchTerm.lower() in moduleName.lower() or searchTerm.lower() in module.info['Description'].lower():
                 messages.display_module_search(moduleName, module)
 

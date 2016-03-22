@@ -3,7 +3,7 @@
 Main agent handling functionality for EmPyre.
 
 Database methods related to agents, as well as
-the GET and POST handlers (process_get() and process_post()) 
+the GET and POST handlers (process_get() and process_post())
 used to process checkin and result requests.
 
 handle_agent_response() is where the packets are parsed and
@@ -12,12 +12,8 @@ the response types are handled as appropriate.
 """
 
 from pydispatch import dispatcher
-import sqlite3
-import pickle
-import base64
 import string
 import os
-import iptools
 from binascii import hexlify
 from binascii import unhexlify
 
@@ -44,7 +40,7 @@ class Agents:
         self.args = args
 
         # internal agent dictionary for the client's session key and tasking/result sets
-        #   self.agents[sessionID] = [  clientSessionKey, 
+        #   self.agents[sessionID] = [  clientSessionKey,
         #                               [tasking1, tasking2, ...],
         #                               [results1, results2, ...],
         #                               X[tab-completable function names for a script-import],
@@ -59,11 +55,11 @@ class Agents:
             sessionKey = self.get_agent_session_key(agentID)
 
             # get the current and previous URIs for tasking
-            uris,old_uris = self.get_agent_uris(agentID)
-            
+            uris, old_uris = self.get_agent_uris(agentID)
+
             if not old_uris:
                 old_uris = ""
-            
+
             # [sessionKey, taskings, results, tasking uris, old uris]
             self.agents[agentID] = [sessionKey, [], [], uris, old_uris]
 
@@ -73,7 +69,6 @@ class Agents:
         self.stage0 = self.mainMenu.stage0
         self.stage1 = self.mainMenu.stage1
         self.stage2 = self.mainMenu.stage2
-
 
     ###############################################################
     #
@@ -88,7 +83,7 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         # remove the agent from the internal cache
         self.agents.pop(sessionID, None)
@@ -97,7 +92,6 @@ class Agents:
         cur = self.conn.cursor()
         cur.execute("DELETE FROM agents WHERE session_id like ?", [sessionID])
         cur.close()
-
 
     def add_agent(self, sessionID, sessionKey, externalIP, delay, jitter, profile, killDate, workingHours, lostLimit, nonce):
         """
@@ -126,18 +120,18 @@ class Agents:
             userAgent = parts[1]
             additionalHeaders = "|".join(parts[2:])
 
-        cur.execute("INSERT INTO agents (name,session_id,delay,jitter,external_ip,session_key,nonce,checkin_time,lastseen_time,uris,user_agent,headers,kill_date,working_hours,lost_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (sessionID,sessionID,delay,jitter,externalIP,sessionKey,nonce,checkinTime,lastSeenTime,requestUris,userAgent,additionalHeaders,killDate,workingHours,lostLimit))
+        cur.execute("INSERT INTO agents (name,session_id,delay,jitter,external_ip,session_key,nonce,checkin_time,lastseen_time,uris,user_agent,headers,kill_date,working_hours,lost_limit) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (sessionID, sessionID, delay, jitter, externalIP, sessionKey, nonce, checkinTime, lastSeenTime, requestUris, userAgent, additionalHeaders, killDate, workingHours, lostLimit))
         cur.close()
 
         # initialize the tasking/result buffers along with the client session key
         sessionKey = self.get_agent_session_key(sessionID)
-        self.agents[sessionID] = [sessionKey, [],[],[], requestUris, ""]
+        self.agents[sessionID] = [sessionKey, [], [], [], requestUris, ""]
 
         # report the initial checkin in the reporting database
         cur = self.conn.cursor()
-        cur.execute("INSERT INTO reporting (name,event_type,message,time_stamp) VALUES (?,?,?,?)", (sessionID,"checkin",checkinTime,helpers.get_datetime()))
+        cur.execute("INSERT INTO reporting (name,event_type,message,time_stamp) VALUES (?,?,?,?)", (sessionID, "checkin", checkinTime, helpers.get_datetime()))
         cur.close()
-
 
     def is_agent_present(self, sessionID):
         """
@@ -146,21 +140,19 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         return sessionID in self.agents
-
 
     def is_uri_present(self, resource):
         """
         Check if the resource is currently in the uris or old_uris for any agent.
         """
 
-        for option,values in self.agents.iteritems():
+        for option, values in self.agents.iteritems():
             if resource in values[-1] or resource in values [-2]:
                 return True
         return False
-
 
     def is_ip_allowed(self, IP):
         """
@@ -169,14 +161,13 @@ class Agents:
 
         if self.ipBlackList:
             if self.ipWhiteList:
-                return IP in self.ipWhiteList and IP not in self.ipBlackList 
+                return IP in self.ipWhiteList and IP not in self.ipBlackList
             else:
-                return IP not in self.ipBlackList 
+                return IP not in self.ipBlackList
         if self.ipWhiteList:
             return IP in self.ipWhiteList
         else:
             return True
-
 
     def save_file(self, sessionID, path, data, append=False):
         """
@@ -185,19 +176,19 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_name(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         parts = path.split("/")
 
         # construct the appropriate save path
-        savePath =  self.installPath + "/downloads/"+str(sessionID)+"/" + "/".join(parts[0:-1])
+        savePath = self.installPath + "/downloads/"+str(sessionID)+"/" + "/".join(parts[0:-1])
         filename = parts[-1]
 
         # fix for 'skywalker' exploit by @zeroSteiner
-        safePath = os.path.abspath("%s/downloads/%s/" %(self.installPath, sessionID))
+        safePath = os.path.abspath("%s/downloads/%s/" % (self.installPath, sessionID))
         if not os.path.abspath(savePath+"/"+filename).startswith(safePath):
-            dispatcher.send("[!] WARNING: agent %s attempted skywalker exploit!" %(sessionID), sender="Agents")
-            dispatcher.send("[!] attempted overwrite of %s with data %s" %(path, data), sender="Agents")
+            dispatcher.send("[!] WARNING: agent %s attempted skywalker exploit!" % (sessionID), sender="Agents")
+            dispatcher.send("[!] attempted overwrite of %s with data %s" % (path, data), sender="Agents")
             return
 
         # make the recursive directory structure if it doesn't already exist
@@ -206,7 +197,7 @@ class Agents:
 
         # overwrite an existing file
         if not append:
-           f = open(savePath+"/"+filename, 'wb')
+            f = open(savePath+"/"+filename, 'wb')
         else:
             # otherwise append
             f = open(savePath+"/"+filename, 'ab')
@@ -215,8 +206,7 @@ class Agents:
         f.close()
 
         # notify everyone that the file was downloaded
-        dispatcher.send("[+] Part of file %s from %s saved" %(filename, sessionID), sender="Agents")
-    
+        dispatcher.send("[+] Part of file %s from %s saved" % (filename, sessionID), sender="Agents")
 
     def save_module_file(self, sessionID, path, data):
         """
@@ -225,18 +215,18 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_name(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         parts = path.split("/")
         # construct the appropriate save path
-        savePath =  self.installPath + "/downloads/"+str(sessionID)+"/" + "/".join(parts[0:-1])
+        savePath = self.installPath + "/downloads/"+str(sessionID)+"/" + "/".join(parts[0:-1])
         filename = parts[-1]
 
         # fix for 'skywalker' exploit by @zeroSteiner
-        safePath = os.path.abspath("%s/downloads/%s/" %(self.installPath, sessionID))
+        safePath = os.path.abspath("%s/downloads/%s/" % (self.installPath, sessionID))
         if not os.path.abspath(savePath+"/"+filename).startswith(safePath):
-            dispatcher.send("[!] WARNING: agent %s attempted skywalker exploit!" %(sessionID), sender="Agents")
-            dispatcher.send("[!] attempted overwrite of %s with data %s" %(path, data), sender="Agents")
+            dispatcher.send("[!] WARNING: agent %s attempted skywalker exploit!" % (sessionID), sender="Agents")
+            dispatcher.send("[!] attempted overwrite of %s with data %s" % (path, data), sender="Agents")
             return
 
         # make the recursive directory structure if it doesn't already exist
@@ -253,7 +243,6 @@ class Agents:
 
         return "/downloads/"+str(sessionID)+"/" + "/".join(parts[0:-1]) + "/" + filename
 
-
     def save_agent_log(self, sessionID, data):
         """
         Save the agent console output to the agent's log file.
@@ -268,19 +257,17 @@ class Agents:
             os.makedirs(savePath)
 
         currentTime = helpers.get_datetime()
-        
+
         f = open(savePath+"/agent.log", 'a')
         f.write("\n" + currentTime + " : " + "\n")
         f.write(data + "\n")
         f.close()
-
 
     ###############################################################
     #
     # Methods to get information from agent fields.
     #
     ###############################################################
-
 
     def get_agents(self):
         """
@@ -293,7 +280,6 @@ class Agents:
         cur.close()
         return results
 
-
     def get_agent_names(self):
         """
         Return all names of active agents from the database.
@@ -303,10 +289,9 @@ class Agents:
         cur.execute("SELECT name FROM agents")
         results = cur.fetchall()
         cur.close()
-        # make sure names all ascii encoded 
-        results = [r[0].encode('ascii','ignore') for r in results]
+        # make sure names all ascii encoded
+        results = [r[0].encode('ascii', 'ignore') for r in results]
         return results
-     
 
     def get_agent_ids(self):
         """
@@ -317,10 +302,9 @@ class Agents:
         cur.execute("SELECT session_id FROM agents")
         results = cur.fetchall()
         cur.close()
-        # make sure names all ascii encoded 
-        results = [r[0].encode('ascii','ignore') for r in results]
+        # make sure names all ascii encoded
+        results = [r[0].encode('ascii', 'ignore') for r in results]
         return results
-
 
     def get_agent(self, sessionID):
         """
@@ -333,7 +317,6 @@ class Agents:
         cur.close()
         return agent
 
-
     def get_agent_internal_ip(self, sessionID):
         """
         Return the internal IP for the agent from the database.
@@ -341,14 +324,13 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
-        
+        if nameid: sessionID = nameid
+
         cur = self.conn.cursor()
         cur.execute("SELECT internal_ip FROM agents WHERE session_id=?", [sessionID])
         agent = cur.fetchone()
         cur.close()
         return agent
-
 
     def is_agent_elevated(self, sessionID):
         """
@@ -357,18 +339,17 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
-        
+        if nameid: sessionID = nameid
+
         cur = self.conn.cursor()
         cur.execute("SELECT high_integrity FROM agents WHERE session_id=?", [sessionID])
         elevated = cur.fetchone()
         cur.close()
 
-        if elevated and elevated != None and elevated != ():
+        if elevated and elevated is not None and elevated != ():
             return int(elevated[0]) == 1
         else:
             return False
-
 
     def get_py_version(self, sessionID):
         """
@@ -377,19 +358,18 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         cur = self.conn.cursor()
         cur.execute("SELECT py_version FROM agents WHERE session_id=?", [sessionID])
         py_version = cur.fetchone()
         cur.close()
 
-        if py_version and py_version != None:
+        if py_version and py_version is not None:
             if type(py_version) is str:
-                return sessionKey
+                return py_version
             else:
                 return py_version[0]
-
 
     def get_agent_session_key(self, sessionID):
         """
@@ -398,19 +378,18 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         cur = self.conn.cursor()
         cur.execute("SELECT session_key FROM agents WHERE session_id=?", [sessionID])
         sessionKey = cur.fetchone()
         cur.close()
 
-        if sessionKey and sessionKey != None:
+        if sessionKey and sessionKey is not None:
             if type(sessionKey) is str:
                 return sessionKey
             else:
                 return sessionKey[0]
-
 
     def get_agent_nonce(self, sessionID):
         """
@@ -418,19 +397,18 @@ class Agents:
         """
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         cur = self.conn.cursor()
         cur.execute("SELECT nonce FROM agents WHERE session_id=?", [sessionID])
         nonce = cur.fetchone()
         cur.close()
 
-        if nonce and nonce != None:
+        if nonce and nonce is not None:
             if type(nonce) is str:
                 return nonce
             else:
                 return nonce[0]
-
 
     def get_agent_results(self, sessionID):
         """
@@ -441,7 +419,7 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         if sessionID not in self.agents:
             print helpers.color("[!] Agent " + str(agentName) + " not active.")
@@ -449,7 +427,6 @@ class Agents:
             results = self.agents[sessionID][2]
             self.agents[sessionID][2] = []
             return "\n".join(results)
-
 
     def get_agent_id(self, name):
         """
@@ -464,7 +441,6 @@ class Agents:
         else:
             return None
 
-
     def get_agent_name(self, sessionID):
         """
         Get an agent name based on sessionID.
@@ -477,7 +453,6 @@ class Agents:
             return results[0]
         else:
             return None
-
 
     def get_agent_hostname(self, sessionID):
         """
@@ -492,7 +467,6 @@ class Agents:
         else:
             return None
 
-
     def get_agent_uris(self, sessionID):
         """
         Get the current and old URIs for an agent from the database.
@@ -500,7 +474,7 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         cur = self.conn.cursor()
         cur.execute("SELECT uris, old_uris FROM agents WHERE session_id=?", [sessionID])
@@ -508,7 +482,6 @@ class Agents:
         cur.close()
 
         return uris
-
 
     def get_autoruns(self):
         """
@@ -537,7 +510,6 @@ class Agents:
         except:
             pass
 
-
     ###############################################################
     #
     # Methods to update agent information fields.
@@ -551,13 +523,12 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         if sessionID in self.agents:
             self.agents[sessionID][2].append(results)
         else:
             dispatcher.send("[!] Non-existent agent " + str(sessionID) + " returned results", sender="Agents")
-
 
     def update_agent_sysinfo(self, sessionID, listener="", external_ip="", internal_ip="", username="", high_integrity=0, hostname="", os_details="", process_id="", py_version=""):
         """
@@ -566,12 +537,11 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         cur = self.conn.cursor()
         cur.execute("UPDATE agents SET listener = ?, internal_ip = ?, username = ?, high_integrity = ?, hostname = ?, os_details = ?, process_id = ?, py_version = ? WHERE session_id=?", [listener, internal_ip, username, high_integrity, hostname, os_details, process_id, py_version, sessionID])
         cur.close()
-
 
     def update_agent_lastseen(self, sessionID):
         """
@@ -580,13 +550,12 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         currentTime = helpers.get_datetime()
         cur = self.conn.cursor()
         cur.execute("UPDATE agents SET lastseen_time=? WHERE session_id=?", [currentTime, sessionID])
         cur.close()
-
 
     def update_agent_profile(self, sessionID, profile):
         """
@@ -595,7 +564,7 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         parts = profile.strip("\"").split("|")
         cur = self.conn.cursor()
@@ -607,7 +576,7 @@ class Agents:
         oldURIs = cur.fetchone()[0]
 
         if sessionID not in self.agents:
-            print helpers.color("[!] Agent " + agentName + " not active.")
+            print helpers.color("[!] Agent " + sessionID + " not active.")
         else:
             # update the URIs in the cache
             self.agents[sessionID][-1] = oldURIs
@@ -622,7 +591,6 @@ class Agents:
             cur.execute("UPDATE agents SET uris=?, user_agent=?, headers=?, old_uris=? WHERE session_id=?", [parts[0], parts[1], parts[2], oldURIs, sessionID])
 
         cur.close()
-
 
     def rename_agent(self, oldname, newname):
         """
@@ -652,11 +620,10 @@ class Agents:
 
             # report the agent rename in the reporting database
             cur = self.conn.cursor()
-            cur.execute("INSERT INTO reporting (name,event_type,message,time_stamp) VALUES (?,?,?,?)", (oldname,"rename",newname,helpers.get_datetime()))
+            cur.execute("INSERT INTO reporting (name,event_type,message,time_stamp) VALUES (?,?,?,?)", (oldname, "rename", newname, helpers.get_datetime()))
             cur.close()
 
             return True
-
 
     def set_agent_field(self, field, value, sessionID):
         """
@@ -665,12 +632,11 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         cur = self.conn.cursor()
         cur.execute("UPDATE agents SET "+str(field)+"=? WHERE session_id=?", [value, sessionID])
         cur.close()
-
 
     def set_autoruns(self, taskCommand, moduleData):
         """
@@ -686,7 +652,6 @@ class Agents:
             print helpers.color("[!] Error: script autoruns not a database field, run ./setup_database.py to reset DB schema.")
             print helpers.color("[!] Warning: this will reset ALL agent connections!")
 
-
     def clear_autoruns(self):
         """
         Clear the currently set global script autoruns in the config.
@@ -700,7 +665,6 @@ class Agents:
         except:
             print helpers.color("[!] Error: script autoruns not a database field, run ./setup_database.py to reset DB schema.")
             print helpers.color("[!] Warning: this will reset ALL agent connections!")
-
 
     ###############################################################
     #
@@ -717,7 +681,7 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         if sessionID not in self.agents:
             print helpers.color("[!] Agent " + str(agentName) + " not active.")
@@ -734,9 +698,8 @@ class Agents:
 
                 # report the agent tasking in the reporting database
                 cur = self.conn.cursor()
-                cur.execute("INSERT INTO reporting (name,event_type,message,time_stamp) VALUES (?,?,?,?)", (sessionID,"task",taskName + " - " + task[0:30],helpers.get_datetime()))
+                cur.execute("INSERT INTO reporting (name,event_type,message,time_stamp) VALUES (?,?,?,?)", (sessionID, "task", taskName + " - " + task[0:30], helpers.get_datetime()))
                 cur.close()
-
 
     def get_agent_tasks(self, sessionID):
         """
@@ -747,7 +710,7 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         if sessionID not in self.agents:
             print helpers.color("[!] Agent " + str(agentName) + " not active.")
@@ -758,7 +721,6 @@ class Agents:
             self.agents[sessionID][1] = []
             return tasks
 
-
     def get_agent_task(self, sessionID):
         """
         Pop off the agent's top task.
@@ -766,14 +728,13 @@ class Agents:
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_id(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         try:
             # pop the first task off the front of the stack
             return self.agents[sessionID][1].pop(0)
         except:
             []
-
 
     def clear_agent_tasks(self, sessionID):
         """
@@ -783,39 +744,34 @@ class Agents:
         agentName = sessionID
 
         if sessionID.lower() == "all":
-            for option,values in self.agents.iteritems():
+            for option, values in self.agents.iteritems():
                 self.agents[option][1] = []
         else:
             # see if we were passed a name instead of an ID
             nameid = self.get_agent_id(sessionID)
-            if nameid : sessionID = nameid
+            if nameid: sessionID = nameid
 
             if sessionID not in self.agents:
                 print helpers.color("[!] Agent " + agentName + " not active.")
             else:
                 self.agents[sessionID][1] = []
 
-
     def handle_agent_response(self, sessionID, responseName, data):
         """
         Handle the result packet based on sessionID and responseName.
         """
-
-        agentSessionID = sessionID
-        agentName = sessionID
 
         # print "responseName:",responseName
         # print "responseData:",data
 
         # see if we were passed a name instead of an ID
         nameid = self.get_agent_name(sessionID)
-        if nameid : sessionID = nameid
+        if nameid: sessionID = nameid
 
         # report the agent result in the reporting database
         cur = self.conn.cursor()
-        cur.execute("INSERT INTO reporting (name,event_type,message,time_stamp) VALUES (?,?,?,?)", (agentSessionID,"result",responseName,helpers.get_datetime()))
+        cur.execute("INSERT INTO reporting (name,event_type,message,time_stamp) VALUES (?,?,?,?)", (sessionID, "result", responseName, helpers.get_datetime()))
         cur.close()
-
 
         # TODO: for heavy traffic packets, check these first (i.e. SOCKS?)
         #       so this logic is skipped
@@ -826,8 +782,6 @@ class Agents:
             self.update_agent_results(sessionID, data)
             # update the agent log
             self.save_agent_log(sessionID, "[!] Error response: " + data)
-
-
         elif responseName == "TASK_SYSINFO":
             # sys info response -> update the host info
             parts = data.split("|")
@@ -835,15 +789,15 @@ class Agents:
                 dispatcher.send("[!] Invalid sysinfo response from " + str(sessionID), sender="Agents")
             else:
                 # extract appropriate system information
-                listener = parts[0].encode('ascii','ignore')
-                username = parts[1].encode('ascii','ignore')
-                high_integrity = parts[2].encode('ascii','ignore')
+                listener = parts[0].encode('ascii', 'ignore')
+                username = parts[1].encode('ascii', 'ignore')
+                high_integrity = parts[2].encode('ascii', 'ignore')
                 high_integrity = 1 if high_integrity.lower() == "true" else 0
-                hostname = parts[3].encode('ascii','ignore')
-                internal_ip = parts[4].encode('ascii','ignore')
-                os_details = parts[5].encode('ascii','ignore')
-                process_id = parts[6].encode('ascii','ignore')
-                py_version = parts[7].encode('ascii','ignore')
+                hostname = parts[3].encode('ascii', 'ignore')
+                internal_ip = parts[4].encode('ascii', 'ignore')
+                os_details = parts[5].encode('ascii', 'ignore')
+                process_id = parts[6].encode('ascii', 'ignore')
+                py_version = parts[7].encode('ascii', 'ignore')
 
                 # update the agent with this new information
                 self.update_agent_sysinfo(sessionID, listener=listener, internal_ip=internal_ip, username=username, high_integrity=high_integrity, hostname=hostname, os_details=os_details, py_version=py_version)
@@ -861,27 +815,24 @@ class Agents:
                 # update the agent log
                 self.save_agent_log(sessionID, sysinfo)
 
-
         elif responseName == "TASK_EXIT":
             # exit command response
-            
+
             # let everyone know this agent exited
             dispatcher.send(data, sender="Agents")
 
             # update the agent results and log
             # self.update_agent_results(sessionID, data)
-            self.save_agent_log(sessionID, data)     
+            self.save_agent_log(sessionID, data)
 
             # remove this agent from the cache/database
             self.remove_agent(sessionID)
-
 
         elif responseName == "TASK_SHELL":
             # shell command response
             self.update_agent_results(sessionID, data)
             # update the agent log
             self.save_agent_log(sessionID, data)
-
 
         elif responseName == "TASK_DOWNLOAD":
             # file download
@@ -902,16 +853,13 @@ class Agents:
                 msg = "file download: " + str(path) + ", part: " + str(index)
                 self.save_agent_log(sessionID, msg)
 
-
-        elif responseName == "TASK_UPLOAD": 
+        elif responseName == "TASK_UPLOAD":
             # shell command response
             self.update_agent_results(sessionID, data)
             # update the agent log
-            self.save_agent_log(sessionID, data)            
-
+            self.save_agent_log(sessionID, data)
 
         elif responseName == "TASK_GETJOBS":
-            
             if not data or data.strip().strip() == "":
                 data = "[*] No active jobs"
 
@@ -920,13 +868,11 @@ class Agents:
             # update the agent log
             self.save_agent_log(sessionID, data)
 
-
         elif responseName == "TASK_STOPJOB":
             # job kill response
             self.update_agent_results(sessionID, data)
             # update the agent log
             self.save_agent_log(sessionID, data)
-
 
         elif responseName == "TASK_CMD_WAIT":
 
@@ -935,7 +881,6 @@ class Agents:
 
             # update the agent log
             self.save_agent_log(sessionID, data)
-
 
         elif responseName == "TASK_CMD_WAIT_SAVE":
             # dynamic script output -> blocking, save data
@@ -955,14 +900,12 @@ class Agents:
             self.update_agent_results(sessionID, msg)
             self.save_agent_log(sessionID, msg)
 
-
         elif responseName == "TASK_CMD_JOB":
 
             # dynamic script output -> non-blocking
             self.update_agent_results(sessionID, data)
             # update the agent log
             self.save_agent_log(sessionID, data)
-
 
         elif responseName == "TASK_CMD_JOB_SAVE":
             # dynamic script output -> non-blocking, save data
@@ -982,10 +925,8 @@ class Agents:
             self.update_agent_results(sessionID, msg)
             self.save_agent_log(sessionID, msg)
 
-
         else:
-            print helpers.color("[!] Unknown response " + str(responseName) + " from " +str(sessionID))
-
+            print helpers.color("[!] Unknown response " + str(responseName) + " from " + str(sessionID))
 
     ###############################################################
     #
@@ -1019,7 +960,7 @@ class Agents:
 
             # if the ID is currently in the cache, see if there's tasking for the agent
             else:
-                
+
                 # update the client's last seen time
                 self.update_agent_lastseen(sessionID)
 
@@ -1033,10 +974,10 @@ class Agents:
                     # build tasking packets for everything we have
                     for tasking in taskings:
                         taskName, taskData = tasking
-                        
+
                         # if there is tasking, build a tasking packet
                         taskPacket = packets.build_task_packet(taskName, taskData)
-                        
+
                         allTaskPackets += taskPacket
 
                     # get the session key for the agent
@@ -1091,7 +1032,6 @@ class Agents:
             # otherwise return the default page
             return (200, http.default_page())
 
-
     def process_post(self, port, clientIP, sessionID, resource, postData):
         """
         Process a POST request.
@@ -1137,7 +1077,7 @@ class Agents:
 
                     results = True
 
-                    # process each result packet                        
+                    # process each result packet
                     for responsePacket in responsePackets:
                         (responseName, counter, length, data) = responsePacket
 
@@ -1151,7 +1091,7 @@ class Agents:
 
                     # return a 200/valid
                     return (200, "")
-                        
+
                     # else:
                     #     dispatcher.send("[!] Invalid counter value from "+str(sessionID), sender="Agents")
                     #     return (404, "")
@@ -1159,7 +1099,6 @@ class Agents:
                 except Exception as e:
                     dispatcher.send("[!] Error processing result packet from "+str(sessionID) + ": " + str(e), sender="Agents")
                     return (404, "")
-
 
         # step 3 of negotiation -> client posts public key
         elif resource.lstrip("/").split("?")[0] == self.stage1:
@@ -1178,7 +1117,7 @@ class Agents:
                 dispatcher.send("[!] HMAC verification failed from "+str(sessionID), sender="Agents")
                 return (404, "")
 
-            if ( (len(message) < 1000) or (len(message) > 2500) ):
+            if ((len(message) < 1000) or (len(message) > 2500)):
                 dispatcher.send("[!] Invalid key post format from "+str(sessionID), sender="Agents")
             else:
                 try:
@@ -1213,14 +1152,13 @@ class Agents:
 
                 # add the agent to the database now that it's "checked in"
                 self.add_agent(sessionID, hexlify(serverPub.key), clientIP, delay, jitter, profile, killDate, workingHours, lostLimit, nonce)
-                
+
                 # step 4 of negotiation -> server returns HMAC(AESn(nonce+PUBs))
                 data = str(nonce)+str(serverPub.publicKey)
                 encryptedMsg = encryption.aes_encrypt_then_hmac(stagingKey, data)
 
                 # return a 200/valid and encrypted stage to the agent
                 return (200, encryptedMsg)
-
 
         # step 5 of negotiation -> client posts sysinfo and requests agent
         elif resource.lstrip("/").split("?")[0] == self.stage2:
@@ -1234,12 +1172,12 @@ class Agents:
                         decoded = helpers.decode_base64(parts[1])
 
                         # get the staging key for the given listener, keyed by port
-                        #   results: host,port,cert_path,staging_key,default_delay,default_jitter,default_profile,kill_date,working_hours,lost_limit 
+                        #   results: host,port,cert_path,staging_key,default_delay,default_jitter,default_profile,kill_date,working_hours,lost_limit
                         config = self.listeners.get_staging_information(host=decoded)
 
                 else:
                     config = self.listeners.get_staging_information(port=port)
-                
+
                 delay = config[4]
                 jitter = config[5]
                 profile = config[6]
@@ -1248,7 +1186,6 @@ class Agents:
                 lostLimit = config[11]
 
                 # get the session key for the agent
-                k = self.get_agent_session_key(sessionID)
                 sessionKey = unhexlify(self.get_agent_session_key(sessionID))
 
                 try:
@@ -1268,22 +1205,22 @@ class Agents:
                         self.remove_agent(sessionID)
                         return (404, "")
 
-                    listener = parts[1].encode('ascii','ignore')
-                    username = parts[2].encode('ascii','ignore')
-                    high_integrity = parts[3].encode('ascii','ignore')
+                    listener = parts[1].encode('ascii', 'ignore')
+                    username = parts[2].encode('ascii', 'ignore')
+                    high_integrity = parts[3].encode('ascii', 'ignore')
                     high_integrity = 1 if high_integrity.lower() == "true" else 0
-                    hostname = parts[4].encode('ascii','ignore')
-                    external_ip = clientIP.encode('ascii','ignore')
-                    internal_ip = parts[5].encode('ascii','ignore')
-                    os_details = parts[6].encode('ascii','ignore')
-                    process_id = parts[7].encode('ascii','ignore')
-                    py_version = parts[8].encode('ascii','ignore')
+                    hostname = parts[4].encode('ascii', 'ignore')
+                    external_ip = clientIP.encode('ascii', 'ignore')
+                    internal_ip = parts[5].encode('ascii', 'ignore')
+                    os_details = parts[6].encode('ascii', 'ignore')
+                    process_id = parts[7].encode('ascii', 'ignore')
+                    py_version = parts[8].encode('ascii', 'ignore')
 
                 except Exception as e:
-                    print "Exception",e
+                    print "Exception", e
                     # remove the agent from the cache/database
                     self.remove_agent(sessionID)
-                    return (404, "")                    
+                    return (404, "")
 
                 # let everyone know an agent got stage2
                 if self.args and self.args.debug:
@@ -1301,7 +1238,7 @@ class Agents:
 
                 # signal everyone that this agent is now active
                 dispatcher.send("[+] Initial agent "+str(sessionID)+" from "+str(clientIP) + " now active", sender="Agents")
-                output =  "[+] Agent " + str(sessionID) + " now active:\n"
+                output = "[+] Agent " + str(sessionID) + " now active:\n"
 
                 # set basic initial information to display for the agent
                 agent = self.mainMenu.agents.get_agent(sessionID)

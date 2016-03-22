@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -26,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
-            
+
             # list of any references/other comments
             'Comments': []
         }
@@ -68,13 +66,12 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         daemonName = self.options['DaemonName']['Value']
         programname = self.options['ProgramName']['Value']
-        plistfilename = "%s.plist"%daemonName
-        
+        plistfilename = "%s.plist" % daemonName
+
         plistSettings = """
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0">
@@ -92,7 +89,7 @@ class Module:
     <true/>
 </dict>
 </plist>
-"""%(daemonName,programname)
+""" % (daemonName, programname)
 
         script = """
 import subprocess
@@ -121,6 +118,6 @@ process.communicate()
 process = subprocess.Popen('launchctl load /Library/LaunchDaemons/%s', stdout=subprocess.PIPE, shell=True)
 process.communicate()
 
-""" %(plistSettings, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename)
+""" % (plistSettings, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename)
 
         return script

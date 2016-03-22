@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -13,7 +11,7 @@ class Module:
             'Author': ['@harmj0y'],
 
             # more verbose multi-line description of the module
-            'Description': ('Performs text to speach using "say".'),
+            'Description': ('Performs text to speech using "say".'),
 
             # True if the module needs to run in the background
             'Background' : False,
@@ -26,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
-            
+
             # list of any references/other comments
             'Comments': [ ]
         }
@@ -68,14 +66,13 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         voice = self.options['Voice']['Value']
         text = self.options['Text']['Value']
 
         script = """
 run_command('say -v %s %s')
-""" %(voice, text)
+""" % (voice, text)
 
         return script

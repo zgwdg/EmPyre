@@ -1,5 +1,6 @@
 from lib.common import helpers
 
+
 class Module:
     def __init__(self, mainMenu, params=[]):
         # metadata info about the module, not modified during runtime
@@ -55,7 +56,7 @@ class Module:
                 'Description'   :   'Listener to use.',
                 'Required'      :   True,
                 'Value'         :   ''
-            },           
+            },
             'UserAgent' : {
                 'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
                 'Required'      :   False,
@@ -130,7 +131,7 @@ def wall(host, pw):
             data = os.read(fd, 1024)
             if data == "Password:":
                 os.write(fd, pw + '\\n')
-                
+
         except OSError:
             break
         if not data:

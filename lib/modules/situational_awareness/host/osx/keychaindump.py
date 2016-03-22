@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -26,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
-            
+
             # list of any references/other comments
             'Comments': [
                 "https://github.com/juuso/keychaindump"
@@ -70,9 +68,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         keyChain = self.options['KeyChain']['Value']
         tempDir = self.options['TempDir']['Value']
         if not tempDir.endswith("/"):
@@ -90,6 +87,6 @@ if "%s" != "":
 else:
     print os.popen('%sdebug').read()
 run_command('rm -f %sdebug')
-""" %(tempDir,tempDir,keyChain,tempDir,keyChain,tempDir,tempDir)
-    
+""" % (tempDir, tempDir, keyChain, tempDir, keyChain, tempDir, tempDir)
+
         return script

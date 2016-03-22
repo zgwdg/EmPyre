@@ -1,5 +1,6 @@
 from lib.common import helpers
 
+
 class Stager:
 
     def __init__(self, mainMenu, params=[]):
@@ -63,8 +64,7 @@ class Stager:
                 self.options[option]['Value'] = value
 
     def generate(self):
-
-      # extract all of our options
+        # extract all of our options
         listenerName = self.options['Listener']['Value']
         savePath = self.options['OutFile']['Value']
         userAgent = self.options['UserAgent']['Value']
@@ -86,5 +86,5 @@ class Stager:
         else:
 
             launcher = launcher.strip('echo').strip(' | python &').strip("\"")
-            dylib = self.mainMenu.stagers.generate_dylib(launcher,arch)
+            dylib = self.mainMenu.stagers.generate_dylib(launcher, arch)
             return dylib

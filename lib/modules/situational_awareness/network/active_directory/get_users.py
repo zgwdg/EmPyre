@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -26,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
-            
+
             # list of any references/other comments
             'Comments': ['']
         }
@@ -76,13 +74,11 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         LDAPAddress = self.options['LDAPAddress']['Value']
         BindDN = self.options['BindDN']['Value']
         password = self.options['password']['Value']
- 
 
         # the Python script itself, with the command to invoke
         #   for execution appended to the end. Scripts should output

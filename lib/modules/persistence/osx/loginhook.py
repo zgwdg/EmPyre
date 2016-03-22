@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -26,7 +24,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
-            
+
             # list of any references/other comments
             'Comments': ["https://support.apple.com/de-at/HT2420"]
         }
@@ -68,9 +66,8 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
+
         loginhookScriptPath = self.options['LoginHookScript']['Value']
         password = self.options['Password']['Value']
         password = password.replace('$', '\$')
@@ -87,7 +84,7 @@ try:
     if str(result) != "1":
         print "[!] ERROR to create a LoginHook requires (sudo) privileges!"
         sys.exit()
-    try:    
+    try:
         print " [*] Setting script to proper linux permissions"
         process = subprocess.Popen('chmod +x %s', stdout=subprocess.PIPE, shell=True)
         process.communicate()
@@ -114,6 +111,6 @@ try:
 except Exception as e:
     print "[!] Issue with LoginHook script: " + str(e)
 
-""" %(loginhookScriptPath, password, loginhookScriptPath, password)
+""" % (loginhookScriptPath, password, loginhookScriptPath, password)
 
         return script

@@ -1,3 +1,20 @@
+from pydispatch import dispatcher
+
+import sys
+import cmd
+import sqlite3
+import os
+import hashlib
+
+# EmPyre imports
+import agents
+import helpers
+import listeners
+import messages
+import modules
+import stagers
+import time
+
 """
 
 The main controller class for EmPyre.
@@ -12,28 +29,13 @@ menu loops.
 VERSION = "0.1.3"
 
 
-from pydispatch import dispatcher
-
-# import time, sys, re, readline
-import sys, cmd, sqlite3, os, hashlib, traceback
-
-# EmPyre imports
-import helpers
-import os
-import http
-import encryption
-import packets
-import messages
-import agents
-import listeners
-import modules
-import stagers
-import time
-
-
 # custom exceptions used for nested menu navigation
 class NavMain(Exception): pass
+
+
 class NavAgents(Exception): pass
+
+
 class NavListeners(Exception): pass
 
 
@@ -42,12 +44,12 @@ class MainMenu(cmd.Cmd):
     def __init__(self, args=None):
 
         cmd.Cmd.__init__(self)
-        
-        # globalOptions[optionName] = (value, required, description) 
+
+        # globalOptions[optionName] = (value, required, description)
         self.globalOptions = {}
 
         self.args = args
-        
+
         # empty database object
         self.conn = self.database_connect()
 
@@ -81,7 +83,7 @@ class MainMenu(cmd.Cmd):
         cur.execute("SELECT stage2_uri FROM config")
         self.stage2 = cur.fetchone()[0]
         cur.close()
-        
+
         # pull out the IP whitelist and create it, if applicable
         cur = self.conn.cursor()
         cur.execute("SELECT ip_whitelist FROM config")
@@ -99,7 +101,7 @@ class MainMenu(cmd.Cmd):
         self.listeners = listeners.Listeners(self, args=args)
         self.stagers = stagers.Stagers(self, args=args)
         self.modules = modules.Modules(self, args=args)
- 
+
         # make sure all the references are passed after instantiation
         # TODO: replace these with self?
         self.agents.listeners = self.listeners
@@ -114,7 +116,7 @@ class MainMenu(cmd.Cmd):
         self.do_help.__func__.__doc__ = '''Displays the help menu.'''
         self.doc_header = 'Commands'
 
-        dispatcher.connect( self.handle_event, sender=dispatcher.Any )
+        dispatcher.connect(self.handle_event, sender=dispatcher.Any)
 
         # Main, Agents, or Listeners
         self.menu_state = "Main"
@@ -151,7 +153,6 @@ class MainMenu(cmd.Cmd):
         except Exception as e:
             print e
 
-
     def startup(self):
         """
         Kick off all initial startup actions.
@@ -163,7 +164,6 @@ class MainMenu(cmd.Cmd):
         self.listeners.start_existing_listeners()
 
         dispatcher.send("[*] EmPyre starting up...", sender="EmPyre")
-
 
     def shutdown(self):
         """
@@ -181,7 +181,6 @@ class MainMenu(cmd.Cmd):
         if self.conn:
             self.conn.close()
 
-
     def database_connect(self):
         try:
             # set the database connectiont to autocommit w/ isolation level
@@ -189,7 +188,7 @@ class MainMenu(cmd.Cmd):
             self.conn.isolation_level = None
             return self.conn
 
-        except Exception as e:
+        except Exception:
             print helpers.color("[!] Could not connect to database")
             print helpers.color("[!] Please run database_setup.py")
             sys.exit()
@@ -236,7 +235,7 @@ class MainMenu(cmd.Cmd):
                     cmd.Cmd.cmdloop(self)
 
             # handle those pesky ctrl+c's
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 self.menu_state = "Main"
                 try:
                     choice = raw_input(helpers.color("\n[>] Exit? [y/N] ", "red"))
@@ -245,36 +244,33 @@ class MainMenu(cmd.Cmd):
                         return True
                     else:
                         continue
-                except KeyboardInterrupt as e:
+                except KeyboardInterrupt:
                     continue
 
             # exception used to signal jumping to "Main" menu
-            except NavMain as e:
+            except NavMain:
                 self.menu_state = "Main"
 
             # exception used to signal jumping to "Agents" menu
-            except NavAgents as e:
+            except NavAgents:
                 self.menu_state = "Agents"
 
             # exception used to signal jumping to "Listeners" menu
-            except NavListeners as e:
+            except NavListeners:
                 self.menu_state = "Listeners"
-
 
     # print a nicely formatted help menu
     # stolen/adapted from recon-ng
     def print_topics(self, header, cmds, cmdlen, maxcol):
         if cmds:
-            self.stdout.write("%s\n"%str(header))
+            self.stdout.write("%s\n" % str(header))
             if self.ruler:
-                self.stdout.write("%s\n"%str(self.ruler * len(header)))
-            for cmd in cmds:
-                self.stdout.write("%s %s\n" % (cmd.ljust(17), getattr(self, 'do_' + cmd).__doc__))
+                self.stdout.write("%s\n" % str(self.ruler * len(header)))
+            for c in cmds:
+                self.stdout.write("%s %s\n" % (c.ljust(17), getattr(self, 'do_' + c).__doc__))
             self.stdout.write("\n")
 
-
     def emptyline(self): pass
-
 
     def handle_event(self, signal, sender):
         """
@@ -287,7 +283,7 @@ class MainMenu(cmd.Cmd):
             HttpHandler     -   the HTTP handler
             EmPyreServer    -   the EmPyre HTTP server
         """
-        
+
         # if --debug is passed, log out all dispatcher signals
         if self.args.debug:
             f = open("empyre.debug", 'a')
@@ -315,7 +311,6 @@ class MainMenu(cmd.Cmd):
         elif sender == "Listeners":
             print helpers.color(signal)
 
-
     ###################################################
     # CMD methods
     ###################################################
@@ -323,11 +318,9 @@ class MainMenu(cmd.Cmd):
     def default(self, line):
         pass
 
-
     def do_exit(self, line):
         "Exit EmPyre"
         raise KeyboardInterrupt
-
 
     def do_agents(self, line):
         "Jump to the Agents menu."
@@ -337,7 +330,6 @@ class MainMenu(cmd.Cmd):
         except Exception as e:
             raise e
 
-
     def do_listeners(self, line):
         "Interact with active listeners."
         try:
@@ -345,7 +337,6 @@ class MainMenu(cmd.Cmd):
             l.cmdloop()
         except Exception as e:
             raise e
-
 
     def do_usestager(self, line):
         "Use an EmPyre stager."
@@ -369,10 +360,9 @@ class MainMenu(cmd.Cmd):
                     l.cmdloop()
             else:
                 print helpers.color("[!] Error in MainMenu's do_userstager()")
-        
+
         except Exception as e:
             raise e
-
 
     def do_usemodule(self, line):
         "Use an EmPyre module."
@@ -385,7 +375,6 @@ class MainMenu(cmd.Cmd):
             except Exception as e:
                 raise e
 
-
     def do_searchmodule(self, line):
         "Search EmPyre module names/descriptions."
 
@@ -395,7 +384,6 @@ class MainMenu(cmd.Cmd):
             print helpers.color("[!] Please enter a search term.")
         else:
             self.modules.search_modules(searchTerm)
-
 
     def do_set(self, line):
         "Set a global option (e.g. IP whitelists)."
@@ -423,7 +411,6 @@ class MainMenu(cmd.Cmd):
             else:
                 print helpers.color("[!] Please choose 'ip_whitelist' or 'ip_blacklist'")
 
-
     def do_reset(self, line):
         "Reset a global option (e.g. IP whitelists)."
 
@@ -431,7 +418,6 @@ class MainMenu(cmd.Cmd):
             self.agents.ipWhiteList = None
         if line.strip().lower() == "ip_blacklist":
             self.agents.ipBlackList = None
-
 
     def do_show(self, line):
         "Show a global option (e.g. IP whitelists)."
@@ -441,10 +427,9 @@ class MainMenu(cmd.Cmd):
         if line.strip().lower() == "ip_blacklist":
             print self.agents.ipBlackList
 
-
     def do_reload(self, line):
         "Reload one (or all) EmPyre modules."
-        
+
         if line.strip().lower() == "all":
             # reload all modules
             print "\n" + helpers.color("[*] Reloading all modules.") + "\n"
@@ -456,13 +441,12 @@ class MainMenu(cmd.Cmd):
                 print "\n" + helpers.color("[*] Reloading module: " + line) + "\n"
                 self.modules.reload_module(line)
 
-
     def do_list(self, line):
         "Lists active agents or listeners."
 
         parts = line.split(" ")
 
-        if parts[0].lower() == "agents":        
+        if parts[0].lower() == "agents":
 
             line = " ".join(parts[1:])
             agents = self.agents.get_agents()
@@ -479,27 +463,26 @@ class MainMenu(cmd.Cmd):
                     intervalMax = (agent[4] + agent[4] * agent[5])+30
 
                     # get the agent last check in time
-                    agentTime = time.mktime(time.strptime(agent[16],"%Y-%m-%d %H:%M:%S"))
+                    agentTime = time.mktime(time.strptime(agent[16], "%Y-%m-%d %H:%M:%S"))
                     if agentTime < time.mktime(time.localtime()) - intervalMax:
                         # if the last checkin time exceeds the limit, remove it
                         displayAgents.append(agent)
 
                 messages.display_staleagents(displayAgents)
 
-
             elif line.strip() != "":
                 # if we're listing an agents active in the last X minutes
                 try:
                     minutes = int(line.strip())
-                    
+
                     # grab just the agents active within the specified window (in minutes)
                     displayAgents = []
                     for agent in agents:
-                        agentTime = time.mktime(time.strptime(agent[16],"%Y-%m-%d %H:%M:%S"))
+                        agentTime = time.mktime(time.strptime(agent[16], "%Y-%m-%d %H:%M:%S"))
 
                         if agentTime > time.mktime(time.localtime()) - (int(minutes) * 60):
                             displayAgents.append(agent)
-                    
+
                     messages.display_agents(displayAgents)
 
                 except:
@@ -508,11 +491,9 @@ class MainMenu(cmd.Cmd):
             else:
                 messages.display_agents(agents)
 
-
         elif parts[0].lower() == "listeners":
 
             messages.display_listeners(self.listeners.get_listeners())
-
 
     def complete_usemodule(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre Python module path."
@@ -523,7 +504,6 @@ class MainMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in modules if s.startswith(mline)]
 
-
     def complete_reload(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre Python module path."
 
@@ -532,7 +512,6 @@ class MainMenu(cmd.Cmd):
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
         return [s[offs:] for s in modules if s.startswith(mline)]
-
 
     def complete_usestager(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre stager module path."
@@ -553,7 +532,6 @@ class MainMenu(cmd.Cmd):
             offs = len(mline) - len(text)
             return [s[offs:] for s in stagers if s.startswith(mline)]
 
-
     def complete_set(self, text, line, begidx, endidx):
         "Tab-complete a global option."
 
@@ -566,16 +544,14 @@ class MainMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in options if s.startswith(mline)]
 
-
     def complete_reset(self, text, line, begidx, endidx):
         "Tab-complete a global option."
-        
-        return self.complete_set(text, line, begidx, endidx)
 
+        return self.complete_set(text, line, begidx, endidx)
 
     def complete_show(self, text, line, begidx, endidx):
         "Tab-complete a global option."
-        
+
         return self.complete_set(text, line, begidx, endidx)
 
 
@@ -596,36 +572,31 @@ class AgentsMenu(cmd.Cmd):
 
     # def preloop(self):
     #     traceback.print_stack()
-    
+
     # print a nicely formatted help menu
     # stolen/adapted from recon-ng
     def print_topics(self, header, cmds, cmdlen, maxcol):
         if cmds:
-            self.stdout.write("%s\n"%str(header))
+            self.stdout.write("%s\n" % str(header))
             if self.ruler:
-                self.stdout.write("%s\n"%str(self.ruler * len(header)))
-            for cmd in cmds:
-                self.stdout.write("%s %s\n" % (cmd.ljust(17), getattr(self, 'do_' + cmd).__doc__))
+                self.stdout.write("%s\n" % str(self.ruler * len(header)))
+            for c in cmds:
+                self.stdout.write("%s %s\n" % (c.ljust(17), getattr(self, 'do_' + c).__doc__))
             self.stdout.write("\n")
 
-
     def emptyline(self): pass
-
 
     def do_back(self, line):
         "Return back a menu."
         return True
 
-
     def do_main(self, line):
         "Go back to the main menu."
         raise NavMain()
 
-
     def do_exit(self, line):
         "Exit EmPyre."
         raise KeyboardInterrupt
-
 
     def do_list(self, line):
         "Lists all active agents (or listeners)."
@@ -637,25 +608,23 @@ class AgentsMenu(cmd.Cmd):
         else:
             self.mainMenu.do_list("agents " + str(line))
 
-
     def do_rename(self, line):
         "Rename a particular agent."
-        
+
         parts = line.strip().split(" ")
 
         # name sure we get an old name and new name for the agent
         if len(parts) == 2:
             # replace the old name with the new name
-            oldname =  parts[0]
+            oldname = parts[0]
             newname = parts[1]
-            self.mainMenu.agents.rename_agent(parts[0], parts[1])
+            self.mainMenu.agents.rename_agent(oldname, newname)
         else:
             print helpers.color("[!] Please enter an agent name and new name")
 
-
     def do_interact(self, line):
         "Interact with a particular agent."
-        
+
         name = line.strip()
 
         if name != "" and self.mainMenu.agents.is_agent_present(name):
@@ -666,7 +635,6 @@ class AgentsMenu(cmd.Cmd):
             a.cmdloop()
         else:
             print helpers.color("[!] Please enter a valid agent name")
-
 
     def do_kill(self, line):
         "Task one or more agents to exit."
@@ -681,7 +649,8 @@ class AgentsMenu(cmd.Cmd):
                     for agent in agents:
                         sessionID = agent[1]
                         self.mainMenu.agents.add_agent_task(sessionID, "TASK_EXIT")
-            except KeyboardInterrupt as e: print ""
+            except KeyboardInterrupt:
+                print ""
 
         else:
             # extract the sessionID and clear the agent tasking
@@ -691,7 +660,6 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.add_agent_task(sessionID, "TASK_EXIT")
             else:
                 print helpers.color("[!] Invalid agent name")
-
 
     def do_clear(self, line):
         "Clear one or more agent's taskings."
@@ -710,7 +678,6 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.clear_agent_tasks(sessionID)
             else:
                 print helpers.color("[!] Invalid agent name")
-
 
     def do_sleep(self, line):
         "Task one or more agents to 'sleep [agent/all] interval [jitter]'"
@@ -736,10 +703,10 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.set_agent_field("jitter", jitter, sessionID)
 
                 # task the agent
-                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global delay; global jitter; delay=%s; jitter=%s; print 'delay/jitter set to %s/%s'"%(delay,jitter,delay,jitter))
+                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global delay; global jitter; delay=%s; jitter=%s; print 'delay/jitter set to %s/%s'" % (delay, jitter, delay, jitter))
 
                 # update the agent log
-                msg = "Tasked agent to delay sleep/jitter to: %s/%s" % (delay,jitter)
+                msg = "Tasked agent to delay sleep/jitter to: %s/%s" % (delay, jitter)
                 self.mainMenu.agents.save_agent_log(sessionID, msg)
 
         else:
@@ -756,15 +723,14 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.set_agent_field("delay", delay, sessionID)
                 self.mainMenu.agents.set_agent_field("jitter", jitter, sessionID)
 
-                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global delay; global jitter; delay=%s; jitter=%s; print 'delay/jitter set to %s/%s'"%(delay,jitter,delay,jitter))
+                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global delay; global jitter; delay=%s; jitter=%s; print 'delay/jitter set to %s/%s'" % (delay, jitter, delay, jitter))
 
                 # update the agent log
-                msg = "Tasked agent to delay sleep/jitter to: %s/%s" % (delay,jitter)
+                msg = "Tasked agent to delay sleep/jitter to: %s/%s" % (delay, jitter)
                 self.mainMenu.agents.save_agent_log(sessionID, msg)
 
             else:
                 print helpers.color("[!] Invalid agent name")
-
 
     def do_lostlimit(self, line):
         "Task one or more agents to 'lostlimit [agent/all] <#ofCBs> '"
@@ -785,7 +751,7 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.set_agent_field("lost_limit", lostLimit, sessionID)
 
                 # task the agent
-                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global lostLimit; lostLimit=%s; print 'lostLimit set to %s'"%(lostLimit, lostLimit))
+                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global lostLimit; lostLimit=%s; print 'lostLimit set to %s'" % (lostLimit, lostLimit))
 
                 # update the agent log
                 msg = "Tasked agent to change lost limit to: %s" % (lostLimit)
@@ -802,7 +768,7 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.set_agent_field("lost_limit", lostLimit, sessionID)
 
                 # task the agent
-                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global lostLimit; lostLimit=%s; print 'lostLimit set to %s'"%(lostLimit, lostLimit))
+                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global lostLimit; lostLimit=%s; print 'lostLimit set to %s'" % (lostLimit, lostLimit))
 
                 # update the agent log
                 msg = "Tasked agent to change lost limit to: %s" % (lostLimit)
@@ -810,7 +776,6 @@ class AgentsMenu(cmd.Cmd):
 
             else:
                 print helpers.color("[!] Invalid agent name")
-
 
     def do_killdate(self, line):
         "Set the killdate for one or more agents (killdate [agent/all] 01/01/2016)."
@@ -832,9 +797,9 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.set_agent_field("kill_date", killDate, sessionID)
 
                 # task the agent
-                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global killDate; killDate='%s'; print 'killDate set to %s'"%(killDate, killDate))
+                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global killDate; killDate='%s'; print 'killDate set to %s'" % (killDate, killDate))
 
-                msg = "Tasked agent to set killdate to: %s" %(killDate)
+                msg = "Tasked agent to set killdate to: %s" % (killDate)
                 self.mainMenu.agents.save_agent_log(sessionID, msg)
 
         else:
@@ -848,15 +813,14 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.set_agent_field("kill_date", killDate, sessionID)
 
                 # task the agent
-                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global killDate; killDate='%s'; print 'killDate set to %s'"%(killDate, killDate))
+                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global killDate; killDate='%s'; print 'killDate set to %s'" % (killDate, killDate))
 
                 # update the agent log
-                msg = "Tasked agent to set killdate to: %s" %(killDate)
+                msg = "Tasked agent to set killdate to: %s" % (killDate)
                 self.mainMenu.agents.save_agent_log(sessionID, msg)
 
             else:
                 print helpers.color("[!] Invalid agent name")
-
 
     def do_workinghours(self, line):
         "Set the workinghours for one or more agents (workinghours [agent/all] 9:00-17:00)."
@@ -878,7 +842,7 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.set_agent_field("working_hours", hours, sessionID)
 
                 # task the agent
-                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global workingHours; workingHours= '%s'"%(hours))
+                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global workingHours; workingHours= '%s'" % (hours))
 
                 msg = "Tasked agent to set working hours to: %s" % (hours)
                 self.mainMenu.agents.save_agent_log(sessionID, msg)
@@ -890,11 +854,11 @@ class AgentsMenu(cmd.Cmd):
             hours = parts[1]
 
             if sessionID and len(sessionID) != 0:
-                #update this agent's field in the database
+                # update this agent's field in the database
                 self.mainMenu.agents.set_agent_field("working_hours", hours, sessionID)
 
                 # task the agent
-                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global workingHours; workingHours= '%s'"%(hours))
+                self.mainMenu.agents.add_agent_task(sessionID, "TASK_CMD_WAIT", "global workingHours; workingHours= '%s'" % (hours))
 
                 # update the agent log
                 msg = "Tasked agent to set working hours to %s" % (hours)
@@ -902,7 +866,6 @@ class AgentsMenu(cmd.Cmd):
 
             else:
                 print helpers.color("[!] Invalid agent name")
-
 
     def do_remove(self, line):
         "Remove one or more agents from the database."
@@ -914,11 +877,12 @@ class AgentsMenu(cmd.Cmd):
                 choice = raw_input(helpers.color("[>] Remove all agents from the database? [y/N] ", "red"))
                 if choice.lower() != "" and choice.lower()[0] == "y":
                     self.mainMenu.agents.remove_agent('%')
-            except KeyboardInterrupt as e: print ""
+            except KeyboardInterrupt:
+                print ""
 
         elif name.lower() == "stale":
             # remove 'stale' agents that have missed their checkin intervals
-            
+
             agents = self.mainMenu.agents.get_agents()
 
             for agent in agents:
@@ -929,12 +893,11 @@ class AgentsMenu(cmd.Cmd):
                 intervalMax = (agent[4] + agent[4] * agent[5])+30
 
                 # get the agent last check in time
-                agentTime = time.mktime(time.strptime(agent[16],"%Y-%m-%d %H:%M:%S"))
+                agentTime = time.mktime(time.strptime(agent[16], "%Y-%m-%d %H:%M:%S"))
 
                 if agentTime < time.mktime(time.localtime()) - intervalMax:
                     # if the last checkin time exceeds the limit, remove it
-                    self.mainMenu.agents.remove_agent(sessionID) 
-
+                    self.mainMenu.agents.remove_agent(sessionID)
 
         elif name.isdigit():
             # if we're removing agents that checked in longer than X minutes ago
@@ -942,14 +905,14 @@ class AgentsMenu(cmd.Cmd):
 
             try:
                 minutes = int(line.strip())
-                
+
                 # grab just the agents active within the specified window (in minutes)
                 for agent in agents:
 
                     sessionID = self.mainMenu.agents.get_agent_id(agent[3])
 
                     # get the agent last check in time
-                    agentTime = time.mktime(time.strptime(agent[16],"%Y-%m-%d %H:%M:%S"))
+                    agentTime = time.mktime(time.strptime(agent[16], "%Y-%m-%d %H:%M:%S"))
 
                     if agentTime < time.mktime(time.localtime()) - (int(minutes) * 60):
                         # if the last checkin time exceeds the limit, remove it
@@ -967,11 +930,9 @@ class AgentsMenu(cmd.Cmd):
             else:
                 print helpers.color("[!] Invalid agent name")
 
-
     def do_listeners(self, line):
         "Jump to the listeners menu."
         raise NavListeners()
-
 
     def do_usestager(self, line):
         "Use an EmPyre stager."
@@ -995,7 +956,6 @@ class AgentsMenu(cmd.Cmd):
         else:
             print helpers.color("[!] Error in AgentsMenu's do_userstager()")
 
-
     def do_usemodule(self, line):
         "Use an EmPyre Python module."
 
@@ -1008,7 +968,6 @@ class AgentsMenu(cmd.Cmd):
             l = ModuleMenu(self.mainMenu, line, agent="all")
             l.cmdloop()
 
-
     def do_searchmodule(self, line):
         "Search EmPyre module names/descriptions."
 
@@ -1019,7 +978,6 @@ class AgentsMenu(cmd.Cmd):
         else:
             self.mainMenu.modules.search_modules(searchTerm)
 
-
     def complete_interact(self, text, line, begidx, endidx):
         "Tab-complete an interact command"
 
@@ -1029,14 +987,12 @@ class AgentsMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in names if s.startswith(mline)]
 
-
     def complete_rename(self, text, line, begidx, endidx):
         "Tab-complete a rename command"
 
         names = self.mainMenu.agents.get_agent_names()
 
         return self.complete_interact(text, line, begidx, endidx)
-
 
     def complete_clear(self, text, line, begidx, endidx):
         "Tab-complete a clear command"
@@ -1046,7 +1002,6 @@ class AgentsMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in names if s.startswith(mline)]
 
-
     def complete_remove(self, text, line, begidx, endidx):
         "Tab-complete a remove command"
 
@@ -1055,41 +1010,34 @@ class AgentsMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in names if s.startswith(mline)]
 
-
     def complete_kill(self, text, line, begidx, endidx):
         "Tab-complete a kill command"
 
         return self.complete_clear(text, line, begidx, endidx)
-
 
     def complete_sleep(self, text, line, begidx, endidx):
         "Tab-complete a sleep command"
 
         return self.complete_clear(text, line, begidx, endidx)
 
-
     def complete_lostlimit(self, text, line, begidx, endidx):
         "Tab-complete a lostlimit command"
 
         return self.complete_clear(text, line, begidx, endidx)
-
 
     def complete_killdate(self, text, line, begidx, endidx):
         "Tab-complete a killdate command"
 
         return self.complete_clear(text, line, begidx, endidx)
 
-
     def complete_workinghours(self, text, line, begidx, endidx):
         "Tab-complete a workinghours command"
 
         return self.complete_clear(text, line, begidx, endidx)
 
-
     def complete_usemodule(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre Python module path"
         return self.mainMenu.complete_usemodule(text, line, begidx, endidx)
-
 
     def complete_usestager(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre stager module path."
@@ -1115,7 +1063,7 @@ class AgentMenu(cmd.Cmd):
         self.prompt = '(EmPyre: '+helpers.color(name, 'red')+') > '
 
         # listen for messages from this specific agent
-        dispatcher.connect( self.handle_agent_event, sender=dispatcher.Any)
+        dispatcher.connect(self.handle_agent_event, sender=dispatcher.Any)
 
         # display any results from the database that were stored
         # while we weren't interacting with the agent
@@ -1145,53 +1093,44 @@ class AgentMenu(cmd.Cmd):
             if (str(self.sessionID) in signal) or (str(name) in signal):
                 print helpers.color(signal)
 
-
     # print a nicely formatted help menu
     #   stolen/adapted from recon-ng
     def print_topics(self, header, cmds, cmdlen, maxcol):
         if cmds:
-            self.stdout.write("%s\n"%str(header))
+            self.stdout.write("%s\n" % str(header))
             if self.ruler:
-                self.stdout.write("%s\n"%str(self.ruler * len(header)))
-            for cmd in cmds:
-                self.stdout.write("%s %s\n" % (cmd.ljust(17), getattr(self, 'do_' + cmd).__doc__))
+                self.stdout.write("%s\n" % str(self.ruler * len(header)))
+            for c in cmds:
+                self.stdout.write("%s %s\n" % (c.ljust(17), getattr(self, 'do_' + c).__doc__))
             self.stdout.write("\n")
 
-
     def emptyline(self): pass
-
 
     def default(self, line):
         "Default handler"
 
         print helpers.color("[!] Command not recognized, use 'help' to see available commands")
 
-
     def do_back(self, line):
         "Go back a menu."
         return True
-
 
     def do_main(self, line):
         "Go back to the main menu."
         raise NavMain()
 
-
     def do_listeners(self, line):
         "Jump to the listeners menu."
         raise NavListeners()
-
 
     def do_agents(self, line):
         "Jump to the Agents menu."
         raise NavAgents()
 
-
     def do_help(self, *args):
         "Displays the help menu or syntax for particular commands."
-        
-        cmd.Cmd.do_help(self, *args)
 
+        cmd.Cmd.do_help(self, *args)
 
     def do_list(self, line):
         "Lists all active agents (or listeners)."
@@ -1203,10 +1142,9 @@ class AgentMenu(cmd.Cmd):
         else:
             print helpers.color("[!] Please use 'list [agents/listeners] <modifier>'.")
 
-
     def do_rename(self, line):
         "Rename the agent."
-        
+
         parts = line.strip().split(" ")
         oldname = self.mainMenu.agents.get_agent_name(self.sessionID)
 
@@ -1215,10 +1153,9 @@ class AgentMenu(cmd.Cmd):
             # replace the old name with the new name
             result = self.mainMenu.agents.rename_agent(oldname, parts[0])
             if result:
-                self.prompt = "(EmPyre: "+helpers.color(parts[0],'red')+") > "
+                self.prompt = "(EmPyre: "+helpers.color(parts[0], 'red')+") > "
         else:
             print helpers.color("[!] Please enter a new name for the agent")
-
 
     def do_info(self, line):
         "Display information about this agent"
@@ -1226,7 +1163,6 @@ class AgentMenu(cmd.Cmd):
         # get the agent name, if applicable
         agent = self.mainMenu.agents.get_agent(self.sessionID)
         messages.display_agent(agent)
-
 
     def do_exit(self, line):
         "Task agent to exit."
@@ -1240,13 +1176,12 @@ class AgentMenu(cmd.Cmd):
                 self.mainMenu.agents.save_agent_log(self.sessionID, "Tasked agent to exit")
                 return True
 
-        except KeyboardInterrupt as e: print ""
-
+        except KeyboardInterrupt:
+            print ""
 
     def do_clear(self, line):
-        "Clear out agent tasking."        
+        "Clear out agent tasking."
         self.mainMenu.agents.clear_agent_tasks(self.sessionID)
-
 
     def do_cd(self, line):
         "Change an agent's active directory"
@@ -1259,7 +1194,6 @@ class AgentMenu(cmd.Cmd):
             # update the agent log
             msg = "Tasked agent to change active directory to: %s" % (line)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
-
 
     def do_jobs(self, line):
         "Return jobs or kill a running job."
@@ -1278,7 +1212,6 @@ class AgentMenu(cmd.Cmd):
             self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_STOPJOB", jobID)
             # update the agent log
             self.mainMenu.agents.save_agent_log(self.sessionID, "Tasked agent to stop job " + str(jobID))
-
 
     def do_sleep(self, line):
         "Task an agent to 'sleep interval [jitter]'"
@@ -1301,12 +1234,11 @@ class AgentMenu(cmd.Cmd):
             self.mainMenu.agents.set_agent_field("delay", delay, self.sessionID)
             self.mainMenu.agents.set_agent_field("jitter", jitter, self.sessionID)
 
-            self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", "global delay; global jitter; delay=%s; jitter=%s; print 'delay/jitter set to %s/%s'"%(delay,jitter,delay,jitter))
+            self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", "global delay; global jitter; delay=%s; jitter=%s; print 'delay/jitter set to %s/%s'" % (delay, jitter, delay, jitter))
 
             # update the agent log
             msg = "Tasked agent to delay sleep/jitter " + str(delay) + "/" + str(jitter)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
-
 
     def do_lostlimit(self, line):
         "Task an agent to display change the limit on lost agent detection"
@@ -1329,10 +1261,9 @@ class AgentMenu(cmd.Cmd):
             msg = "Tasked agent to change lost limit " + str(lostLimit)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
 
-
     def do_killdate(self, line):
         "Get or set an agent's killdate (01/01/2016)."
-        
+
         parts = line.strip().split(" ")
         killDate = parts[0]
 
@@ -1346,12 +1277,11 @@ class AgentMenu(cmd.Cmd):
             self.mainMenu.agents.set_agent_field("kill_date", killDate, self.sessionID)
 
             # task the agent with the new killDate
-            self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", "global killDate; killDate='%s'; print 'killDate set to %s'"%(killDate, killDate))
+            self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", "global killDate; killDate='%s'; print 'killDate set to %s'" % (killDate, killDate))
 
             # update the agent log
             msg = "Tasked agent to set killdate to %s" %(killDate)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
-
 
     def do_workinghours(self, line):
         "Get or set an agent's working hours (9:00-17:00)."
@@ -1374,10 +1304,9 @@ class AgentMenu(cmd.Cmd):
             msg = "Tasked agent to set working hours to: %s" % (hours)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
 
-
     def do_shell(self, line):
         "Task an agent to use a shell command."
-        
+
         line = line.strip()
 
         if line != "":
@@ -1387,8 +1316,7 @@ class AgentMenu(cmd.Cmd):
             msg = "Tasked agent to run shell command: %s" % (line)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
 
-
-    def do_python(self,line):
+    def do_python(self, line):
         "Task an agent to run a Python command."
 
         line = line.strip()
@@ -1399,18 +1327,16 @@ class AgentMenu(cmd.Cmd):
             # update the agent log
             msg = "Tasked agent to run Python command %s" % (line)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
-            
 
     def do_sysinfo(self, line):
         "Task an agent to get system information."
-        
+
         # task the agent with this shell command
         self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_SYSINFO")
         # update the agent log
         self.mainMenu.agents.save_agent_log(self.sessionID, "Tasked agent to get system information")
 
-
-    def do_download(self,line):
+    def do_download(self, line):
         "Task an agent to download a file."
 
         line = line.strip()
@@ -1421,15 +1347,14 @@ class AgentMenu(cmd.Cmd):
             msg = "Tasked agent to download: %s" % (line)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
 
-
-    def do_upload(self,line):
+    def do_upload(self, line):
         "Task an agent to upload a file."
 
         # "upload /path/file.ext" or "upload /path/file/file.ext newfile.ext"
         # absolute paths accepted
         parts = line.strip().split(" ")
         uploadname = ""
-        
+
         if len(parts) > 0 and parts[0] != "":
             if len(parts) == 1:
                 # if we're uploading the file with its original name
@@ -1443,7 +1368,7 @@ class AgentMenu(cmd.Cmd):
                 f = open(parts[0], 'r')
                 fileData = f.read()
                 f.close()
-                
+
                 msg = "Tasked agent to upload " + parts[0] + " : " + hashlib.md5(fileData).hexdigest()
                 # update the agent log with the filename and MD5
                 self.mainMenu.agents.save_agent_log(self.sessionID, msg)
@@ -1455,7 +1380,6 @@ class AgentMenu(cmd.Cmd):
             else:
                 print helpers.color("[!] Please enter a valid file path to upload")
 
-
     def do_usemodule(self, line):
         "Use an EmPyre Python module."
 
@@ -1463,10 +1387,9 @@ class AgentMenu(cmd.Cmd):
 
         if module not in self.mainMenu.modules.modules:
             print helpers.color("[!] Error: invalid module")
-        else:   
+        else:
             l = ModuleMenu(self.mainMenu, line, agent=self.sessionID)
             l.cmdloop()
-
 
     def do_searchmodule(self, line):
         "Search EmPyre module names/descriptions."
@@ -1478,13 +1401,12 @@ class AgentMenu(cmd.Cmd):
         else:
             self.mainMenu.modules.search_modules(searchTerm)
 
-
     # def do_updateprofile(self, line):
     #     "Update an agent connection profile."
 
     #     # profile format:
     #     #   TaskURI1,TaskURI2,...|UserAgent|OptionalHeader1,OptionalHeader2...
-        
+
     #     profile = line.strip().strip()
 
     #     if profile != "" :
@@ -1503,10 +1425,10 @@ class AgentMenu(cmd.Cmd):
 
     #             # task the agent to update their profile
     #             self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", updatecmd)
-                
+
     #             # update the agent's profile in the database
     #             self.mainMenu.agents.update_agent_profile(self.sessionID, profile)
-                
+
     #             # print helpers.color("[*] Tasked agent "+self.sessionID+" to run " + updatecmd)
     #             # update the agent log
     #             msg = "Tasked agent to update profile " + profile
@@ -1515,7 +1437,6 @@ class AgentMenu(cmd.Cmd):
     #     else:
     #         print helpers.color("[*] Profile format is \"TaskURI1,TaskURI2,...|UserAgent|OptionalHeader2:Val1|OptionalHeader2:Val2...\"")
 
-
     # def complete_jobs(self, text, line, begidx, endidx):
     #     "Tab-complete jobs management options."
 
@@ -1523,16 +1444,13 @@ class AgentMenu(cmd.Cmd):
     #     offs = len(mline) - len(text)
     #     return [s[offs:] for s in ["kill"] if s.startswith(mline)]
 
-
     def complete_usemodule(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre Python module path"
         return self.mainMenu.complete_usemodule(text, line, begidx, endidx)
 
-
     def complete_upload(self, text, line, begidx, endidx):
         "Tab-complete an upload file path"
-        return helpers.complete_path(text,line)
-
+        return helpers.complete_path(text, line)
 
     # def complete_updateprofile(self, text, line, begidx, endidx):
     #     "Tab-complete an updateprofile path"
@@ -1546,7 +1464,7 @@ class ListenerMenu(cmd.Cmd):
         self.doc_header = 'Listener Commands'
 
         self.mainMenu = mainMenu
-        
+
         # get all the the stock listener options
         self.options = self.mainMenu.listeners.get_listener_options()
 
@@ -1563,21 +1481,18 @@ class ListenerMenu(cmd.Cmd):
     # stolen/adapted from recon-ng
     def print_topics(self, header, cmds, cmdlen, maxcol):
         if cmds:
-            self.stdout.write("%s\n"%str(header))
+            self.stdout.write("%s\n" % str(header))
             if self.ruler:
-                self.stdout.write("%s\n"%str(self.ruler * len(header)))
-            for cmd in cmds:
-                self.stdout.write("%s %s\n" % (cmd.ljust(17), getattr(self, 'do_' + cmd).__doc__))
+                self.stdout.write("%s\n" % str(self.ruler * len(header)))
+            for c in cmds:
+                self.stdout.write("%s %s\n" % (c.ljust(17), getattr(self, 'do_' + c).__doc__))
             self.stdout.write("\n")
 
-
     def emptyline(self): pass
-
 
     def do_exit(self, line):
         "Exit EmPyre."
         raise KeyboardInterrupt
-
 
     def do_list(self, line):
         "List all active listeners (or agents)."
@@ -1589,16 +1504,13 @@ class ListenerMenu(cmd.Cmd):
         else:
             self.mainMenu.do_list("listeners " + str(line))
 
-
     def do_back(self, line):
         "Go back a menu."
         return True
 
-
     def do_main(self, line):
         "Go back to the main menu."
         raise NavMain()
-
 
     def do_set(self, line):
         "Set a listener option."
@@ -1608,12 +1520,10 @@ class ListenerMenu(cmd.Cmd):
         else:
             print helpers.color("[!] Please enter a value to set for the option")
 
-
     def do_unset(self, line):
         "Unset a listener option."
         option = line.strip()
         self.mainMenu.listeners.set_listener_option(option, '')
-
 
     def do_info(self, line):
         "Display listener options."
@@ -1629,7 +1539,6 @@ class ListenerMenu(cmd.Cmd):
         else:
             messages.display_listener(self.mainMenu.listeners.options)
 
-
     def do_options(self, line):
         "Display listener options."
 
@@ -1644,7 +1553,6 @@ class ListenerMenu(cmd.Cmd):
         else:
             messages.display_listener(self.mainMenu.listeners.options)
 
-
     def do_kill(self, line):
         "Kill one or all active listeners."
 
@@ -1655,7 +1563,8 @@ class ListenerMenu(cmd.Cmd):
                 choice = raw_input(helpers.color("[>] Kill all listeners? [y/N] ", "red"))
                 if choice.lower() != "" and choice.lower()[0] == "y":
                     self.mainMenu.listeners.killall()
-            except KeyboardInterrupt as e: print ""
+            except KeyboardInterrupt:
+                print ""
 
         else:
             if listenerID != "" and self.mainMenu.listeners.is_listener_valid(listenerID):
@@ -1664,21 +1573,17 @@ class ListenerMenu(cmd.Cmd):
             else:
                 print helpers.color("[!] Invalid listener name or ID.")
 
-
     def do_execute(self, line):
         "Execute a listener with the currently specified options."
         self.mainMenu.listeners.add_listener_from_config()
-
 
     def do_run(self, line):
         "Execute a listener with the currently specified options."
         self.do_execute(line)
 
-
     def do_agents(self, line):
         "Jump to the Agents menu."
         raise NavAgents()
-
 
     def do_usestager(self, line):
         "Use an EmPyre stager."
@@ -1702,15 +1607,14 @@ class ListenerMenu(cmd.Cmd):
         else:
             print helpers.color("[!] Error in ListenerMenu's do_userstager()")
 
-
     def do_launcher(self, line):
         "Generate an initial launcher for a listener."
-        
+
         nameid = self.mainMenu.listeners.get_listener_id(line.strip())
-        if nameid : 
+        if nameid:
             listenerID = nameid
         else:
-            listenerID = line.strip() 
+            listenerID = line.strip()
 
         if listenerID != "" and self.mainMenu.listeners.is_listener_valid(listenerID):
             # set the listener value for the launcher
@@ -1721,7 +1625,6 @@ class ListenerMenu(cmd.Cmd):
             print stager.generate()
         else:
             print helpers.color("[!] Please enter a valid listenerID")
-
 
     def complete_set(self, text, line, begidx, endidx):
         "Tab-complete listener option values."
@@ -1747,12 +1650,11 @@ class ListenerMenu(cmd.Cmd):
             return [s[offs:] for s in listenerTypes if s.startswith(mline)]
 
         elif line.split(" ")[1].lower() == "certpath":
-            return helpers.complete_path(text,line,arg=True)
+            return helpers.complete_path(text, line, arg=True)
 
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
         return [s[offs:] for s in self.options if s.startswith(mline)]
-
 
     def complete_unset(self, text, line, begidx, endidx):
         "Tab-complete listener option values."
@@ -1761,11 +1663,9 @@ class ListenerMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in self.options if s.startswith(mline)]
 
-
     def complete_usestager(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre stager module path."
         return self.mainMenu.complete_usestager(text, line, begidx, endidx)
-
 
     def complete_kill(self, text, line, begidx, endidx):
         "Tab-complete listener names"
@@ -1777,7 +1677,6 @@ class ListenerMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in names if s.startswith(mline)]
 
-
     def complete_launcher(self, text, line, begidx, endidx):
         "Tab-complete listener names/IDs"
 
@@ -1788,11 +1687,9 @@ class ListenerMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in names if s.startswith(mline)]
 
-
     def complete_info(self, text, line, begidx, endidx):
         "Tab-complete listener names/IDs"
         return self.complete_launcher(text, line, begidx, endidx)
-
 
     def complete_options(self, text, line, begidx, endidx):
         "Tab-complete listener names/IDs"
@@ -1825,10 +1722,10 @@ class ModuleMenu(cmd.Cmd):
 
     def validate_options(self):
         "Make sure all required module options are completed."
-        
+
         sessionID = self.module.options['Agent']['Value']
 
-        for option,values in self.module.options.iteritems():
+        for option, values in self.module.options.iteritems():
             if values['Required'] and ((not values['Value']) or (values['Value'] == '')):
                 print helpers.color("[!] Error: Required module option missing.")
                 return False
@@ -1847,47 +1744,36 @@ class ModuleMenu(cmd.Cmd):
                 choice = raw_input(helpers.color("[>] Module is not opsec safe, run? [y/N] ", "red"))
                 if not (choice.lower() != "" and choice.lower()[0] == "y"):
                     return False
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 print ""
                 return False
 
         return True
 
-
     def emptyline(self): pass
-
 
     # print a nicely formatted help menu
     # stolen/adapted from recon-ng
     def print_topics(self, header, cmds, cmdlen, maxcol):
         if cmds:
-            self.stdout.write("%s\n"%str(header))
+            self.stdout.write("%s\n" % str(header))
             if self.ruler:
-                self.stdout.write("%s\n"%str(self.ruler * len(header)))
-            for cmd in cmds:
-                self.stdout.write("%s %s\n" % (cmd.ljust(17), getattr(self, 'do_' + cmd).__doc__))
+                self.stdout.write("%s\n" % str(self.ruler * len(header)))
+            for c in cmds:
+                self.stdout.write("%s %s\n" % (c.ljust(17), getattr(self, 'do_' + c).__doc__))
             self.stdout.write("\n")
-
 
     def do_agents(self, line):
         "Jump to the Agents menu."
         raise NavAgents()
 
-
     def do_listeners(self, line):
         "Jump to the listeners menu."
         raise NavListeners()
 
-
     def do_exit(self, line):
         "Exit EmPyre."
         raise KeyboardInterrupt
-
-
-    def do_main(self, line):
-        "Return to the main menu."
-        return True
-
 
     def do_list(self, line):
         "Lists all active agents (or listeners)."
@@ -1899,7 +1785,6 @@ class ModuleMenu(cmd.Cmd):
         else:
             print helpers.color("[!] Please use 'list [agents/listeners] <modifier>'.")
 
-
     def do_reload(self, line):
         "Reload the current module."
 
@@ -1910,38 +1795,33 @@ class ModuleMenu(cmd.Cmd):
         # regrab the reference
         self.module = self.mainMenu.modules.modules[self.moduleName]
 
-
     def do_info(self, line):
         "Display module options."
         messages.display_module(self.moduleName, self.module)
-
 
     def do_options(self, line):
         "Display module options."
         messages.display_module(self.moduleName, self.module)
 
-
     def do_back(self, line):
         "Return to the main menu."
         return True
-
 
     def do_main(self, line):
         "Go back to the main menu."
         raise NavMain()
 
-
     def do_set(self, line):
         "Set a module option."
-        
+
         parts = line.split()
 
         try:
             option = parts[0]
             if option not in self.module.options:
-                print helpers.color("[!] Invalid option specified.")   
+                print helpers.color("[!] Invalid option specified.")
 
-            elif len(parts) == 1 :
+            elif len(parts) == 1:
                 # "set OPTION"
                 # check if we're setting a switch
                 if self.module.options[option]['Description'].startswith("Switch."):
@@ -1952,13 +1832,13 @@ class ModuleMenu(cmd.Cmd):
                 # otherwise "set OPTION VALUE"
                 option = parts[0]
                 value = " ".join(parts[1:])
-                
-                if value == '""' or value == "''": value = ""
+
+                if value == '""' or value == "''":
+                    value = ""
 
                 self.module.options[option]['Value'] = value
         except:
             print helpers.color("[!] Error in setting option, likely invalid option name.")
-
 
     def do_unset(self, line):
         "Unset a module option."
@@ -1973,7 +1853,6 @@ class ModuleMenu(cmd.Cmd):
         else:
             self.module.options[option]['Value'] = ''
 
-
     def do_usemodule(self, line):
         "Use an EmPyre Python module."
 
@@ -1981,10 +1860,9 @@ class ModuleMenu(cmd.Cmd):
 
         if module not in self.mainMenu.modules.modules:
             print helpers.color("[!] Error: invalid module")
-        else:   
+        else:
             l = ModuleMenu(self.mainMenu, line, agent=self.module.options['Agent']['Value'])
             l.cmdloop()
-
 
     def do_execute(self, line):
         "Execute the given EmPyre module."
@@ -2001,7 +1879,7 @@ class ModuleMenu(cmd.Cmd):
 
         if not moduleData or moduleData == "":
             print helpers.color("[!] Error: module produced an empty script")
-            print helpers.color("[!] Error Building module: " + str(e), color="yellow")
+            print helpers.color("[!] Error Building module: " + str(moduleError), color="yellow")
             dispatcher.send("[!] Error: module produced an empty script", sender="EmPyre")
             return
 
@@ -2045,7 +1923,7 @@ class ModuleMenu(cmd.Cmd):
             try:
                 choice = raw_input(helpers.color("[>] Run module on all agents? [y/N] ", "red"))
                 if choice.lower() != "" and choice.lower()[0] == "y":
-              
+
                     # signal everyone with what we're doing
                     print helpers.color("[*] Tasking all agents to run " + self.moduleName)
                     dispatcher.send("[*] Tasking all agents to run " + self.moduleName, sender="EmPyre")
@@ -2063,7 +1941,8 @@ class ModuleMenu(cmd.Cmd):
                         msg = "Tasked agent to run module " + self.moduleName
                         self.mainMenu.agents.save_agent_log(sessionID, msg)
 
-            except KeyboardInterrupt as e: print ""
+            except KeyboardInterrupt as e:
+                print ""
 
         # set the script to be the global autorun
         elif agentName.lower() == "autorun":
@@ -2083,11 +1962,9 @@ class ModuleMenu(cmd.Cmd):
                 msg = "Tasked agent to run module " + self.moduleName
                 self.mainMenu.agents.save_agent_log(agentName, msg)
 
-
     def do_run(self, line):
         "Execute the given EmPyre module."
         self.do_execute(line)
-
 
     def complete_set(self, text, line, begidx, endidx):
         "Tab-complete a module option to set."
@@ -2098,7 +1975,7 @@ class ModuleMenu(cmd.Cmd):
             # if we're tab-completing "agent", return the agent names
             agentNames = self.mainMenu.agents.get_agent_names() + ["all", "autorun"]
             endLine = " ".join(line.split(" ")[1:])
-            
+
             mline = endLine.partition(' ')[2]
             offs = len(mline) - len(text)
             return [s[offs:] for s in agentNames if s.startswith(mline)]
@@ -2113,10 +1990,10 @@ class ModuleMenu(cmd.Cmd):
             return [s[offs:] for s in listenerNames if s.startswith(mline)]
 
         elif line.split(" ")[1].lower().endswith("path"):
-            return helpers.complete_path(text,line,arg=True)
+            return helpers.complete_path(text, line, arg=True)
 
         elif line.split(" ")[1].lower().endswith("file"):
-            return helpers.complete_path(text,line,arg=True)
+            return helpers.complete_path(text, line, arg=True)
 
         elif line.split(" ")[1].lower().endswith("host"):
             return [helpers.lhost()]
@@ -2125,7 +2002,6 @@ class ModuleMenu(cmd.Cmd):
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
         return [s[offs:] for s in options if s.startswith(mline)]
-
 
     def complete_unset(self, text, line, begidx, endidx):
         "Tab-complete a module option to unset."
@@ -2136,11 +2012,9 @@ class ModuleMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in options if s.startswith(mline)]
 
-
     def complete_usemodule(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre Python module path."
         return self.mainMenu.complete_usemodule(text, line, begidx, endidx)
-
 
 
 class StagerMenu(cmd.Cmd):
@@ -2164,11 +2038,10 @@ class StagerMenu(cmd.Cmd):
             listener = self.mainMenu.listeners.get_listener(listener)
             self.stager.options['Listener']['Value'] = listener
 
-
     def validate_options(self):
         "Make sure all required stager options are completed."
-        
-        for option,values in self.stager.options.iteritems():
+
+        for option, values in self.stager.options.iteritems():
             if values['Required'] and ((not values['Value']) or (values['Value'] == '')):
                 print helpers.color("[!] Error: Required stager option missing.")
                 return False
@@ -2181,31 +2054,23 @@ class StagerMenu(cmd.Cmd):
 
         return True
 
-
-    def emptyline(self): pass
-
+    def emptyline(self):
+        pass
 
     # print a nicely formatted help menu
     # stolen/adapted from recon-ng
     def print_topics(self, header, cmds, cmdlen, maxcol):
         if cmds:
-            self.stdout.write("%s\n"%str(header))
+            self.stdout.write("%s\n" % str(header))
             if self.ruler:
-                self.stdout.write("%s\n"%str(self.ruler * len(header)))
-            for cmd in cmds:
-                self.stdout.write("%s %s\n" % (cmd.ljust(17), getattr(self, 'do_' + cmd).__doc__))
+                self.stdout.write("%s\n" % str(self.ruler * len(header)))
+            for c in cmds:
+                self.stdout.write("%s %s\n" % (c.ljust(17), getattr(self, 'do_' + c).__doc__))
             self.stdout.write("\n")
-
 
     def do_exit(self, line):
         "Exit EmPyre."
         raise KeyboardInterrupt
-
-
-    def do_main(self, line):
-        "Return to the main menu."
-        return True
-
 
     def do_list(self, line):
         "Lists all active agents (or listeners)."
@@ -2217,38 +2082,33 @@ class StagerMenu(cmd.Cmd):
         else:
             print helpers.color("[!] Please use 'list [agents/listeners] <modifier>'.")
 
-
     def do_info(self, line):
         "Display stager options."
         messages.display_stager(self.stagerName, self.stager)
-
 
     def do_options(self, line):
         "Display stager options."
         messages.display_stager(self.stagerName, self.stager)
 
-
     def do_back(self, line):
         "Return to the main menu."
         return True
-
 
     def do_main(self, line):
         "Go back to the main menu."
         raise NavMain()
 
-
     def do_set(self, line):
         "Set a stager option."
-        
+
         parts = line.split()
 
         try:
             option = parts[0]
             if option not in self.stager.options:
-                print helpers.color("[!] Invalid option specified.")   
+                print helpers.color("[!] Invalid option specified.")
 
-            elif len(parts) == 1 :
+            elif len(parts) == 1:
                 # "set OPTION"
                 # check if we're setting a switch
                 if self.stager.options[option]['Description'].startswith("Switch."):
@@ -2259,13 +2119,13 @@ class StagerMenu(cmd.Cmd):
                 # otherwise "set OPTION VALUE"
                 option = parts[0]
                 value = " ".join(parts[1:])
-                
-                if value == '""' or value == "''": value = ""
+
+                if value == '""' or value == "''":
+                    value = ""
 
                 self.stager.options[option]['Value'] = value
         except:
             print helpers.color("[!] Error in setting option, likely invalid option name.")
-
 
     def do_unset(self, line):
         "Unset a stager option."
@@ -2279,7 +2139,6 @@ class StagerMenu(cmd.Cmd):
             print helpers.color("[!] Invalid option specified.")
         else:
             self.stager.options[option]['Value'] = ''
-
 
     def do_generate(self, line):
         "Generate/execute the given EmPyre stager."
@@ -2327,12 +2186,10 @@ class StagerMenu(cmd.Cmd):
         else:
             print stagerOutput
 
-
     def do_execute(self, line):
         "Generate/execute the given EmPyre stager."
 
         self.do_generate(line)
-
 
     def complete_set(self, text, line, begidx, endidx):
         "Tab-complete a stager option to set."
@@ -2350,13 +2207,12 @@ class StagerMenu(cmd.Cmd):
 
         elif line.split(" ")[1].lower().endswith("path"):
             # tab-complete any stager option that ends with 'path'
-            return helpers.complete_path(text,line,arg=True)
+            return helpers.complete_path(text, line, arg=True)
 
         # otherwise we're tab-completing an option name
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
         return [s[offs:] for s in options if s.startswith(mline)]
-
 
     def complete_unset(self, text, line, begidx, endidx):
         "Tab-complete a stager option to unset."
@@ -2367,11 +2223,9 @@ class StagerMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in options if s.startswith(mline)]
 
-
     def do_agents(self, line):
         "Jump to the Agents menu."
         raise NavAgents()
-
 
     def do_listeners(self, line):
         "Jump to the listeners menu."

