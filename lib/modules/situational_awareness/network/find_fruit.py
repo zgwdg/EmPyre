@@ -186,7 +186,6 @@ def main(ip, port, threads):
     VulnLinks = []
 
     if '/' in ip:
-
         printCIDR(ip)
 
         for ip in iplist:
@@ -216,7 +215,7 @@ def main(ip, port, threads):
         VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "data/login")
 
     print "Scanning ..."
-    pool = Pool(processes=10)
+    pool = Pool(processes=threads)
     pool.map(http_get, VulnLinks)
     pool.close()
     pool.join()        
