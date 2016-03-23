@@ -47,17 +47,17 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'HTTPS' : {
-                # The 'Agent' option is the only one that MUST be in a module
-                'Description'   :   'True/False',
-                'Required'      :   False,
-                'Value'         :   ''
-            },
             'Port' : {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'The port to scan on.',
                 'Required'      :   True,
-                'Value'         :   ''
+                'Value'         :   '8080'
+            },
+            'Threads' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'How many threads to start.',
+                'Required'      :   False,
+                'Value'         :   '10'
             }
         }
 
@@ -79,15 +79,17 @@ class Module:
 
     def generate(self):
         target = self.options['Target']['Value']
-        https = self.options['HTTPS']['Value']
         port = self.options['Port']['Value']
+        threads = self.options['Threads']['Value']
         
 
         script = """
-import urllib2
 from multiprocessing import Process, Pool
+import urllib2
 import sys
 import re
+import time
+
 
 
 iplist = []
@@ -163,51 +165,69 @@ def validateCIDRBlock(b):
         return False
 
     return True
-    
-def main(ip, https, port):
 
-    try:
-        cidrBlock = ip
 
-    except:
-        print "need cidr"
+        
+def http_get(url):    
+    while True:
+        try:
+            req = urllib2.Request(url)
+            resp = urllib2.urlopen(req, timeout = 1)
+            code = resp.getcode()
+            if code == 200:
+                print url + " returned 200!"
+            return
+        except urllib2.URLError:
+            break
+          
 
-    if not validateCIDRBlock(cidrBlock):
-        print "need cidr"
-    else:
-        printCIDR(cidrBlock)
 
-        VulnLinks = []
-        VulnLinks.append("jmx-console/")
-        VulnLinks.append("web-console/ServerInfo.jsp")
-        VulnLinks.append("invoker/JMXInvokerServlet")
-        VulnLinks.append("lc/system/console")
-        VulnLinks.append("axis2/axis2-admin/")
-        VulnLinks.append("manager/html/")
-        VulnLinks.append("tomcat/manager/html/")
-        VulnLinks.append("wp-admin")
-        VulnLinks.append("workorder/FileDownload.jsp")
-        VulnLinks.append("ibm/console/logon.jsp?action=OK")
-        VulnLinks.append("data/login")
+def main(ip, port, threads):
+    VulnLinks = []
+
+    if '/' in ip:
+
+        printCIDR(ip)
+
         for ip in iplist:
-          for link in VulnLinks:
-            uri = 'http' + https + '://' + ip + ':' + port + '/' + link
-            print uri
-            req = urllib2.Request(uri)
             
-            try:
-                resp = urllib2.urlopen(req, timeout = 1)
-                code = resp.getcode()
-                print link + "returned a " + str(code) 
-            except urllib2.URLError, e:
-              continue
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "jmx-console/")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "web-console/ServerInfo.jsp")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "invoker/JMXInvokerServlet")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "lc/system/console")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "axis2/axis2-admin/")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "manager/html/")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "tomcat/manager/html/")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "wp-admin")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "workorder/FileDownload.jsp")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "ibm/console/logon.jsp?action=OK")
+            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "data/login")
+    else:
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "jmx-console/")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "web-console/ServerInfo.jsp")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "invoker/JMXInvokerServlet")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "lc/system/console")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "axis2/axis2-admin/")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "manager/html/")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "tomcat/manager/html/")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "wp-admin")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "workorder/FileDownload.jsp")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "ibm/console/logon.jsp?action=OK")
+        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "data/login")
+
+    print "Scanning ..."
+    pool = Pool(processes=10)
+    pool.map(http_get, VulnLinks)
+    pool.close()
+    pool.join()        
 
 ip = "%s"
-https = "%s"
 port = str("%s")
-main(ip, https, port)
+threads = %s
 
-""" %(target, https, port)
+
+main(ip, port, threads)
+
+""" %(target, port, threads)
 
         return script
-        print moduleData
