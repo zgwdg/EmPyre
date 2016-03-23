@@ -300,12 +300,13 @@ def processPacket(taskingID, data):
         try:
             buffer = StringIO()
             sys.stdout = buffer
-            exec(data)
+            code_obj = compile(data, '<string>', 'exec')
+            ns = {}
+            exec code_obj in {}
             sys.stdout = sys.__stdout__
             results = buffer.getvalue()
             return encodePacket(100, str(buffer.getvalue()))
         except Exception as e:
-
             return encodePacket(0, "error executing specified Python data: %s" %(e))
 
     elif taskingID == 101:
