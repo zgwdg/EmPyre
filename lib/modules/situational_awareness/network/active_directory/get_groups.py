@@ -51,7 +51,7 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'password' : {
+            'Password' : {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Password to connect to LDAP',
                 'Required'      :   False,
@@ -78,7 +78,7 @@ class Module:
 
         LDAPAddress = self.options['LDAPAddress']['Value']
         BindDN = self.options['BindDN']['Value']
-        password = self.options['password']['Value']
+        password = self.options['Password']['Value']
 
         # the Python script itself, with the command to invoke
         #   for execution appended to the end. Scripts should output
