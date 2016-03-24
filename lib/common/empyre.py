@@ -1189,8 +1189,13 @@ class AgentMenu(cmd.Cmd):
         line = line.strip()
 
         if line != "":
+            # have to be careful with inline python and no threading
+            # this can cause the agent to crash so we will use try / cath
             # task the agent with this shell command
-            self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", 'os.chdir("%s"); print "Directory changed to: %s"' % (line, line))
+            if line == "..":
+                self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", 'import os; os.chdir(os.pardir); print "Directory stepped down: %s"' % (line))
+            else:
+                self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", 'import os; os.chdir("%s"); print "Directory changed to: %s"' % (line, line))
             # update the agent log
             msg = "Tasked agent to change active directory to: %s" % (line)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
