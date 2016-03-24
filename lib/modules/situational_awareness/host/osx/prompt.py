@@ -77,6 +77,7 @@ class Module:
 
         if listApps != "":
             script = """
+import os
 apps = [ app.split('.app')[0] for app in os.listdir('/Applications/') if not app.split('.app')[0].startswith('.')]
 choices = []
 for x in xrange(len(apps)):
@@ -89,6 +90,7 @@ print '\\n'.join(choices)
         else:
             # osascript prompt for the specifiec application
             script = """
+import os
 print os.popen('osascript -e \\\'tell app "%s" to activate\\\' -e \\\'tell app "%s" to display dialog "%s requires your password to continue." & return  default answer "" with icon 1 with hidden answer with title "%s Alert"\\\'').read()
 """ % (appName, appName, appName, appName)
 
