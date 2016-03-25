@@ -472,7 +472,7 @@ def run():
         print 'ERROR: prerequisite check failed\\n'
 
         #bail
-        sys.exit(-1)
+        return ""
 
     #configure the provide .dylib
     if not configure(attackerDYLIB, targetDYLIB):
@@ -481,7 +481,7 @@ def run():
         print 'ERROR: failed to configure %%s\\n' %% (os.path.split(targetDYLIB)[1])
 
         #bail
-        sys.exit(-1)
+        return ""
 
     #dbg msg
     print ' [+] copying configured .dylib to %%s' %% (configuredDYLIB)
