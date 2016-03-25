@@ -118,6 +118,8 @@ process.communicate()
 process = subprocess.Popen('launchctl load /Library/LaunchDaemons/%s', stdout=subprocess.PIPE, shell=True)
 process.communicate()
 
-""" % (plistSettings, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename)
+print "\\n[+] Persistence has been installed: /Library/LaunchDaemons/%s"
+
+""" % (plistSettings, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename)
 
         return script

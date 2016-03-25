@@ -562,7 +562,7 @@ def run():
         for binary in vulnerableBinaries['rpathExes']:
 
             #dbg msg
-            print '%%s has multiple rpaths (%%s)\\n' %% (binary['binary'], binary)
+            print '%%s has an rpath vulnerability: (%%s%%s)\\n' %% (binary['binary'], binary['LC_RPATH'],binary['importedDylib'])
 
     #binary didn't have any
     else:
@@ -591,7 +591,12 @@ def run():
 
     #dbg msg
     
-    print "Scan completed in " + str(datetime.now() - startTime)
+    print "Scan completed in " + str(datetime.now() - startTime) + "\\n"
+
+    print "[+] To abuse an rpath vulnerability...\\n"
+    print "[+] Find the legitimate dylib: find / -name <dylibname>, and note the path\\n"
+    print "[+] Run the CreateHijacker module in /persistence/osx/. Set the DylibPath to the path of the legitimate dylib.\\n"
+    print "[+] Copy the hijacking dylib to the target binaries rpath. You will need to craft the path if it does not already exist\\n"
 
 run()
 """ % (scanPath, LoadedProcesses)

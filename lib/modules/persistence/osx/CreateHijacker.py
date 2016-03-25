@@ -489,6 +489,8 @@ def run():
     #make a (local) copy w/ name
     shutil.copy2(attackerDYLIB, configuredDYLIB)
 
+    os.remove(attackerDYLIB)
+
     #dbg msg
     print '\\nsuccessfully configured %%s (locally renamed to: %%s) as a compatible hijacker for %%s!\\n' %% (os.path.split(attackerDYLIB)[1], os.path.split(targetDYLIB)[1], os.path.split(targetDYLIB)[1])
 
