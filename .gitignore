@@ -1,5 +1,5 @@
 data/empyre.db
-./data/empyre.pem
+data/empyre.pem
 empyre.debug
 *.pyc
 downloads/*

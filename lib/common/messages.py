@@ -358,6 +358,7 @@ def display_module(moduleName, module):
     print '{0: >17}'.format("Module: ") + str(moduleName)
     print '{0: >17}'.format("OpsecSafe: ") + ("True" if module.info['OpsecSafe'] else "False")
     print '{0: >17}'.format("Background: ") + ("True" if module.info['Background'] else "False")
+    print '{0: >17}'.format("RunoOnDisk: ") + ("True" if module.info['Background'] else "False")
     print '{0: >17}'.format("OutputExtension: ") + (str(module.info['OutputExtension']) if module.info['OutputExtension'] else "None")
 
     print "\nAuthors:"

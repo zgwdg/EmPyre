@@ -24,6 +24,9 @@ class Module:
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
 
+            # Use on disk execution method, rather than a dynamic exec method
+            'RunOnDisk' : False,
+
             # list of any references/other comments
             'Comments': [
                 'Using SQLite3 iMessage has a decent standard to correlate users to messages and isnt encrypted.'

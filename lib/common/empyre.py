@@ -1898,7 +1898,14 @@ class ModuleMenu(cmd.Cmd):
         moduleData = helpers.strip_python_comments(moduleData)
 
         taskCommand = ""
-
+        # check for opt tasking methods to prevent using a try/catch block
+        # elif dose not support try/catch native 
+        try:
+            if str(self.module.info['RunOnDisk']).lower() == "true":
+                RunOnDisk = True
+        except:
+            RunOnDisk = False
+            pass
         # build the appropriate task command and module data blob
         if str(self.module.info['Background']).lower() == "true":
             # if this module should be run in the background
@@ -1911,6 +1918,17 @@ class ModuleMenu(cmd.Cmd):
                 taskCommand = "TASK_CMD_JOB_SAVE"
             else:
                 taskCommand = "TASK_CMD_JOB"
+        elif RunOnDisk:
+            # if this module is run on disk
+            extention = self.module.info['OutputExtension']
+            if self.module.info['OutputExtension'] and self.module.info['OutputExtension'] != "":
+                # if this module needs to save its file output to the server
+                #   format- [15 chars of prefix][5 chars extension][data]
+                saveFilePrefix = self.moduleName.split("/")[-1][:15]
+                moduleData = saveFilePrefix.rjust(15) + extention.rjust(5) + moduleData
+                taskCommand = "TASK_CMD_WAIT_SAVE"
+            else:
+                taskCommand = "TASK_CMD_WAIT_DISK"
         else:
             # if this module is run in the foreground
             extention = self.module.info['OutputExtension']
