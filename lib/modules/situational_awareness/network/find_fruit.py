@@ -52,6 +52,12 @@ class Module:
                 'Description'   :   'The port to scan on.',
                 'Required'      :   True,
                 'Value'         :   '8080'
+            },
+            'SSL' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'True/False to force SSL',
+                'Required'      :   False,
+                'Value'         :   'False'
             }
         }
 
@@ -74,6 +80,8 @@ class Module:
     def generate(self):
         target = self.options['Target']['Value']
         port = self.options['Port']['Value']
+        ssl = self.options['SSL']['Value']
+
         
 
         script = """
@@ -171,39 +179,44 @@ def http_get(url):
           
 
 
-def main(ip, port):
+def main(ip, port, ssl):
     
-    
+    if ssl == True:
+        http = "https"
+
+    elif ssl == False:
+        http = "http"
+
     VulnLinks = []
     if '/' in ip:
         printCIDR(ip)
 
         for ip in iplist:
           
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "jmx-console/")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "web-console/ServerInfo.jsp")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "invoker/JMXInvokerServlet")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "lc/system/console")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "axis2/axis2-admin/")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "manager/html/")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "tomcat/manager/html/")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "wp-admin")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "workorder/FileDownload.jsp")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "ibm/console/logon.jsp?action=OK")
-            VulnLinks.append('http' + '://' + ip + ':' + port + '/' + "data/login")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "jmx-console/")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "web-console/ServerInfo.jsp")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "invoker/JMXInvokerServlet")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "lc/system/console")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "axis2/axis2-admin/")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "manager/html/")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "tomcat/manager/html/")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "wp-admin")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "workorder/FileDownload.jsp")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "ibm/console/logon.jsp?action=OK")
+            VulnLinks.append(http + '://' + ip + ':' + port + '/' + "data/login")
     else:
         
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'jmx-console/')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'web-console/ServerInfo.jsp')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'invoker/JMXInvokerServlet')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'lc/system/console')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'axis2/axis2-admin/')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'manager/html/')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'tomcat/manager/html/')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'wp-admin')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'workorder/FileDownload.jsp')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'ibm/console/logon.jsp?action=OK')
-        VulnLinks.append('http' + '://' + ip + ':' + port + '/' + 'data/login')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'jmx-console/')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'web-console/ServerInfo.jsp')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'invoker/JMXInvokerServlet')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'lc/system/console')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'axis2/axis2-admin/')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'manager/html/')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'tomcat/manager/html/')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'wp-admin')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'workorder/FileDownload.jsp')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'ibm/console/logon.jsp?action=OK')
+        VulnLinks.append(http + '://' + ip + ':' + port + '/' + 'data/login')
 
     for link in VulnLinks:
         while True:
@@ -219,10 +232,10 @@ def main(ip, port):
 
 ip = "%s"
 port = str("%s")
+ssl = %s
 
+main(ip, port, ssl)
 
-main(ip, port)
-
-""" %(target, port)
+""" %(target, port, ssl)
 
         return script
