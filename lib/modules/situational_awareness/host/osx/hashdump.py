@@ -1,3 +1,5 @@
+from lib.common import helpers
+
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -61,7 +63,8 @@ class Module:
     def generate(self):
 
         script = """
-
+import os
+import base64
 def getUserHash(userName):
     from xml.etree import ElementTree
     try:
