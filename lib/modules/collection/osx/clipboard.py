@@ -23,7 +23,7 @@ class Module:
             'NeedsAdmin': False,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
-            'OpsecSafe': False,
+            'OpsecSafe': True,
 
             # list of any references/other comments
             'Comments': ['']
