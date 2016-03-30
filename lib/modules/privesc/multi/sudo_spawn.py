@@ -116,6 +116,6 @@ class Module:
             launcher = launcher.replace('echo', '')
             parts = launcher.split("|")
             launcher = "python -c %s" % (parts[0])
-            script = 'import os; os.system("echo \\"%s\\" | sudo -S %s")' % (password, launcher)
+            script = 'import subprocess; subprocess.Popen("echo \\"%s\\" | sudo -S %s", shell=True, stdout=subprocess.PIPE, bufsize=1)' % (password, launcher)
 
             return script
