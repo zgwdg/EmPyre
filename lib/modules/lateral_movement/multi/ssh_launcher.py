@@ -58,7 +58,7 @@ class Module:
                 'Value'         :   ''
             },
             'LittleSnitch' : {
-                'Description'   :   'Set for stagger LittleSnitch checks.',
+                'Description'   :   'Set for stager LittleSnitch checks.',
                 'Required'      :   True,
                 'Value'         :   'True'
             },
