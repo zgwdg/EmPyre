@@ -43,19 +43,19 @@ class Module:
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'LDAP IP/Hostname',
                 'Required'      :   True,
-                'Value'         :   '192.168.149.161'
+                'Value'         :   ''
             },
             'BindDN' : {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'user@penlab.local',
                 'Required'      :   True,
-                'Value'         :   'jfrank@penlab.local'
+                'Value'         :   ''
             },
             'password' : {
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Password to connect to LDAP',
                 'Required'      :   False,
-                'Value'         :   'MgMt4L!fe'
+                'Value'         :   ''
             }
         }
 
