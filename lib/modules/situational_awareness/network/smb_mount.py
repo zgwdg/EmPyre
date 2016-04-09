@@ -111,23 +111,25 @@ class Module:
 import sys, os, subprocess, re
 
 username = "%s"
+domain = "%s"
 password = "%s"
-password.replace('!','%%21')
-password.replace('#','%%23')
-password.replace('$','%%24')
 sharename = "%s"
 mountpoint = "%s"
 command = "%s"
+password.replace('!','%%21')
+password.replace('#','%%23')
+password.replace('$','%%24')
 
 
-print subprocess.Popen('mkdir /Volumes/{}', shell=True, stdout=subprocess.PIPE).stdout.read().format(mountpoint)
+cmd = \"""mkdir /Volumes/{}\""".format(mountpoint)
+subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 
-cmd = \"""mount_smbfs //'{};{}:{}'@{} /Volumes/{}""\".format(domain,username,password,sharename,mountpoint)
-print subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+cmd1 = \"""mount_smbfs //'{};{}:{}'@{} /Volumes/{}""\".format(domain,username,password,sharename,mountpoint)
+print subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE).stdout.read()
 print ""
 
-cmd2 = \"""{}""\".format(command)
-print subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE).stdout.read().format(command)
+cmd2 = \"""{} /Volumes/{}""\".format(command,mountpoint)
+print subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE).stdout.read()
 print ""
 
 
@@ -140,5 +142,5 @@ print "Finished"
 
 
 
-""" % (username, password, sharename, mountpoint, command)
+""" % (username, domain, password, sharename, mountpoint, command)
         return script

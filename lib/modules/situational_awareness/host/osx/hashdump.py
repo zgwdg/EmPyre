@@ -85,7 +85,7 @@ def getUserHash(userName):
             saltRaw = base64.b64decode(salt64)
             saltHex = saltRaw.encode("hex")
 
-            return (userName, "ml$%s$%s$%s" %(iterations, saltHex, entropyHex))
+            return (userName, "$ml$%s$%s$%s" %(iterations, saltHex, entropyHex))
 
     except Exception as e:
         print "getUserHash() exception: %s" %(e)
