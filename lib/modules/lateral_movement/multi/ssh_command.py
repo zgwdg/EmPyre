@@ -66,16 +66,6 @@ class Module:
                 'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
                 'Required'      :   False,
                 'Value'         :   'default'
-            },
-            'Proxy' : {
-                'Description'   :   'Proxy to use for request (default, none, or other).',
-                'Required'      :   False,
-                'Value'         :   'default'
-            },
-            'ProxyCreds' : {
-                'Description'   :   'Proxy credentials ([domain\]username:password) to use for request (default, none, or other).',
-                'Required'      :   False,
-                'Value'         :   'default'
             }
         }
 
@@ -99,8 +89,6 @@ class Module:
         password = self.options['Password']['Value']
         listenerName = self.options['Listener']['Value']
         userAgent = self.options['UserAgent']['Value']
-        proxy = self.options['Proxy']['Value']
-        proxyCreds = self.options['ProxyCreds']['Value']
         littleSnitch = self.options['LittleSnitch']['Value']
 
         isEmpire = self.mainMenu.listeners.is_listener_empyre(listenerName)
@@ -109,7 +97,7 @@ class Module:
             return ""
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds, littlesnitch=littleSnitch)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  littlesnitch=littleSnitch)
         launcher = launcher.replace("'", "\\'")
         launcher = launcher.replace('"', '\\"')
         if launcher == "":
