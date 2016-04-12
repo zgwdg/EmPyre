@@ -202,7 +202,7 @@ class Stagers:
 
         return server + checksum
 
-    def generate_launcher(self, listenerName, encode=True, userAgent="default", proxy="default", proxyCreds="default",littlesnitch='True'):
+    def generate_launcher(self, listenerName, encode=True, userAgent="default", littlesnitch='True'):
         """
         Generate the initial Python 'download cradle' with a specified
         c2 server and a valid HTTP checksum.
@@ -212,10 +212,6 @@ class Stagers:
         userAgent ->    "default" uses the UA from the default profile in the database
                         "none" sets no user agent
                         any other text is used as the user-agent
-        proxy ->        "default" uses the default system proxy
-                        "none" sets no proxy
-                        any other text is used as the proxy
-
         """
 
         # if we don't have a valid listener, return nothing
