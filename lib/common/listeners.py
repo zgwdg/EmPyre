@@ -60,12 +60,12 @@ class Listeners:
                 'Value'         :   "http://" + helpers.lhost() + ":" + defaults['default_port']
             },
             'Type' : {
-                'Description'   :   'Listener type (native, pivot, hop, foreign, meter).',
+                'Description'   :   'Listener type (native, hop, foreign).',
                 'Required'      :   True,
                 'Value'         :   "native"
             },
             'RedirectTarget' : {
-                'Description'   :   'Listener target to redirect to for pivot/hop.',
+                'Description'   :   'Listener target to redirect to for hop.',
                 'Required'      :   False,
                 'Value'         :   ""
             },
