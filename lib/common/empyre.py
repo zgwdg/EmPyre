@@ -26,7 +26,7 @@ menu loops.
 """
 
 # make version for EmPyre
-VERSION = "0.1.3"
+VERSION = "0.8"
 
 
 # custom exceptions used for nested menu navigation
