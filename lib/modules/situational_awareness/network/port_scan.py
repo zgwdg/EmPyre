@@ -186,7 +186,7 @@ def main(target, port):
         for ip in iplist:
             portscan(ip, port)
     else:
-        portscan(ip, port)
+        portscan(target, port)
 
 target = "%s"
 port = %s
