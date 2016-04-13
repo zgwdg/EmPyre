@@ -3,6 +3,10 @@ from os.path import expanduser
 from StringIO import StringIO
 from threading import Thread
 import os
+import sys
+import trace
+import threading
+
 
 ################################################
 #
@@ -299,11 +303,17 @@ def processPacket(taskingID, data):
 
     elif taskingID == 51:
         # stop and remove a specified job if it's running
+        print "At taksing 51"
         try:
-            result = jobs[int(data)].join()
+            # Calling join first seems to hang
+            # result = jobs[int(data)].join()
+            sendMessage(encodePacket(0, "At thread stop"))
+            result = jobs[int(data)].kill()
+            sendMessage(encodePacket(0, "Past thread stop"))
             jobs[int(data)]._Thread__stop()
+            sendMessage(encodePacket(0, str(result)))
             if result and result != "":
-                sendMessage(encodePacket(51, result ))
+                sendMessage(encodePacket(51, result))
         except:
             return encodePacket(0, "error stopping job: %s" %(data))
 
@@ -407,6 +417,45 @@ class ThreadWithReturnValue(Thread):
         return self._return
 
 
+class KThread(threading.Thread):
+
+    """A subclass of threading.Thread, with a kill()
+  method."""
+
+    def __init__(self, *args, **keywords):
+        threading.Thread.__init__(self, *args, **keywords)
+        self.killed = False
+
+    def start(self):
+        """Start the thread."""
+        self.__run_backup = self.run
+        self.run = self.__run      # Force the Thread toinstall our trace.
+        threading.Thread.start(self)
+
+    def __run(self):
+        """Hacked run function, which installs the
+    trace."""
+        sys.settrace(self.globaltrace)
+        self.__run_backup()
+        self.run = self.__run_backup
+
+    def globaltrace(self, frame, why, arg):
+        if why == 'call':
+            return self.localtrace
+        else:
+            return None
+
+    def localtrace(self, frame, why, arg):
+        if self.killed:
+            if why == 'line':
+                raise SystemExit()
+        return self.localtrace
+
+    def kill(self):
+        self.killed = True
+
+
+
 def start_job(code):
     
     global jobs
@@ -422,7 +471,7 @@ def start_job(code):
     
     # create/start/return the thread
     # call the job_func so sys data can be cpatured
-    codeThread = ThreadWithReturnValue(target=job_func, args=())
+    codeThread = KThread(target=job_func)
     codeThread.start()
     
     jobs.append(codeThread)
