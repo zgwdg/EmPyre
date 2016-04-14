@@ -16,7 +16,7 @@ class Module:
             'Description': ('Searches for low-hanging web applications.'),
 
             # True if the module needs to run in the background
-            'Background' : False,
+            'Background' : True,
 
             # File extension to save the file as
             'OutputExtension' : None,
