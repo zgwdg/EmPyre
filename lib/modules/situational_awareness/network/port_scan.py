@@ -169,9 +169,9 @@ def portscan(target,port):
         s.connect((target, port))
     except Exception:
         failvar = 0
-        print "Host {} {}/tcp \tclosed".format(target, port)
+        print "Host {} {}/tcp closed".format(target, port)
     else:
-        print "Host {} {}/tcp \topen".format(target, port)
+        print "Host {} {}/tcp open".format(target, port)
     s.close()
 
 
