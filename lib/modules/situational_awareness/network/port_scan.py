@@ -28,7 +28,7 @@ class Module:
             'OpsecSafe' : True,
             
             # list of any references/other comments
-            'Comments': []
+            'Comments': ['CIDR Parser credits to http://bibing.us.es/proyectos/abreproy/12106/fichero/ARCHIVOS%252Fservidor_xmlrpc%252Fcidr.py']
         }
 
         # any options needed by the module, settable during runtime
