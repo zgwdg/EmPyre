@@ -9,7 +9,7 @@ class Module:
             'Name': 'SSHCommand',
 
             # list of one or more authors for the module
-            'Author': ['Paul Mikesell', '@424f424f'],
+            'Author': ['@424f424f'],
 
             # more verbose multi-line description of the module
             'Description': 'This module will send an launcher via ssh.',
@@ -28,7 +28,7 @@ class Module:
 
             # list of any references/other comments
             'Comments': [
-                'http://blog.clustrix.com/2012/01/31/scripting-ssh-with-python/'
+                'http://stackoverflow.com/questions/17118239/how-to-give-subprocess-a-password-and-get-stdout-at-the-same-time'
                             ]
         }
 
@@ -112,7 +112,7 @@ def wall(host, pw):
     pid, fd = pty.fork()
     if pid == 0:
         os.execvp('ssh', ['ssh', '-o StrictHostKeyChecking=no', host, '%s'])
-        os._exit(1) # fail to execv
+        os._exit(1)
 
     os.read(fd, 1024)
     os.write(fd, '\\n' + pw + '\\n')
