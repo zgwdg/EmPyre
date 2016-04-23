@@ -596,7 +596,6 @@ def run():
     print "[+] To abuse an rpath vulnerability...\\n"
     print "[+] Find the legitimate dylib: find / -name <dylibname>, and note the path\\n"
     print "[+] Run the CreateHijacker module in /persistence/osx/. Set the DylibPath to the path of the legitimate dylib.\\n"
-    print "[+] Copy the hijacking dylib to the target binaries rpath. You will need to craft the path if it does not already exist\\n"
 
 run()
 """ % (scanPath, LoadedProcesses)

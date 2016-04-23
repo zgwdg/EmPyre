@@ -47,7 +47,7 @@ DEFAULT_JITTER = 0.0
 
 # the default traffic profile to use for agent communications
 #   format -> requestUris|user_agent|additionalHeaders
-DEFAULT_PROFILE = "/admin/get.php,/news.asp,/login/process.jsp|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"
+DEFAULT_PROFILE = "/admin/get.php,/news.asp,/login/process.jsp|Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:45.0) Gecko/20100101 Firefox/45.0"
 
 # default https cert to use
 DEFAULT_CERT_PATH = ''
