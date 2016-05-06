@@ -1903,6 +1903,8 @@ class ModuleMenu(cmd.Cmd):
         try:
             if str(self.module.info['RunOnDisk']).lower() == "true":
                 RunOnDisk = True
+            if str(self.module.info['RunOnDisk']).lower() == "false":
+                RunOnDisk = False
         except:
             RunOnDisk = False
             pass
