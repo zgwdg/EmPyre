@@ -20,12 +20,13 @@ cd ..
 chown $(logname):$(logname) ./data/empyre.db
 
 # remove the debug file if it exists
-rm empyre.debug
+if [ -e empyre.debug ]
+then
+    rm empyre.debug
+fi
 
 # remove the download folders
 rm -rf ./downloads/
 
 # start up EmPyre
-./empyre --debug
-
-
+./empyre

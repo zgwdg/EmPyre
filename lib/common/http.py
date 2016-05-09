@@ -11,10 +11,7 @@ These are the first places URI requests are processed.
 """
 
 from BaseHTTPServer import BaseHTTPRequestHandler
-import BaseHTTPServer
-import threading
-import ssl
-import os
+import BaseHTTPServer, threading, ssl, os, re
 from pydispatch import dispatcher
 
 # EmPyre imports
@@ -35,15 +32,17 @@ def default_page():
 
 ###############################################################
 #
-# Checksum helpers.
+# Host2lhost helper.
 #
 ###############################################################
 
-def checksum8(s):
+def host2lhost(s):
     """
-    Add up all character values and mods the total by 256.
+    Return lhost for EmPyre's native listener from Host value
     """
-    return sum([ord(ch) for ch in s]) % 0x100
+    reg = r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
+    res = re.findall( reg, s)
+    return res[0] if len(res) == 1 else '0.0.0.0'
 
 
 ###############################################################
@@ -112,18 +111,19 @@ class RequestHandler(BaseHTTPRequestHandler):
         dispatcher.send("[*] Post to "+resource+" from "+str(sessionID)+" at "+clientIP, sender="HttpHandler")
 
         # read in the length of the POST data
-        length = int(self.headers.getheader('content-length'))
-        postData = self.rfile.read(length)
+        if self.headers.getheader('content-length'):
+            length = int(self.headers.getheader('content-length'))
+            postData = self.rfile.read(length)
 
-        # get the appropriate response for this agent
-        (code, responsedata) = self.server.agents.process_post(self.server.server_port, clientIP, sessionID, resource, postData)
+            # get the appropriate response for this agent
+            (code, responsedata) = self.server.agents.process_post(self.server.server_port, clientIP, sessionID, resource, postData)
 
-        # write the response out
-        self.send_response(code)
-        self.end_headers()
-        self.wfile.write(responsedata)
-        self.wfile.flush()
-        # self.wfile.close() # causes an error with HTTP comms
+            # write the response out
+            self.send_response(code)
+            self.end_headers()
+            self.wfile.write(responsedata)
+            self.wfile.flush()
+            # self.wfile.close() # causes an error with HTTP comms
 
     # supress all the stupid default stdout/stderr output
     def log_message(*arg):
@@ -138,7 +138,7 @@ class EmPyreServer(threading.Thread):
     Uses agents.RequestHandler handle inbound requests.
     """
 
-    def __init__(self, handler, port=80, cert=''):
+    def __init__(self, handler, lhost='0.0.0.0', port=80, cert=''):
 
         # set to False if the listener doesn't successfully start
         self.success = True
@@ -147,7 +147,7 @@ class EmPyreServer(threading.Thread):
             threading.Thread.__init__(self)
             self.server = None
 
-            self.server = BaseHTTPServer.HTTPServer(('0.0.0.0', int(port)), RequestHandler)
+            self.server = BaseHTTPServer.HTTPServer((lhost, int(port)), RequestHandler)
 
             # pass the agent handler object along for the RequestHandler
             self.server.agents = handler

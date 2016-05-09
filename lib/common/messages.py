@@ -6,8 +6,7 @@ Titles, agent displays, listener displays, etc.
 
 """
 
-import os
-import textwrap
+import os, textwrap
 
 # EmPyre imports
 import helpers
@@ -25,7 +24,7 @@ def title(version):
     """
     os.system('clear')
     print "================================================================="
-    print " EmPyre: Python post-exploitation agent | [Version]: " + version
+    print " EmPyre: Python post-exploitation agent | [Version]: %s" % (version)
     print '================================================================='
     print """
     ______          ____                
@@ -36,7 +35,6 @@ def title(version):
                       /____/            
 
 """
-
 
 def wrap_string(data, width=40, indent=32, indentAll=False, followingHeader=None):
     """
@@ -66,7 +64,6 @@ def wrap_string(data, width=40, indent=32, indentAll=False, followingHeader=None
         return returnString
     else:
         return data.strip()
-
 
 def wrap_columns(col1, col2, width1=24, width2=40, indent=31):
     """
@@ -102,7 +99,6 @@ def wrap_columns(col1, col2, width1=24, width2=40, indent=31):
 
     return result
 
-
 def display_options(options, color=True):
     """
     Take a dictionary and display it nicely.
@@ -112,7 +108,6 @@ def display_options(options, color=True):
             print "\t%s\t%s" % (helpers.color('{0: <16}'.format(key), "green"), wrap_string(options[key]))
         else:
             print "\t%s\t%s" % ('{0: <16}'.format(key), wrap_string(options[key]))
-
 
 def agent_print(agents):
     """
@@ -124,7 +119,7 @@ def agent_print(agents):
     print "  ---------          -----------     ------------                  ---------           -----    --------------------"
 
     for agent in agents:
-        [ID, sessionID, listener, name, delay, jitter, external_ip, internal_ip, username, high_integrity, process_id, hostname, os_details, session_key, nonce, checkin_time, lastseen_time,  servers, uris, old_uris, user_agent, headers, kill_date, working_hours, py_version, lost_limit] = agent
+        [ID, sessionID, listener, name, delay, jitter, external_ip, internal_ip, username, high_integrity, process_id, hostname, os_details, session_key, nonce, checkin_time, lastseen_time,  servers, uris, old_uris, user_agent, headers, kill_date, working_hours, py_version, lost_limit, taskings, results] = agent
         if str(high_integrity) == "1":
             # add a * to the username if it's high integrity (root)
             username = "*" + username
@@ -132,25 +127,23 @@ def agent_print(agents):
 
     print ""
 
-
 def display_agents(agents):
-
+    """
+    Take an agent dictionary and display everything nicely.
+    """
     if len(agents) > 0:
         agent_print(agents)
     else:
         print helpers.color("[!] No agents currently registered ")
 
-
 def display_staleagents(agents):
     """
-    Take an agent dictionary and display everything nicely.
+    Take a stale agent dictionary and display everything nicely.
     """
-
     if len(agents) > 0:
         agent_print(agents)
     else:
         print helpers.color("[!] No stale agents currently registered ")
-
 
 def display_agent(agent):
     """
@@ -160,7 +153,7 @@ def display_agent(agent):
     """
 
     # extract out database fields.
-    keys = ["ID", "sessionID", "listener", "name", "delay", "jitter", "external_ip", "internal_ip", "username", "high_integrity", "process_id", "hostname", "os_details", "session_key", "nonce", "checkin_time", "lastseen_time", "servers", "uris", "old_uris", "user_agent", "headers", "kill_date", "working_hours", "py_version", "lost_limit"]
+    keys = ["ID", "sessionID", "listener", "name", "delay", "jitter", "external_ip", "internal_ip", "username", "high_integrity", "process_id", "hostname", "os_details", "session_key", "nonce", "checkin_time", "lastseen_time", "servers", "uris", "old_uris", "user_agent", "headers", "kill_date", "working_hours", "py_version", "lost_limit", "takings", "results"]
 
     print helpers.color("\n[*] Agent info:\n")
 
@@ -168,10 +161,9 @@ def display_agent(agent):
     agentInfo = dict(zip(keys, agent))
 
     for key in agentInfo:
-        if key != "functions":
+        if key != "functions" and key != "takings" and key != "results":
             print "\t%s\t%s" % (helpers.color('{0: <16}'.format(key), "blue"), wrap_string(agentInfo[key], width=70))
     print ""
-
 
 def display_listeners(listeners):
     """
@@ -203,7 +195,6 @@ def display_listeners(listeners):
     else:
         print helpers.color("[!] No listeners currently active ")
 
-
 def display_listener(options):
     """
     Displays a listener's information structure.
@@ -221,7 +212,6 @@ def display_listener(options):
             print "  %s%s%s%s" % ('{0: <18}'.format(option), '{0: <12}'.format(("True" if values['Required'] else "False")), '{0: <33}'.format(values['Value']), values['Description'])
 
     print "\n"
-
 
 def display_listener_database(listener):
     """
@@ -322,7 +312,6 @@ def display_listener_database(listener):
 
     display_listener(options)
 
-
 def display_stager(stagerName, stager):
     """
     Displays a stager's information structure.
@@ -348,7 +337,6 @@ def display_stager(stagerName, stager):
 
     print "\n"
 
-
 def display_module(moduleName, module):
     """
     Displays a module's information structure.
@@ -356,9 +344,10 @@ def display_module(moduleName, module):
 
     print '\n{0: >17}'.format("Name: ") + str(module.info['Name'])
     print '{0: >17}'.format("Module: ") + str(moduleName)
+    print '{0: >17}'.format("NeedsAdmin: ") + ("True" if module.info['NeedsAdmin'] else "False")
     print '{0: >17}'.format("OpsecSafe: ") + ("True" if module.info['OpsecSafe'] else "False")
     print '{0: >17}'.format("Background: ") + ("True" if module.info['Background'] else "False")
-    print '{0: >17}'.format("RunoOnDisk: ") + ("True" if module.info['Background'] else "False")
+    print '{0: >17}'.format("RunOnDisk: ") + ("True" if module.info['Background'] else "False")
     print '{0: >17}'.format("OutputExtension: ") + (str(module.info['OutputExtension']) if module.info['OutputExtension'] else "None")
 
     print "\nAuthors:"
@@ -374,16 +363,18 @@ def display_module(moduleName, module):
 
     # print out any options, if present
     if module.options:
-        print "\nOptions:\n"
-        print "  Name             Required    Value                     Description"
-        print "  ----             --------    -------                   -----------"
 
-        for option, values in module.options.iteritems():
-            # print "  %s%s%s%s" % ('{0: <17}'.format(option), '{0: <12}'.format(("True" if values['Required'] else "False")), '{0: <25}'.format(values['Value']), wrap_string(values['Description'], indent=56))
-            print "  %s%s%s" % ('{0: <17}'.format(str(option)), '{0: <12}'.format(("True" if values['Required'] else "False")), wrap_columns(str(values['Value']), str(values['Description'])))
+        # get the size for the first column
+        maxNameLen = len(max(module.options.keys(), key=len))
+
+        print "\nOptions:\n"
+        print "  %sRequired    Value                     Description" %('{:<{}s}'.format("Name", maxNameLen+1))
+        print "  %s--------    -------                   -----------" %('{:<{}s}'.format("----", maxNameLen+1))
+
+        for option,values in module.options.iteritems():
+            print "  %s%s%s" % ('{:<{}s}'.format(str(option), maxNameLen+1), '{0: <12}'.format(("True" if values['Required'] else "False")), wrap_columns(str(values['Value']), str(values['Description']), indent=(31 + (maxNameLen-16))))
 
     print ""
-
 
 def display_module_search(moduleName, module):
     """
@@ -398,7 +389,6 @@ def display_module_search(moduleName, module):
         print "\t" + line
 
     print "\n"
-
 
 def display_credentials(creds):
 

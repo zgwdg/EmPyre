@@ -33,7 +33,7 @@ elif STAGING_KEY == "RANDOM":
 # the resource requested by the initial launcher
 STAGE0_URI = "index.asp"
 
-# the resource used by the RSA key post
+# the resource used by the DH key post
 STAGE1_URI = "index.jsp"
 
 # the resource used by the sysinfo checkin that returns the agent.ps1
@@ -56,22 +56,38 @@ DEFAULT_CERT_PATH = ''
 DEFAULT_PORT = 8080
 
 # the installation path for EmPyre, defaults to auto-calculating it
-INSTALL_PATH = "/".join(os.getcwd().split("/")[0:-1])+"/"
+# NOTE: set manually if issues arise
+currentPath = os.path.dirname(os.path.realpath(__file__))
+empyreIndex = currentPath.rfind("EmPyre")
+if empyreIndex < 0:
+    empyreIndex = currentPath.rfind("empyre")
+if empyreIndex < 0:
+    INSTALL_PATH = "/".join(os.getcwd().split("/")[0:-1])+"/"
+else:
+    endIndex = currentPath.find("/", empyreIndex)
+    endIndex = None if endIndex < 0 else endIndex
+    INSTALL_PATH = currentPath[0:endIndex] + "/"
 
 # the version version to appear as
 SERVER_VERSION = "Microsoft-IIS/7.5"
 
 # an IP white list to ONLY accept clients from
-#   format is 192.168.1.1,192.168.1.10-192.168.1.100,10.0.0.0/8
+#   format is "192.168.1.1,192.168.1.10-192.168.1.100,10.0.0.0/8"
 IP_WHITELIST = ""
 
 # an IP black list to reject accept clients from
-#   format is 192.168.1.1,192.168.1.10-192.168.1.100,10.0.0.0/8
+#   format is "192.168.1.1,192.168.1.10-192.168.1.100,10.0.0.0/8"
 IP_BLACKLIST = ""
 
-#number of times an agent will call back without an answer prior to exiting
+# number of times an agent will call back without an answer prior to exiting
 DEFAULT_LOST_LIMIT = 60 
 
+# default credentials used to log into the RESTful API
+API_USERNAME = "empyreadmin"
+API_PASSWORD = ''.join(random.sample(string.ascii_letters + string.digits + punctuation, 32))
+
+# the 'permanent' API token (doesn't change)
+API_PERMANENT_TOKEN = ''.join(random.choice(string.ascii_lowercase + string.digits) for x in range(40))
 
 
 ###################################################
@@ -105,11 +121,15 @@ c.execute('''CREATE TABLE config (
     "default_lost_limit" integer,
     "autorun_command" text,
     "autorun_data" text,
-    "rootuser" boolean
+    "rootuser" boolean,
+    "api_username" text,
+    "api_password" text,
+    "api_current_token" text,
+    "api_permanent_token" text
     )''')
 
 # kick off the config component of the database
-c.execute("INSERT INTO config VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (STAGING_KEY,STAGE0_URI,STAGE1_URI,STAGE2_URI,DEFAULT_DELAY,DEFAULT_JITTER,DEFAULT_PROFILE,DEFAULT_CERT_PATH,DEFAULT_PORT,INSTALL_PATH,SERVER_VERSION,IP_WHITELIST,IP_BLACKLIST, DEFAULT_LOST_LIMIT, "", "", False))
+c.execute("INSERT INTO config VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (STAGING_KEY,STAGE0_URI,STAGE1_URI,STAGE2_URI,DEFAULT_DELAY,DEFAULT_JITTER,DEFAULT_PROFILE,DEFAULT_CERT_PATH,DEFAULT_PORT,INSTALL_PATH,SERVER_VERSION,IP_WHITELIST,IP_BLACKLIST, DEFAULT_LOST_LIMIT, "", "", False, API_USERNAME, API_PASSWORD, "", API_PERMANENT_TOKEN))
 
 c.execute('''CREATE TABLE "agents" (
     "id" integer PRIMARY KEY,
@@ -137,7 +157,9 @@ c.execute('''CREATE TABLE "agents" (
     "kill_date" text,
     "working_hours" text,
     "py_version" text,
-    "lost_limit" integer
+    "lost_limit" integer,
+    "taskings" text,
+    "results" text
     )''')
 
 c.execute('''CREATE TABLE "listeners" (
@@ -155,6 +177,20 @@ c.execute('''CREATE TABLE "listeners" (
     "listener_type" text,
     "redirect_target" text,
     "default_lost_limit" integer
+    )''')
+
+
+# type = hash, plaintext, token
+#   for tokens, the data is base64'ed and stored in pass
+c.execute('''CREATE TABLE "credentials" (
+    "id" integer PRIMARY KEY,
+    "credtype" text,
+    "domain" text,
+    "username" text,
+    "password" text,
+    "host" text,
+    "sid" text,
+    "notes" text
     )''')
 
 
