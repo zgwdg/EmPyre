@@ -196,22 +196,17 @@ class DiffieHellman(object):
 def _compact_word(word):
     return (word[0] << 24) | (word[1] << 16) | (word[2] << 8) | word[3]
 
-
 def _string_to_bytes(text):
     return list(ord(c) for c in text)
-
 
 def _bytes_to_string(binary):
     return "".join(chr(b) for b in binary)
 
-
 def _concat_list(a, b):
     return a + b
 
-
 def to_bufferable(binary):
     return binary
-
 
 def _get_byte(c):
     return ord(c)
@@ -244,14 +239,12 @@ except Exception:
     def _get_byte(c):
         return c
 
-
 def append_PKCS7_padding(data):
     if (len(data) % 16) == 0:
         return data
     else:
         pad = 16 - (len(data) % 16)
         return data + to_bufferable(chr(pad) * pad)
-
 
 def strip_PKCS7_padding(data):
     if len(data) % 16 != 0:
@@ -543,7 +536,6 @@ def CBCenc(aesObj, plaintext, base64=False):
 
     return ciphertext
 
-
 def CBCdec(aesObj, ciphertext, base64=False):
 
     # break the blocks in 16 byte chunks, padding the last chunk if necessary
@@ -560,7 +552,6 @@ def CBCdec(aesObj, ciphertext, base64=False):
 
     return plaintext
 
-
 def aes_encrypt(key, data):
     """
     Generate a random IV and new AES cipher object with the given
@@ -570,7 +561,6 @@ def aes_encrypt(key, data):
     aes = AESModeOfOperationCBC(key, iv=IV)
     return IV + CBCenc(aes, data)
 
-
 def aes_encrypt_then_hmac(key, data):
     """
     Encrypt the data then calculate HMAC over the ciphertext.
@@ -578,7 +568,6 @@ def aes_encrypt_then_hmac(key, data):
     data = aes_encrypt(key, data)
     mac = hmac.new(str(key), data, hashlib.sha1).digest()
     return data + mac
-
 
 def aes_decrypt(key, data):
     """
@@ -588,7 +577,6 @@ def aes_decrypt(key, data):
     IV = data[0:16]
     aes = AESModeOfOperationCBC(key, iv=IV)
     return CBCdec(aes, data[16:])
-
 
 def verify_hmac(key, data):
     """
@@ -604,7 +592,6 @@ def verify_hmac(key, data):
 
     return False
 
-
 def aes_decrypt_and_verify(key, data):
     """
     Decrypt the data, but only if it has a valid MAC.
@@ -613,7 +600,6 @@ def aes_decrypt_and_verify(key, data):
         return aes_decrypt(key, data[:-20])
 
     raise Exception("Invalid ciphertext received.")
-
 
 def rc4(key, data):
     """
