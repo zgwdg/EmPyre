@@ -68,7 +68,7 @@ class Module:
 import subprocess
 
 try:
-    volume = \"""osascript -e "set Volume 10" ""\"
+    volume = \"""osascript -e "set Volume 100" ""\"
     process1 = subprocess.Popen(volume, stdout=subprocess.PIPE, shell=True)
     cmd = \"""open -a "Safari" -g -j https://www.youtube.com/watch?v=v2AC41dglnM""\"
     process2 = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
