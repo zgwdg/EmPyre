@@ -1,14 +1,3 @@
-from time import localtime, strftime
-from Crypto.Random import random
-import re
-import string
-import base64
-import binascii
-import sys
-import os
-import socket
-import sqlite3
-import iptools
 """
 
 Misc. helper functions used in EmPyre.
@@ -17,6 +6,10 @@ Includes the Python functions that generate the
 randomized stagers.
 
 """
+
+import re, string, base64, binascii, sys, os, socket, sqlite3, iptools
+from time import localtime, strftime
+from Crypto.Random import random
 
 
 ###############################################################
@@ -36,13 +29,11 @@ def validate_hostname(hostname):
     allowed = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
     return all(allowed.match(x) for x in hostname.split("."))
 
-
 def validate_ip(IP):
     """
     Uses iptools to validate an IP.
     """
     return iptools.ipv4.validate_ip(IP)
-
 
 def generate_ip_list(s):
     """
@@ -96,13 +87,11 @@ def random_string(length=-1, charset=string.ascii_letters):
     random_string = ''.join(random.choice(charset) for x in range(length))
     return random_string
 
-
 def randomize_capitalization(data):
     """
     Randomize the capitalization of a string.
     """
     return "".join(random.choice([k.upper(), k]) for k in data)
-
 
 def chunks(l, n):
     """
@@ -117,7 +106,6 @@ def chunks(l, n):
 # Specific Python helpers
 #
 ####################################################################################
-
 
 def strip_python_comments(data):
     """
@@ -150,13 +138,12 @@ def get_config(fields):
     conn.isolation_level = None
 
     cur = conn.cursor()
-    cur.execute("SELECT "+fields+" FROM config")
+    cur.execute("SELECT %s FROM config" %(fields))
     results = cur.fetchone()
     cur.close()
     conn.close()
 
     return results
-
 
 def get_datetime():
     """
@@ -164,13 +151,11 @@ def get_datetime():
     """
     return strftime("%Y-%m-%d %H:%M:%S", localtime())
 
-
 def get_file_datetime():
     """
     Return the current date/time in a format workable for a file name.
     """
     return strftime("%Y-%m-%d_%H-%M-%S", localtime())
-
 
 def lhost():
     """
@@ -214,7 +199,6 @@ def lhost():
                 pass
     return ip
 
-
 def color(string, color=None):
     """
     Change text color for the Linux terminal.
@@ -248,7 +232,6 @@ def color(string, color=None):
         else:
             return string
 
-
 def unique(seq, idfun=None):
     # uniquify a list, order preserving
     # from http://www.peterbe.com/plog/uniqifiers-benchmark
@@ -267,13 +250,11 @@ def unique(seq, idfun=None):
         result.append(item)
     return result
 
-
 def uniquify_tuples(tuples):
     # uniquify mimikatz tuples based on the password
     # cred format- (credType, domain, username, password, hostname, sid)
     seen = set()
     return [item for item in tuples if "%s%s%s%s" % (item[0], item[1], item[2], item[3]) not in seen and not seen.add("%s%s%s%s" % (item[0], item[1], item[2], item[3]))]
-
 
 def decode_base64(data):
     """
@@ -291,19 +272,16 @@ def decode_base64(data):
         # if there's a decoding error, just return the data
         return data
 
-
 def encode_base64(data):
     """
     Decode data as a base64 string.
     """
     return base64.encodestring(data).strip()
 
-
 def complete_path(text, line, arg=False):
     """
     Helper for tab-completion of file paths.
     """
-
     # stolen from dataq at
     #   http://stackoverflow.com/questions/16826172/filename-tab-completion-in-cmd-cmd-of-python
 

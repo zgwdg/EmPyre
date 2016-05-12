@@ -1,20 +1,3 @@
-from pydispatch import dispatcher
-
-import sys
-import cmd
-import sqlite3
-import os
-import hashlib
-
-# EmPyre imports
-import agents
-import helpers
-import listeners
-import messages
-import modules
-import stagers
-import time
-
 """
 
 The main controller class for EmPyre.
@@ -26,22 +9,33 @@ menu loops.
 """
 
 # make version for EmPyre
-VERSION = "0.8"
+VERSION = "1.0.0"
 
+from pydispatch import dispatcher
+
+import sys, cmd, sqlite3, os, hashlib, traceback, time
+
+# EmPyre imports
+import helpers
+import http
+import encryption
+import packets
+import messages
+import agents
+import listeners
+import modules
+import stagers
+import credentials
 
 # custom exceptions used for nested menu navigation
 class NavMain(Exception): pass
-
-
 class NavAgents(Exception): pass
-
-
 class NavListeners(Exception): pass
 
 
 class MainMenu(cmd.Cmd):
 
-    def __init__(self, args=None):
+    def __init__(self, args=None, restAPI=False):
 
         cmd.Cmd.__init__(self)
 
@@ -53,57 +47,17 @@ class MainMenu(cmd.Cmd):
         # empty database object
         self.conn = self.database_connect()
 
-        # grab and set the user of the DB
-        cur = self.conn.cursor()
-        cur.execute("SELECT rootuser FROM config")
-        self.isroot = cur.fetchone()[0]
-        cur.close()
-
-        # grab the universal install path
-        # TODO: combine these into one query
-        cur = self.conn.cursor()
-        cur.execute("SELECT install_path FROM config")
-        self.installPath = cur.fetchone()[0]
-        cur.close()
-
-        # pull out the stage0 uri
-        cur = self.conn.cursor()
-        cur.execute("SELECT stage0_uri FROM config")
-        self.stage0 = cur.fetchone()[0]
-        cur.close()
-
-        # pull out the stage1 uri
-        cur = self.conn.cursor()
-        cur.execute("SELECT stage1_uri FROM config")
-        self.stage1 = cur.fetchone()[0]
-        cur.close()
-
-        # pull out the stage2 uri
-        cur = self.conn.cursor()
-        cur.execute("SELECT stage2_uri FROM config")
-        self.stage2 = cur.fetchone()[0]
-        cur.close()
-
-        # pull out the IP whitelist and create it, if applicable
-        cur = self.conn.cursor()
-        cur.execute("SELECT ip_whitelist FROM config")
-        self.ipWhiteList = helpers.generate_ip_list(cur.fetchone()[0])
-        cur.close()
-
-        # pull out the IP blacklist and create it, if applicable
-        cur = self.conn.cursor()
-        cur.execute("SELECT ip_blacklist FROM config")
-        self.ipBlackList = helpers.generate_ip_list(cur.fetchone()[0])
-        cur.close()
+        # pull out some common configuration information
+        (self.isroot, self.installPath, self.stage0, self.stage1, self.stage2, self.ipWhiteList, self.ipBlackList) = helpers.get_config('rootuser,install_path,stage0_uri,stage1_uri,stage2_uri,ip_whitelist,ip_blacklist')
 
         # instantiate the agents, listeners, and stagers objects
         self.agents = agents.Agents(self, args=args)
         self.listeners = listeners.Listeners(self, args=args)
         self.stagers = stagers.Stagers(self, args=args)
         self.modules = modules.Modules(self, args=args)
+        self.credentials = credentials.Credentials(self, args=args)
 
         # make sure all the references are passed after instantiation
-        # TODO: replace these with self?
         self.agents.listeners = self.listeners
         self.agents.modules = self.modules
         self.agents.stagers = self.stagers
@@ -121,8 +75,13 @@ class MainMenu(cmd.Cmd):
         # Main, Agents, or Listeners
         self.menu_state = "Main"
 
-        # start everything up
-        self.startup()
+        # parse/handle any passed command line arguments
+        self.args = args
+        self.handle_args()
+
+        # start everything up normally if the RESTful API isn't being launched
+        if not restAPI:
+            self.startup()
 
     def check_root(self):
         """
@@ -153,6 +112,67 @@ class MainMenu(cmd.Cmd):
         except Exception as e:
             print e
 
+    def handle_args(self):
+        """
+        Handle any passed arguments.
+        """
+        
+        if self.args.listener or self.args.stager:
+            # if we're displaying listeners/stagers or generating a stager
+            if self.args.listener:
+                if self.args.listener == 'list':
+                    activeListeners = self.listeners.get_listeners()
+                    messages.display_listeners(activeListeners)
+                else:
+                    activeListeners = self.listeners.get_listeners()
+                    targetListener = [l for l in activeListeners if self.args.listener in l[1]]
+
+                    if targetListener:
+                        targetListener = targetListener[0]
+                        messages.display_listener_database(targetListener)
+                    else:
+                        print helpers.color("\n[!] No active listeners with name '%s'\n" %(self.args.listener))
+
+            else:
+                if self.args.stager == 'list':
+                    print "\nStagers:\n"
+                    print "  Name             Description"
+                    print "  ----             -----------"
+                    for stagerName,stager in self.stagers.stagers.iteritems():
+                        print "  %s%s" % ('{0: <17}'.format(stagerName), stager.info['Description'])
+                    print "\n"
+                else:
+                    stagerName = self.args.stager
+                    try:
+                        targetStager = self.stagers.stagers[stagerName]
+                        menu = StagerMenu(self, stagerName)
+
+                        if self.args.stager_options:
+                            for option in self.args.stager_options:
+                                if '=' not in option:
+                                    print helpers.color("\n[!] Invalid option: '%s'" %(option))
+                                    print helpers.color("[!] Please use Option=Value format\n")
+                                    if self.conn: self.conn.close()
+                                    sys.exit()
+
+                                # split the passed stager options by = and set the appropriate option
+                                optionName, optionValue = option.split('=')
+                                menu.do_set("%s %s" %(optionName, optionValue))
+
+                            # generate the stager
+                            menu.do_generate('')
+
+                        else:
+                            messages.display_stager(stagerName, targetStager)
+
+                    except Exception as e:
+                        print e
+                        print helpers.color("\n[!] No current stager with name '%s'\n" %(stagerName))
+
+            # shutdown the database connection object
+            if self.conn: self.conn.close()
+            sys.exit()
+
     def startup(self):
         """
         Kick off all initial startup actions.
@@ -171,7 +191,6 @@ class MainMenu(cmd.Cmd):
         """
 
         print "\n" + helpers.color("[!] Shutting down...\n")
-        # self.server.shutdown()
         dispatcher.send("[*] EmPyre shutting down...", sender="EmPyre")
 
         # enumerate all active servers/listeners and shut them down
@@ -185,6 +204,7 @@ class MainMenu(cmd.Cmd):
         try:
             # set the database connectiont to autocommit w/ isolation level
             self.conn = sqlite3.connect('./data/empyre.db', check_same_thread=False)
+            self.conn.text_factory = str
             self.conn.isolation_level = None
             return self.conn
 
@@ -222,7 +242,7 @@ class MainMenu(cmd.Cmd):
                     else:
                         num_modules = 0
 
-                    num_listeners = self.listeners.listeners
+                    num_listeners = self.listeners.get_listeners()
                     if(num_listeners):
                         num_listeners = len(num_listeners)
                     else:
@@ -235,7 +255,7 @@ class MainMenu(cmd.Cmd):
                     cmd.Cmd.cmdloop(self)
 
             # handle those pesky ctrl+c's
-            except KeyboardInterrupt:
+            except KeyboardInterrupt as e:
                 self.menu_state = "Main"
                 try:
                     choice = raw_input(helpers.color("\n[>] Exit? [y/N] ", "red"))
@@ -244,20 +264,24 @@ class MainMenu(cmd.Cmd):
                         return True
                     else:
                         continue
-                except KeyboardInterrupt:
+                except KeyboardInterrupt as e:
                     continue
 
             # exception used to signal jumping to "Main" menu
-            except NavMain:
+            except NavMain as e:
                 self.menu_state = "Main"
 
             # exception used to signal jumping to "Agents" menu
-            except NavAgents:
+            except NavAgents as e:
                 self.menu_state = "Agents"
 
             # exception used to signal jumping to "Listeners" menu
-            except NavListeners:
+            except NavListeners as e:
                 self.menu_state = "Listeners"
+
+            except Exception as e:
+                print helpers.color("[!] Exception: %s" %(e))
+                time.sleep(5)
 
     # print a nicely formatted help menu
     # stolen/adapted from recon-ng
@@ -284,11 +308,15 @@ class MainMenu(cmd.Cmd):
             EmPyreServer    -   the EmPyre HTTP server
         """
 
-        # if --debug is passed, log out all dispatcher signals
+        # if --debug X is passed, log out all dispatcher signals
         if self.args.debug:
             f = open("empyre.debug", 'a')
             f.write(helpers.get_datetime() + " " + sender + " : " + signal + "\n")
             f.close()
+
+            if self.args.debug == '2':
+                # if --debug 2, also print the output to the screen
+                print " " + sender + " : " + signal
 
         # display specific signals from the agents.
         if sender == "Agents":
@@ -385,6 +413,106 @@ class MainMenu(cmd.Cmd):
         else:
             self.modules.search_modules(searchTerm)
 
+    def do_creds(self, line):
+        "Add/display credentials to/from the database."
+
+        filterTerm = line.strip()
+
+        if filterTerm == "":
+            creds = self.credentials.get_credentials()
+
+        elif filterTerm.split()[0].lower() == "add":
+            # add format: "domain username password <notes> <credType> <sid>
+            args = filterTerm.split()[1:]
+
+            if len(args) == 3:
+                domain, username, password = args
+                if helpers.validate_ntlm(password):
+                    # credtype, domain, username, password, host, sid="", notes=""):
+                    self.credentials.add_credential("hash", domain, username, password, "")
+                else:
+                    self.credentials.add_credential("plaintext", domain, username, password, "")
+
+            elif len(args) == 4:
+                domain, username, password, notes = args
+                if helpers.validate_ntlm(password):
+                    self.credentials.add_credential("hash", domain, username, password, "", notes=notes)
+                else:
+                    self.credentials.add_credential("plaintext", domain, username, password, "", notes=notes)
+
+            elif len(args) == 5:
+                domain, username, password, notes, credType = args
+                self.credentials.add_credential(credType, domain, username, password, "", notes=notes)
+
+            elif len(args) == 6:
+                domain, username, password, notes, credType, sid = args
+                self.credentials.add_credential(credType, domain, username, password, "", sid=sid, notes=notes)
+
+            else:
+                print helpers.color("[!] Format is 'add domain username password <notes> <credType> <sid>")
+                return
+
+            creds = self.credentials.get_credentials()
+
+        elif filterTerm.split()[0].lower() == "remove":
+            try:
+                args = filterTerm.split()[1:]
+                if len(args) != 1 :
+                    print helpers.color("[!] Format is 'remove <credID>/<credID-credID>/all'")
+                else:
+                    if args[0].lower() == "all":
+                        choice = raw_input(helpers.color("[>] Remove all credentials from the database? [y/N] ", "red"))
+                        if choice.lower() != "" and choice.lower()[0] == "y":
+                            self.credentials.remove_all_credentials()
+                    else:
+                        if "," in args[0]:
+                            credIDs = args[0].split(",")
+                            self.credentials.remove_credentials(credIDs)
+                        elif "-" in args[0]:
+                            parts = args[0].split("-")
+                            credIDs = [x for x in xrange(int(parts[0]), int(parts[1])+1)]
+                            self.credentials.remove_credentials(credIDs)
+                        else:
+                            self.credentials.remove_credentials(args)
+
+            except:
+                print helpers.color("[!] Error in remove command parsing.")
+                print helpers.color("[!] Format is 'remove <credID>/<credID-credID>/all'")
+
+            return
+
+        elif filterTerm.split()[0].lower() == "export":
+            args = filterTerm.split()[1:]
+
+            if len(args) != 1:
+                print helpers.color("[!] Please supply an output filename/filepath.")
+                return
+            else:
+                creds = self.credentials.get_credentials()
+                
+                if len(creds) == 0:
+                    print helpers.color("[!] No credentials in the database.")
+                    return
+
+                f = open(args[0], 'w')
+                f.write("CredID,CredType,Domain,Username,Password,Host,SID,Notes\n")
+                for cred in creds:
+                    f.write(",".join([str(x) for x in cred]) + "\n")
+                
+                print "\n" + helpers.color("[*] Credentials exported to %s.\n" % (args[0]))
+                return
+
+        elif filterTerm.split()[0].lower() == "plaintext":
+            creds = self.credentials.get_credentials(credtype="plaintext")
+
+        elif filterTerm.split()[0].lower() == "hash":
+            creds = self.credentials.get_credentials(credtype="hash")
+
+        else:
+            creds = self.credentials.get_credentials(filterTerm=filterTerm)
+        
+        messages.display_credentials(creds)
+
     def do_set(self, line):
         "Set a global option (e.g. IP whitelists)."
 
@@ -394,18 +522,24 @@ class MainMenu(cmd.Cmd):
         else:
             if parts[0].lower() == "ip_whitelist":
                 if parts[1] != "" and os.path.exists(parts[1]):
-                    f = open(parts[1], 'r')
-                    ipData = f.read()
-                    f.close()
-                    self.agents.ipWhiteList = helpers.generate_ip_list(ipData)
+                    try:
+                        f = open(parts[1], 'r')
+                        ipData = f.read()
+                        f.close()
+                        self.agents.ipWhiteList = helpers.generate_ip_list(ipData)
+                    except:
+                        print helpers.color("[!] Error opening ip file %s" %(parts[1]))
                 else:
                     self.agents.ipWhiteList = helpers.generate_ip_list(",".join(parts[1:]))
             elif parts[0].lower() == "ip_blacklist":
                 if parts[1] != "" and os.path.exists(parts[1]):
-                    f = open(parts[1], 'r')
-                    ipData = f.read()
-                    f.close()
-                    self.agents.ipBlackList = helpers.generate_ip_list(ipData)
+                    try:
+                        f = open(parts[1], 'r')
+                        ipData = f.read()
+                        f.close()
+                        self.agents.ipBlackList = helpers.generate_ip_list(ipData)
+                    except:
+                        print helpers.color("[!] Error opening ip file %s" %(parts[1]))
                 else:
                     self.agents.ipBlackList = helpers.generate_ip_list(",".join(parts[1:]))
             else:
@@ -427,6 +561,14 @@ class MainMenu(cmd.Cmd):
         if line.strip().lower() == "ip_blacklist":
             print self.agents.ipBlackList
 
+    def do_load(self, line):
+        "Loads EmPyre modules from a non-standard folder."
+        
+        if line.strip() == '' or not os.path.isdir(line.strip()):
+            print "\n" + helpers.color("[!] Please specify a valid folder to load modules from.") + "\n"
+        else:
+            self.modules.load_modules(rootPath=line.strip())
+
     def do_reload(self, line):
         "Reload one (or all) EmPyre modules."
 
@@ -434,6 +576,9 @@ class MainMenu(cmd.Cmd):
             # reload all modules
             print "\n" + helpers.color("[*] Reloading all modules.") + "\n"
             self.modules.load_modules()
+        elif os.path.isdir(line.strip()):
+            # if we're loading an external directory
+            self.modules.load_modules(rootPath=line.strip())
         else:
             if line.strip() not in self.modules.modules:
                 print helpers.color("[!] Error: invalid module")
@@ -544,15 +689,24 @@ class MainMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in options if s.startswith(mline)]
 
+    def complete_load(self, text, line, begidx, endidx):
+        "Tab-complete a module load path."
+        return helpers.complete_path(text,line)
+
     def complete_reset(self, text, line, begidx, endidx):
         "Tab-complete a global option."
-
         return self.complete_set(text, line, begidx, endidx)
 
     def complete_show(self, text, line, begidx, endidx):
         "Tab-complete a global option."
-
         return self.complete_set(text, line, begidx, endidx)
+
+    def complete_creds(self, text, line, begidx, endidx):
+        "Tab-complete 'creds' commands."
+        commands = [ "add", "remove", "export", "hash", "plaintext"]
+        mline = line.partition(' ')[2]
+        offs = len(mline) - len(text)
+        return [s[offs:] for s in commands if s.startswith(mline)]
 
 
 class AgentsMenu(cmd.Cmd):
@@ -588,7 +742,11 @@ class AgentsMenu(cmd.Cmd):
 
     def do_back(self, line):
         "Return back a menu."
-        return True
+        return NavMain()
+
+    def do_listeners(self, line):
+        "Jump to the listeners menu."
+        raise NavListeners()
 
     def do_main(self, line):
         "Go back to the main menu."
@@ -607,6 +765,10 @@ class AgentsMenu(cmd.Cmd):
             self.mainMenu.do_list("agents " + str(" ".join(line.split(" ")[1:])))
         else:
             self.mainMenu.do_list("agents " + str(line))
+
+    def do_creds(self, line):
+        "Display/return credentials from the database."
+        self.mainMenu.do_creds(line)
 
     def do_rename(self, line):
         "Rename a particular agent."
@@ -649,7 +811,7 @@ class AgentsMenu(cmd.Cmd):
                     for agent in agents:
                         sessionID = agent[1]
                         self.mainMenu.agents.add_agent_task(sessionID, "TASK_EXIT")
-            except KeyboardInterrupt:
+            except KeyboardInterrupt as e:
                 print ""
 
         else:
@@ -832,6 +994,7 @@ class AgentsMenu(cmd.Cmd):
 
         elif parts[0].lower() == "all":
             hours = parts[1]
+            hours = hours.replace("," , "-")
 
             agents = self.mainMenu.agents.get_agents()
 
@@ -852,6 +1015,7 @@ class AgentsMenu(cmd.Cmd):
             sessionID = self.mainMenu.agents.get_agent_id(parts[0])
 
             hours = parts[1]
+            hours = hours.replace("," , "-")
 
             if sessionID and len(sessionID) != 0:
                 # update this agent's field in the database
@@ -877,7 +1041,7 @@ class AgentsMenu(cmd.Cmd):
                 choice = raw_input(helpers.color("[>] Remove all agents from the database? [y/N] ", "red"))
                 if choice.lower() != "" and choice.lower()[0] == "y":
                     self.mainMenu.agents.remove_agent('%')
-            except KeyboardInterrupt:
+            except KeyboardInterrupt as e:
                 print ""
 
         elif name.lower() == "stale":
@@ -929,10 +1093,6 @@ class AgentsMenu(cmd.Cmd):
                 self.mainMenu.agents.remove_agent(sessionID)
             else:
                 print helpers.color("[!] Invalid agent name")
-
-    def do_listeners(self, line):
-        "Jump to the listeners menu."
-        raise NavListeners()
 
     def do_usestager(self, line):
         "Use an EmPyre stager."
@@ -1010,6 +1170,14 @@ class AgentsMenu(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in names if s.startswith(mline)]
 
+    def complete_list(self, text, line, begidx, endidx):
+        "Tab-complete a list command"
+
+        options = ["stale"]
+        mline = line.partition(' ')[2]
+        offs = len(mline) - len(text)
+        return [s[offs:] for s in options if s.startswith(mline)]
+
     def complete_kill(self, text, line, begidx, endidx):
         "Tab-complete a kill command"
 
@@ -1043,6 +1211,9 @@ class AgentsMenu(cmd.Cmd):
         "Tab-complete an EmPyre stager module path."
         return self.mainMenu.complete_usestager(text, line, begidx, endidx)
 
+    def complete_creds(self, text, line, begidx, endidx):
+        "Tab-complete 'creds' commands."
+        return self.mainMenu.complete_creds(text, line, begidx, endidx)
 
 class AgentMenu(cmd.Cmd):
 
@@ -1115,21 +1286,20 @@ class AgentMenu(cmd.Cmd):
         "Go back a menu."
         return True
 
-    def do_main(self, line):
-        "Go back to the main menu."
-        raise NavMain()
+    def do_agents(self, line):
+        "Jump to the Agents menu."
+        raise NavAgents()
 
     def do_listeners(self, line):
         "Jump to the listeners menu."
         raise NavListeners()
 
-    def do_agents(self, line):
-        "Jump to the Agents menu."
-        raise NavAgents()
+    def do_main(self, line):
+        "Go back to the main menu."
+        raise NavMain()
 
     def do_help(self, *args):
         "Displays the help menu or syntax for particular commands."
-
         cmd.Cmd.do_help(self, *args)
 
     def do_list(self, line):
@@ -1176,7 +1346,7 @@ class AgentMenu(cmd.Cmd):
                 self.mainMenu.agents.save_agent_log(self.sessionID, "Tasked agent to exit")
                 return True
 
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
             print ""
 
     def do_clear(self, line):
@@ -1406,48 +1576,13 @@ class AgentMenu(cmd.Cmd):
         else:
             self.mainMenu.modules.search_modules(searchTerm)
 
+    def do_creds(self, line):
+        "Display/return credentials from the database."
+        self.mainMenu.do_creds(line)
+
     # def do_updateprofile(self, line):
     #     "Update an agent connection profile."
-
-    #     # profile format:
-    #     #   TaskURI1,TaskURI2,...|UserAgent|OptionalHeader1,OptionalHeader2...
-
-    #     profile = line.strip().strip()
-
-    #     if profile != "" :
-    #         # load up a profile from a file if a path was passed
-    #         if os.path.exists(profile):
-    #             f = open(profile, 'r')
-    #             profile = f.readlines()
-    #             f.close()
-    #             # strip out profile comments and blank lines
-    #             profile = [l for l in profile if (not l.startswith("#") and l.strip() != "")]
-    #             profile = profile[0]
-    #         if not profile.strip().startswith("\"/"):
-    #             print helpers.color("[!] Task URIs in profiles must start with / and be enclosed in quotes!")
-    #         else:
-    #             updatecmd = "Update-Profile " + profile
-
-    #             # task the agent to update their profile
-    #             self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", updatecmd)
-
-    #             # update the agent's profile in the database
-    #             self.mainMenu.agents.update_agent_profile(self.sessionID, profile)
-
-    #             # print helpers.color("[*] Tasked agent "+self.sessionID+" to run " + updatecmd)
-    #             # update the agent log
-    #             msg = "Tasked agent to update profile " + profile
-    #             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
-
-    #     else:
-    #         print helpers.color("[*] Profile format is \"TaskURI1,TaskURI2,...|UserAgent|OptionalHeader2:Val1|OptionalHeader2:Val2...\"")
-
-    # def complete_jobs(self, text, line, begidx, endidx):
-    #     "Tab-complete jobs management options."
-
-    #     mline = line.partition(' ')[2]
-    #     offs = len(mline) - len(text)
-    #     return [s[offs:] for s in ["kill"] if s.startswith(mline)]
+    #     # TODO: implement
 
     def complete_usemodule(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre Python module path"
@@ -1510,18 +1645,39 @@ class ListenerMenu(cmd.Cmd):
             self.mainMenu.do_list("listeners " + str(line))
 
     def do_back(self, line):
-        "Go back a menu."
-        return True
+        "Go back to the main menu."
+        raise NavMain()
+
+    def do_agents(self, line):
+        "Jump to the Agents menu."
+        raise NavAgents()
 
     def do_main(self, line):
         "Go back to the main menu."
         raise NavMain()
 
+    def do_exit(self, line):
+        "Exit EmPyre."
+        raise KeyboardInterrupt
+
     def do_set(self, line):
         "Set a listener option."
         parts = line.split(" ")
         if len(parts) > 1:
-            self.mainMenu.listeners.set_listener_option(parts[0], " ".join(parts[1:]))
+            if parts[0].lower() == "defaultprofile" and os.path.exists(parts[1]):
+                try:
+                    f = open(parts[1], 'r')
+                    profileDataRaw = f.readlines()
+                    
+                    profileData = [l for l in profileDataRaw if (not l.startswith("#") and l.strip() != "")]
+                    profileData = profileData[0].strip("\"")
+
+                    f.close()
+                    self.mainMenu.listeners.set_listener_option(parts[0], profileData)
+                except:
+                    print helpers.color("[!] Error opening profile file %s" %(parts[1]))
+            else:
+                self.mainMenu.listeners.set_listener_option(parts[0], " ".join(parts[1:]))
         else:
             print helpers.color("[!] Please enter a value to set for the option")
 
@@ -1568,7 +1724,7 @@ class ListenerMenu(cmd.Cmd):
                 choice = raw_input(helpers.color("[>] Kill all listeners? [y/N] ", "red"))
                 if choice.lower() != "" and choice.lower()[0] == "y":
                     self.mainMenu.listeners.killall()
-            except KeyboardInterrupt:
+            except KeyboardInterrupt as e:
                 print ""
 
         else:
@@ -1580,15 +1736,15 @@ class ListenerMenu(cmd.Cmd):
 
     def do_execute(self, line):
         "Execute a listener with the currently specified options."
-        self.mainMenu.listeners.add_listener_from_config()
+        (success, message) = self.mainMenu.listeners.add_listener_from_config()
+        if success:
+            print helpers.color("[*] Listener '%s' successfully started." %(message))
+        else:
+            print helpers.color("[!] %s" %(message))
 
     def do_run(self, line):
         "Execute a listener with the currently specified options."
         self.do_execute(line)
-
-    def do_agents(self, line):
-        "Jump to the Agents menu."
-        raise NavAgents()
 
     def do_usestager(self, line):
         "Use an EmPyre stager."
@@ -1625,6 +1781,7 @@ class ListenerMenu(cmd.Cmd):
             # set the listener value for the launcher
             stager = self.mainMenu.stagers.stagers["launcher"]
             stager.options['Listener']['Value'] = listenerID
+            stager.options['Base64']['Value'] = "True"
 
             # and generate the code
             print stager.generate()
@@ -1655,6 +1812,9 @@ class ListenerMenu(cmd.Cmd):
             return [s[offs:] for s in listenerTypes if s.startswith(mline)]
 
         elif line.split(" ")[1].lower() == "certpath":
+            return helpers.complete_path(text, line, arg=True)
+
+        elif line.split(" ")[1].lower() == "defaultprofile":
             return helpers.complete_path(text, line, arg=True)
 
         mline = line.partition(' ')[2]
@@ -1735,6 +1895,20 @@ class ModuleMenu(cmd.Cmd):
                 print helpers.color("[!] Error: Required module option missing.")
                 return False
 
+        # # TODO: implement this all/autorun check
+        # try:
+        #     # if we're running this module for all agents, skip this validation
+        #     if sessionID.lower() != "all" and sessionID.lower() != "autorun": 
+        #         modulePSVersion = int(self.module.info['MinPSVersion'])
+        #         agentPSVersion = int(self.mainMenu.agents.get_ps_version(sessionID))
+        #         # check if the agent/module PowerShell versions are compatible
+        #         if modulePSVersion > agentPSVersion:
+        #             print helpers.color("[!] Error: module requires PS version "+str(modulePSVersion)+" but agent running PS version "+str(agentPSVersion))
+        #             return False
+        # except Exception as e:
+        #     print helpers.color("[!] Invalid module or agent PS version!")
+        #     return False
+
         # check if the module needs admin privs
         if self.module.info['NeedsAdmin']:
             # if we're running this module for all agents, skip this validation
@@ -1768,6 +1942,10 @@ class ModuleMenu(cmd.Cmd):
                 self.stdout.write("%s %s\n" % (c.ljust(17), getattr(self, 'do_' + c).__doc__))
             self.stdout.write("\n")
 
+    def do_back(self, line):
+        "Go back a menu."
+        return True
+
     def do_agents(self, line):
         "Jump to the Agents menu."
         raise NavAgents()
@@ -1775,6 +1953,10 @@ class ModuleMenu(cmd.Cmd):
     def do_listeners(self, line):
         "Jump to the listeners menu."
         raise NavListeners()
+
+    def do_main(self, line):
+        "Go back to the main menu."
+        raise NavMain()
 
     def do_exit(self, line):
         "Exit EmPyre."
@@ -1807,14 +1989,6 @@ class ModuleMenu(cmd.Cmd):
     def do_options(self, line):
         "Display module options."
         messages.display_module(self.moduleName, self.module)
-
-    def do_back(self, line):
-        "Return to the main menu."
-        return True
-
-    def do_main(self, line):
-        "Go back to the main menu."
-        raise NavMain()
 
     def do_set(self, line):
         "Set a module option."
@@ -1869,6 +2043,10 @@ class ModuleMenu(cmd.Cmd):
             l = ModuleMenu(self.mainMenu, line, agent=self.module.options['Agent']['Value'])
             l.cmdloop()
 
+    def do_creds(self, line):
+        "Display/return credentials from the database."
+        self.mainMenu.do_creds(line)
+
     def do_execute(self, line):
         "Execute the given EmPyre module."
 
@@ -1898,14 +2076,18 @@ class ModuleMenu(cmd.Cmd):
         moduleData = helpers.strip_python_comments(moduleData)
 
         taskCommand = ""
+
         # check for opt tasking methods to prevent using a try/catch block
         # elif dose not support try/catch native 
         try:
             if str(self.module.info['RunOnDisk']).lower() == "true":
                 RunOnDisk = True
+            if str(self.module.info['RunOnDisk']).lower() == "false":
+                RunOnDisk = False
         except:
             RunOnDisk = False
             pass
+
         # build the appropriate task command and module data blob
         if str(self.module.info['Background']).lower() == "true":
             # if this module should be run in the background
@@ -2039,6 +2221,10 @@ class ModuleMenu(cmd.Cmd):
         "Tab-complete an EmPyre Python module path."
         return self.mainMenu.complete_usemodule(text, line, begidx, endidx)
 
+    def complete_creds(self, text, line, begidx, endidx):
+        "Tab-complete 'creds' commands."
+        return self.mainMenu.complete_creds(text, line, begidx, endidx)
+
 
 class StagerMenu(cmd.Cmd):
 
@@ -2091,6 +2277,22 @@ class StagerMenu(cmd.Cmd):
                 self.stdout.write("%s %s\n" % (c.ljust(17), getattr(self, 'do_' + c).__doc__))
             self.stdout.write("\n")
 
+    def do_back(self, line):
+        "Go back a menu."
+        return True
+
+    def do_agents(self, line):
+        "Jump to the Agents menu."
+        raise NavAgents()
+
+    def do_listeners(self, line):
+        "Jump to the listeners menu."
+        raise NavListeners()
+
+    def do_main(self, line):
+        "Go back to the main menu."
+        raise NavMain()
+
     def do_exit(self, line):
         "Exit EmPyre."
         raise KeyboardInterrupt
@@ -2112,14 +2314,6 @@ class StagerMenu(cmd.Cmd):
     def do_options(self, line):
         "Display stager options."
         messages.display_stager(self.stagerName, self.stager)
-
-    def do_back(self, line):
-        "Return to the main menu."
-        return True
-
-    def do_main(self, line):
-        "Go back to the main menu."
-        raise NavMain()
 
     def do_set(self, line):
         "Set a stager option."
@@ -2211,7 +2405,6 @@ class StagerMenu(cmd.Cmd):
 
     def do_execute(self, line):
         "Generate/execute the given EmPyre stager."
-
         self.do_generate(line)
 
     def complete_set(self, text, line, begidx, endidx):
@@ -2245,11 +2438,3 @@ class StagerMenu(cmd.Cmd):
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
         return [s[offs:] for s in options if s.startswith(mline)]
-
-    def do_agents(self, line):
-        "Jump to the Agents menu."
-        raise NavAgents()
-
-    def do_listeners(self, line):
-        "Jump to the listeners menu."
-        raise NavListeners()

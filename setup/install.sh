@@ -20,6 +20,7 @@ if lsb_release -d | grep -q "Fedora"; then
 	pip install iptools
 	pip install pydispatcher
 	pip install macholib
+	pip install flask
 elif lsb_release -d | grep -q "Kali"; then
 	Release=Kali
 	apt-get install python-dev
@@ -30,6 +31,7 @@ elif lsb_release -d | grep -q "Kali"; then
 	pip install iptools
 	pip install pydispatcher
 	pip install macholib
+	pip install flask
 elif lsb_release -d | grep -q "Ubuntu"; then
 	Release=Ubuntu
 	apt-get install python-dev
@@ -39,6 +41,7 @@ elif lsb_release -d | grep -q "Ubuntu"; then
 	pip install iptools
 	pip install pydispatcher
 	pip install macholib
+	pip install flask
 else
 	echo "Unknown distro - Debian/Ubuntu Fallback"
 	 apt-get install python-dev
@@ -48,6 +51,7 @@ else
 	 pip install iptools
 	 pip install pydispatcher
 	 pip install macholib
+	 pip install flask
 fi
 
 # set up the database schema

