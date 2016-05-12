@@ -28,7 +28,6 @@ class Module:
             
             # list of any references/other comments
             'Comments': [
-                'comment',
                 'Heavily adapted from @patrickwardle\'s script: https://github.com/synack/DylibHijack/blob/master/scan.py'
             ]
         }

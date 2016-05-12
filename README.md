@@ -2,11 +2,13 @@
 
 EmPyre is a pure Python post-exploitation agent built on cryptologically-secure communications and a flexible architecture. It is based heavily on the controller and communication structure of Empire.
 
-The Diffie Hellman implementation is from Mark Loiseau's project at https://github.com/lowazo/pyDHE, licensed under version 3.0 of the GNU General Public License.
+The Diffie Hellman implementation is from Mark Loiseau's project [here](https://github.com/lowazo/pyDHE), licensed under version 3.0 of the GNU General Public License.
 
-The AES implementation is adapted from Richard Moore's project at https://github.com/ricmoo/pyaes, licensed under the MIT license.
+The AES implementation is adapted from Richard Moore's project [here](https://github.com/ricmoo/pyaes), licensed under the MIT license.
 
-The initial Python launcher code is inspired from MSF's Python Meterpreter launcher at https://github.com/rapid7/metasploit-framework/blob/master/lib/msf/core/payload/python/reverse_http.rb, licensed under the BSD-3-clause license.
+The initial Python launcher code is inspired from MSF's Python Meterpreter launcher [here](https://github.com/rapid7/metasploit-framework/blob/master/lib/msf/core/payload/python/reverse_http.rb), licensed under the BSD-3-clause license.
+
+The collection/osx/keylogger module was originally written by joev [here](https://github.com/gojhonny/metasploit-framework/blob/master/modules/post/osx/capture/keylog_recorder.rb) and licensed under the MSF_LICENSE/BSD 3-clause license.
 
 
 ## Key negotiation
@@ -20,16 +22,16 @@ The initial Python launcher code is inspired from MSF's Python Meterpreter launc
 The process is as follows:
 
 1. client runs launcher.py that GETs stager.py from /stage0
-	launcher.py implements a minimized RC4 decoding stub and negotiation key
+    launcher.py implements a minimized RC4 decoding stub and negotiation key
 
 2. server returns RC4(KEYs, stager.py) (key negotiation stager)
-	stager.py contains minimized DH and AES
+    stager.py contains minimized DH and AES
 
 3. client generates DH key PUBc, and POSTs HMAC(AES(KEYs, PUBc)) posts to /stage1
-	server generates a new DH key on each check in
+    server generates a new DH key on each check in
 
 4. server returns HMAC(AES(KEYs, nonce+PUBs))
-	client calculates shared DH key KEYn
+    client calculates shared DH key KEYn
 
 5. client POSTs HMAC(AES(KEYn, [nonce+1]+sysinfo) to /stage2
 

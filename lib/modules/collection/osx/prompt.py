@@ -88,7 +88,7 @@ print '\\n'.join(choices)
 """
 
         else:
-            # osascript prompt for the specifiec application
+            # osascript prompt for the specific application
             script = """
 import os
 print os.popen('osascript -e \\\'tell app "%s" to activate\\\' -e \\\'tell app "%s" to display dialog "%s requires your password to continue." & return  default answer "" with icon 1 with hidden answer with title "%s Alert"\\\'').read()

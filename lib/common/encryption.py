@@ -23,7 +23,7 @@ Encryption helper functions.
 #   https://github.com/lowazo/pyDHE
 #
 # Licensed under version 3.0 of the GNU General
-# Public License.
+# Public License (see pyDHE_license.txt)
 #
 ###################################################
 
@@ -264,7 +264,7 @@ def strip_PKCS7_padding(data):
 # Richard Moore's implementation at:
 #   https://github.com/ricmoo/pyaes
 #
-# Licensed under the MIT license.
+# Licensed under the MIT license (see pyaes_license.txt)
 #
 ###################################################
 
