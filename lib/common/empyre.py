@@ -849,16 +849,21 @@ class AgentsMenu(cmd.Cmd):
         if len(parts) == 1:
             print helpers.color("[!] Please enter 'interval [jitter]'")
 
-        # make sure we pass a int()
-        if not isinstance(parts[1], int):
-            print helpers.color("[!] Please only enter integer for 'interval'")
+        if len(parts) >= 2:
+            try:
+                int(parts[1])
+            except:
+                print helpers.color("[!] Please only enter integer for 'interval'")
+                return
 
-        # make sure we pass a int()  
-        if len(parts) == 3:
-            if not isinstance(parts[2], int) and isinstance(parts[2], float):
+        if len(parts) > 2:
+            try:
+                int(parts[2])
+            except:
                 print helpers.color("[!] Please only enter integer for '[jitter]'")
+                return
 
-        elif parts[0].lower() == "all":
+        if parts[0].lower() == "all":
             delay = parts[1]
             jitter = 0.0
             if len(parts) == 3:
