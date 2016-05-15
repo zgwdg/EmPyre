@@ -849,6 +849,15 @@ class AgentsMenu(cmd.Cmd):
         if len(parts) == 1:
             print helpers.color("[!] Please enter 'interval [jitter]'")
 
+        # make sure we pass a int()
+        if not isinstance(parts[1], int):
+            print helpers.color("[!] Please only enter integer for 'interval'")
+
+        # make sure we pass a int()  
+        if len(parts) == 3:
+            if not isinstance(parts[2], int) and isinstance(parts[2], float):
+                print helpers.color("[!] Please only enter integer for '[jitter]'")
+
         elif parts[0].lower() == "all":
             delay = parts[1]
             jitter = 0.0
@@ -1394,12 +1403,27 @@ class AgentMenu(cmd.Cmd):
         parts = line.strip().split(" ")
         delay = parts[0]
 
+        # make sure we pass a int()
+        if len(parts) >= 1:
+            try:
+                int(delay)
+            except:
+                print helpers.color("[!] Please only enter integer for 'interval'")
+                return
+
+        if len(parts) > 1:
+            try:
+                int(parts[1])
+            except:
+                print helpers.color("[!] Please only enter integer for '[jitter]'")
+                return
+
         if delay == "":
             # task the agent to display the delay/jitter
             self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", "global delay; global jitter; print 'delay/jitter = ' + str(delay)+'/'+str(jitter)")
             self.mainMenu.agents.save_agent_log(self.sessionID, "Tasked agent to display delay/jitter")
 
-        if len(parts) > 0 and parts[0] != "":
+        elif len(parts) > 0 and parts[0] != "":
             delay = parts[0]
             jitter = 0.0
             if len(parts) == 2:
