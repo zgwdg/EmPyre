@@ -17,7 +17,7 @@ class Module:
             'Background': False,
 
             # File extension to save the file as
-            'OutputExtension': ".pcap",
+            'OutputExtension': "pcap",
 
             # if the module needs administrative privileges
             'NeedsAdmin': True,
