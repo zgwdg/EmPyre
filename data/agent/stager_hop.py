@@ -92,7 +92,7 @@ class DiffieHellman(object):
         _rand = 0
         _bytes = bits // 8 + 8
 
-        while(_rand.bit_length() < bits):
+        while(len(bin(_rand))-2 < bits):
             try:
                 # Python 3
                 _rand = int.from_bytes(random_function(_bytes), byteorder='big')
@@ -145,7 +145,7 @@ class DiffieHellman(object):
         # Otherwise hashlib can't hash it.
         try:
             _sharedSecretBytes = self.sharedSecret.to_bytes(
-                self.sharedSecret.bit_length() // 8 + 1, byteorder="big")
+                len(bin(self.sharedSecret))-2 // 8 + 1, byteorder="big")
         except AttributeError:
             _sharedSecretBytes = str(self.sharedSecret)
 

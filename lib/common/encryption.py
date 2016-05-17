@@ -103,7 +103,7 @@ class DiffieHellman(object):
         _rand = 0
         _bytes = bits // 8 + 8
 
-        while(_rand.bit_length() < bits):
+        while(len(bin(_rand))-2 < bits):
             try:
                 # Python 3
                 _rand = int.from_bytes(random_function(_bytes), byteorder='big')
@@ -156,7 +156,7 @@ class DiffieHellman(object):
         # Otherwise hashlib can't hash it.
         try:
             _sharedSecretBytes = self.sharedSecret.to_bytes(
-                self.sharedSecret.bit_length() // 8 + 1, byteorder="big")
+                len(bin(self.sharedSecret))-2 // 8 + 1, byteorder="big")
         except AttributeError:
             _sharedSecretBytes = str(self.sharedSecret)
 
@@ -169,29 +169,6 @@ class DiffieHellman(object):
         Return the shared secret key
         """
         return self.key
-
-    def showParams(self):
-        """
-        Show the parameters of the Diffie Hellman agreement.
-        """
-        print("Parameters:")
-        print("Prime[{0}]: {1}".format(self.prime.bit_length(), self.prime))
-        print("Generator[{0}]: {1}\n".format(self.generator.bit_length(),
-                                             self.generator))
-        print("Private key[{0}]: {1}\n".format(self.privateKey.bit_length(),
-                                               self.privateKey))
-        print("Public key[{0}]: {1}".format(self.publicKey.bit_length(),
-                                            self.publicKey))
-
-    def showResults(self):
-        """
-        Show the results of a Diffie-Hellman exchange.
-        """
-        print("Results:")
-        print("Shared secret[{0}]: {1}".format(self.sharedSecret.bit_length(),
-                                               self.sharedSecret))
-        print("Shared key[{0}]: {1}".format(len(self.key), hexlify(self.key)))
-
 
 def _compact_word(word):
     return (word[0] << 24) | (word[1] << 16) | (word[2] << 8) | word[3]
