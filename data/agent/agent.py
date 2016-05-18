@@ -211,7 +211,7 @@ def processJobTasking(result):
         # send packets
         sendMessage(resultPackets)
     except Exception as e:
-        print "processTasking exception:",e
+        print "processJobTasking exception:",e
         pass
 
 def processPacket(taskingID, data):
