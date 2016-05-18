@@ -47,12 +47,12 @@ class Module:
                 'Value'         :   'standard'
             },
             'Ip': {
-                'Description'   :   'IP to curl script from (Defualt is local webserver inside agent).',
+                'Description'   :   'IP to curl script from (Default  is local webserver inside agent).',
                 'Required'      :   True,
                 'Value'         :   '127.0.0.1'
             },
             'Port': {
-                'Description'   :   'Port to setup server and curl from (Defualt is 8089).',
+                'Description'   :   'Port to setup server and curl from (Default is 8089).',
                 'Required'      :   True,
                 'Value'         :   '8089'
             },
@@ -1606,7 +1606,7 @@ except Exception as e:
   pass
   #print e
 try:
-  process = subprocess.Popen('curl -s %s | bash -s %s', stdout=subprocess.PIPE, shell=True)
+  process = subprocess.Popen('curl -s %s | bash -s %s 2> /dev/null', stdout=subprocess.PIPE, shell=True)
   result = process.communicate()
   result = result[0].strip()
   print result

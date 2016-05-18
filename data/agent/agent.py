@@ -550,7 +550,8 @@ def data_webserver(data, ip, port, serveCount):
             s.send_header("Content-type", "text/html")
             s.end_headers()
             s.wfile.write(data)
-            exit()
+        def log_message(s, format, *args):
+            return
     server_class = BaseHTTPServer.HTTPServer
     httpServer = server_class((hostName, portNumber), serverHandler)
     try:
