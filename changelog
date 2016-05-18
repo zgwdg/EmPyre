@@ -12,6 +12,7 @@ XX/XX/2016 - RELEASE 1.0.x
 - Unix-Privesc-Check module added
 
 - Bug fixes
+-- Allow Pipe within shell commands
 -- Convert jitters to int
 -- Input validation for sleep / jitter
 -- cross compatibility for obtaining current user (linux)
