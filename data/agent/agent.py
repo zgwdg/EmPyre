@@ -6,6 +6,7 @@ import os
 import sys
 import trace
 import threading
+import BaseHTTPServer
 
 
 ################################################
@@ -210,7 +211,7 @@ def processJobTasking(result):
         # send packets
         sendMessage(resultPackets)
     except Exception as e:
-        print "processTasking exception:",e
+        print "processJobTasking exception:",e
         pass
 
 def processPacket(taskingID, data):
@@ -528,6 +529,39 @@ def send_job_message_buffer():
         processJobTasking(result)
     else:
         pass
+
+def start_webserver(data, ip, port, serveCount):
+    # thread data_webserver for execution
+    t = threading.Thread(target=data_webserver, args=(data, ip, port, serveCount))
+    t.start()
+    return
+
+def data_webserver(data, ip, port, serveCount):
+    # hosts a file on port and IP servers data string
+    hostName = str(ip) 
+    portNumber = int(port)
+    data = str(data)
+    serveCount = int(serveCount)
+    count = 0
+    class serverHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+        def do_GET(s):
+            """Respond to a GET request."""
+            s.send_response(200)
+            s.send_header("Content-type", "text/html")
+            s.end_headers()
+            s.wfile.write(data)
+        def log_message(s, format, *args):
+            return
+    server_class = BaseHTTPServer.HTTPServer
+    httpServer = server_class((hostName, portNumber), serverHandler)
+    try:
+        while (count < serveCount):
+            httpServer.handle_request()
+            count += 1
+    except:
+        pass
+    httpServer.server_close()
+    return
 
 # additional implementation methods
 def run_command(command):
