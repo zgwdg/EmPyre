@@ -266,8 +266,8 @@ def processPacket(taskingID, data):
             if jitter < 0: jitter = -jitter
             if jitter > 1: jitter = 1/jitter
 
-            minSleep = (1.0-jitter)*delay
-            maxSleep = (1.0+jitter)*delay
+            minSleep = int((1.0-jitter)*delay)
+            maxSleep = int((1.0+jitter)*delay)
             sleepTime = random.randint(minSleep, maxSleep)
             time.sleep(sleepTime)
 
@@ -593,8 +593,8 @@ while(True):
     # sleep for the randomized interval
     if jitter < 0: jitter = -jitter
     if jitter > 1: jitter = 1/jitter
-    minSleep = (1.0-jitter)*delay
-    maxSleep = (1.0+jitter)*delay
+    minSleep = int((1.0-jitter)*delay)
+    maxSleep = int((1.0+jitter)*delay)
 
     sleepTime = random.randint(minSleep, maxSleep)
     time.sleep(sleepTime)
