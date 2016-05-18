@@ -1,4 +1,25 @@
 
-5/12/2016
----------
-Initial public release of 1.0.0
+============
+XX/XX/2016 - RELEASE 1.0.x
+============
+- Agent now supports python 2.6.x
+- Teensy stager for micro controller (@matterpreter)
+- Self-deleting bash stager
+- Linux pure python PCAP sniffer module added
+- Kerberos ccache dump module added
+- OpenVPN credential scraper module added
+- Linux-Priv-Checker module added
+- Unix-Privesc-Check module added
+
+- Bug fixes
+-- Convert jitters to int
+-- Input validation for sleep / jitter
+-- cross compatibility for obtaining current user (linux)
+
+
+
+============
+5/12/2016 - RELEASE 1.0.0
+============
+-Initial public release of 1.0.0, All components released
+
