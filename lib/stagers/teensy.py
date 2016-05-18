@@ -27,7 +27,7 @@ class Stager:
                 'Value'         :   ''
             },
             'OutFile' : {
-                'Description'   :   'File to output AppleScript to, otherwise displayed on the screen.',
+                'Description'   :   'File to output Teensy to, otherwise displayed on the screen.',
                 'Required'      :   False,
                 'Value'         :   ''
             },
