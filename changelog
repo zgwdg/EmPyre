@@ -2,7 +2,7 @@
 ============
 XX/XX/2016 - RELEASE 1.0.x
 ============
-- Agent now supports python 2.6.x
+- Agent now supports python 2.6.x (thanks to calmhavoc <calmhavoc@gmail.com>)
 - Teensy stager for micro controller (@matterpreter)
 - Self-deleting bash stager
 - Linux pure python PCAP sniffer module added
@@ -14,7 +14,7 @@ XX/XX/2016 - RELEASE 1.0.x
 - Added dylib stagers without LC_REEXPORT_DYLIB load command for use outside of dylib hijacks
 
 - Bug fixes
--- Allow Pipe within shell commands
+-- Allow Pipe within shell commands (thanks to Mewtayshun <mewtayshun@gmail.com> and Michael Butler <michael.butler@defpoint.com>)
 -- Convert jitters to int
 -- Input validation for sleep / jitter
 -- cross compatibility for obtaining current user (linux)
