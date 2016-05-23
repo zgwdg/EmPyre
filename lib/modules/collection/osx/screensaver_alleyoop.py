@@ -29,7 +29,8 @@ class Module:
 
             # list of any references/other comments
             'Comments': [
-                "https://github.com/fuzzynop/FiveOnceInYourLife"
+                "https://github.com/fuzzynop/FiveOnceInYourLife",
+                "https://github.com/enigma0x3/Invoke-LoginPrompt"
             ]
         }
 
