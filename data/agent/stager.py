@@ -595,10 +595,7 @@ def get_sysinfo():
     osDetails = os.uname()
     hostname = osDetails[1]
 
-    x = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    x.connect(("10.0.0.0", 80))
-    internalIP = x.getsockname()[0]
-    x.close()
+    internalIP = internalIP = socket.gethostbyname(socket.gethostname())
 
     osDetails = ",".join(osDetails)
     processID = os.getpid()
