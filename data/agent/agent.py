@@ -568,6 +568,9 @@ def data_webserver(data, ip, port, serveCount):
 def run_command(command):
     if "|" in command:    
         command_parts = command.split('|')
+    elif ">" in command or ">>" in command or "<" in command or "<<" in command:   
+        p = subprocess.Popen(command,stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        return ''.join(list(iter(p.stdout.readline, b'')))
     else:
         command_parts = []
         command_parts.append(command)
