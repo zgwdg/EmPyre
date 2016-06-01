@@ -5,6 +5,7 @@ from threading import Thread
 import os
 import sys
 import trace
+import shlex
 import threading
 import BaseHTTPServer
 
@@ -565,11 +566,31 @@ def data_webserver(data, ip, port, serveCount):
 
 # additional implementation methods
 def run_command(command):
-    command = command.split()
-    p = subprocess.Popen(command,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
-    return ''.join(list(iter(p.stdout.readline, b'')))
+    if "|" in command:    
+        command_parts = command.split('|')
+    elif ">" in command or ">>" in command or "<" in command or "<<" in command:   
+        p = subprocess.Popen(command,stdin=None, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        return ''.join(list(iter(p.stdout.readline, b'')))
+    else:
+        command_parts = []
+        command_parts.append(command)
+    i = 0
+    p = {}
+    for command_part in command_parts:
+        command_part = command_part.strip()
+        if i == 0:
+            p[i]=subprocess.Popen(shlex.split(command_part),stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            p[i]=subprocess.Popen(shlex.split(command_part),stdin=p[i-1].stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        i = i +1
+    (output, err) = p[i-1].communicate()
+    exit_code = p[0].wait()
+    if exit_code != 0:
+        errorStr =  "Shell Output: " + str(output) + '\n'
+        errorStr += "Shell Error: " + str(err) + '\n'
+        return errorStr
+    else:
+        return str(output)
 
 
 def get_file_part(filePath, offset=0, chunkSize=512000):
