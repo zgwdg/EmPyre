@@ -25,7 +25,7 @@ class Module:
             'NeedsAdmin' : False,
 
             # True if the method doesn't touch disk/is reasonably opsec safe
-            'OpsecSafe' : True,
+            'OpsecSafe' : False,
             
             # list of any references/other comments
             'Comments': ['Thanks to @passingthehash for bringing this up.']
