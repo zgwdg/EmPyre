@@ -355,7 +355,7 @@ def display_module(moduleName, module):
         print "  " + author
 
     print "\nDescription:"
-    desc = wrap_string(module.info['Description'], width=60, indent=2, indentAll=True)
+    desc = wrap_string(''.join(module.info['Description']), width=60, indent=2, indentAll=True)
     if len(desc.splitlines()) == 1:
         print "  " + str(desc)
     else:
@@ -384,7 +384,7 @@ def display_module_search(moduleName, module):
     print " " + helpers.color(moduleName, "blue") + "\n"
     # width=40, indent=32, indentAll=False,
 
-    lines = textwrap.wrap(textwrap.dedent(module.info['Description']).strip(), width=70)
+    lines = textwrap.wrap(textwrap.dedent(''.join(module.info['Description'])).strip(), width=70)
     for line in lines:
         print "\t" + line
 
