@@ -52,17 +52,17 @@ class Module:
             'MaxSize': {
                 'Description'   :   'Set max file size to save to disk/memory (MB).',
                 'Required'      :   True,
-                'Value'         :   '100'
+                'Value'         :   '1'
             },
             'MaxPackets': {
                 'Description'   :   'Set max packets to capture.',
-                'Required'      :   False,
-                'Value'         :   '1000'
+                'Required'      :   True,
+                'Value'         :   '100'
             },
             'InMemory': {
                 'Description'   :   'Store binary data in memory, never drop to disk (WARNING: set MaxSize).',
                 'Required'      :   False,
-                'Value'         :   'False'
+                'Value'         :   'True'
             },
 
             'SavePath': {
