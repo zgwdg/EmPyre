@@ -122,6 +122,9 @@ def parse(text):
     password = text[-1]
     password.rstrip('\\n')
     password.rstrip('\\r')
+    password.replace('!','%%21')
+    password.replace('#','%%23')
+    password.replace('$','%%24')
     return password
 
 def run(exitCount, verbose=False):
