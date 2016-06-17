@@ -398,11 +398,11 @@ def start_restful_api(startEmpyre=False, suppress=False, username=None, password
                 if not main.agents.is_agent_present(sessionID):
                     return make_response(jsonify({'error': 'invalid agent name'}), 400)
 
-                modulePSVersion = int(module.info['MinPSVersion'])
-                agentPSVersion = int(main.agents.get_ps_version(sessionID))
+                # modulePSVersion = int(module.info['MinPSVersion'])
+                # agentPSVersion = int(main.agents.get_ps_version(sessionID))
                 # check if the agent/module PowerShell versions are compatible
-                if modulePSVersion > agentPSVersion:
-                    return make_response(jsonify({'error': "module requires PS version "+str(modulePSVersion)+" but agent running PS version "+str(agentPSVersion)}), 400)
+                # if modulePSVersion > agentPSVersion:
+                    # return make_response(jsonify({'error': "module requires PS version "+str(modulePSVersion)+" but agent running PS version "+str(agentPSVersion)}), 400)
 
         except Exception as e:
             return make_response(jsonify({'error': 'exception: %s' %(e)}), 400)
@@ -426,7 +426,7 @@ def start_restful_api(startEmpyre=False, suppress=False, username=None, password
         except UnicodeDecodeError:
             return make_response(jsonify({'error': 'module source contains non-ascii characters'}), 400)
 
-        moduleData = helpers.strip_powershell_comments(moduleData)
+        # moduleData = helpers.strip_powershell_comments(moduleData)
         taskCommand = ""
 
         # build the appropriate task command and module data blob
@@ -436,7 +436,7 @@ def start_restful_api(startEmpyre=False, suppress=False, username=None, password
             if extention and extention != "":
                 # if this module needs to save its file output to the server
                 #   format- [15 chars of prefix][5 chars extension][data]
-                saveFilePrefix = moduleName.split("/")[-1]
+                saveFilePrefix = module_name.split("/")[-1]
                 moduleData = saveFilePrefix.rjust(15) + extention.rjust(5) + moduleData
                 taskCommand = "TASK_CMD_JOB_SAVE"
             else:
@@ -448,7 +448,7 @@ def start_restful_api(startEmpyre=False, suppress=False, username=None, password
             if module.info['OutputExtension'] and module.info['OutputExtension'] != "":
                 # if this module needs to save its file output to the server
                 #   format- [15 chars of prefix][5 chars extension][data]
-                saveFilePrefix = moduleName.split("/")[-1][:15]
+                saveFilePrefix = module_name.split("/")[-1][:15]
                 moduleData = saveFilePrefix.rjust(15) + extention.rjust(5) + moduleData
                 taskCommand = "TASK_CMD_WAIT_SAVE"
             else:

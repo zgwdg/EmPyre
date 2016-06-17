@@ -20,7 +20,7 @@ XX/XX/2016 - RELEASE 1.0.x
 -- Convert jitters to int
 -- Input validation for sleep / jitter
 -- cross compatibility for obtaining current user (linux)
-
+-- PowerShell remnant code, fixed by @interference-security
 
 
 
