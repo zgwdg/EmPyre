@@ -13,12 +13,14 @@ XX/XX/2016 - RELEASE 1.0.x
 - x64 Shellcode Inject module added
 - Added dylib stagers without LC_REEXPORT_DYLIB load command for use outside of dylib hijacks
 - Added Screensaver Alley-oop to force auth against the OSX keychain.
+- Added GitHub templates
 
 - Bug fixes
 -- Allow Pipe within shell commands (thanks to Mewtayshun <mewtayshun@gmail.com> and Michael Butler <michael.butler@defpoint.com>)
 -- Convert jitters to int
 -- Input validation for sleep / jitter
 -- cross compatibility for obtaining current user (linux)
+
 
 
 
