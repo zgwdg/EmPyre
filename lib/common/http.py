@@ -148,7 +148,7 @@ class EmPyreServer(threading.Thread):
             self.server = None
             try:
                 self.server = BaseHTTPServer.HTTPServer((lhost, int(port)), RequestHandler)
-            except socket.error::
+            except socket.error:
                 dispatcher.send("[!] Error starting listener on IP address "+lhost+", trying 0.0.0.0 ...", sender="EmPyreServer")
                 self.server = BaseHTTPServer.HTTPServer(("0.0.0.0", int(port)), RequestHandler)
 
