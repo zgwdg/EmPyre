@@ -13,7 +13,7 @@ These are the first places URI requests are processed.
 from BaseHTTPServer import BaseHTTPRequestHandler
 import BaseHTTPServer, threading, ssl, os, re
 from pydispatch import dispatcher
-
+import socket
 # EmPyre imports
 import helpers
 
@@ -146,8 +146,11 @@ class EmPyreServer(threading.Thread):
         try:
             threading.Thread.__init__(self)
             self.server = None
-
-            self.server = BaseHTTPServer.HTTPServer((lhost, int(port)), RequestHandler)
+            try:
+                self.server = BaseHTTPServer.HTTPServer((lhost, int(port)), RequestHandler)
+            except socket.error:
+                dispatcher.send("[!] Error starting listener on IP address "+lhost+", trying 0.0.0.0 ...", sender="EmPyreServer")
+                self.server = BaseHTTPServer.HTTPServer(("0.0.0.0", int(port)), RequestHandler)
 
             # pass the agent handler object along for the RequestHandler
             self.server.agents = handler
