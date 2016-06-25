@@ -15,6 +15,8 @@ import sqlite3, base64, string, os, iptools, json
 from pydispatch import dispatcher
 from binascii import hexlify
 from binascii import unhexlify
+from zlib_wrapper import compress
+from zlib_wrapper import decompress
 
 # EmPyre imports
 import encryption
@@ -198,6 +200,15 @@ class Agents:
             # otherwise append
             f = open(savePath+"/"+filename, 'ab')
 
+        # decompress data from agent
+        d = decompress.decompress()
+        dec_data = d.dec_data(data)
+        if not dec_data['crc32_check']:
+            dispatcher.send("[!] WARNING: File agent %s failed crc32 check during decompressing!." %(nameid))
+            print helpers.color("[!] WARNING: File agent %s failed crc32 check during decompressing!." %(nameid))
+            dispatcher.send("[!] HEADER: Start crc32: %s -- Received crc32: %s -- Crc32 pass: %s!." %(dec_data['header_crc32'],dec_data['dec_crc32'],dec_data['crc32_check']))
+            print helpers.color("[!] HEADER: Start crc32: %s -- Received crc32: %s -- Crc32 pass: %s!." %(dec_data['header_crc32'],dec_data['dec_crc32'],dec_data['crc32_check']))
+        data = dec_data['data']
         f.write(data)
         f.close()
 
