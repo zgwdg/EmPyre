@@ -695,7 +695,6 @@ def get_file_part(filePath, offset=0, chunkSize=512000, base64=True):
         return ''
 
     f = open(filePath, 'rb')
-    print offset
     f.seek(offset, 0)
     data = f.read(chunkSize)
     f.close()
