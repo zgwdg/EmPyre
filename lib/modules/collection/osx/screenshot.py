@@ -90,7 +90,7 @@ Quartz.CGImageDestinationAddImage(dest, image, properties)
 Quartz.CGImageDestinationFinalize(dest)
 
 f = open(path, 'rb')
-data = base64.b64encode(f.read())
+data = f.read()
 f.close()
 run_command('rm -f %s')
 print data

