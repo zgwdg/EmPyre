@@ -47,7 +47,7 @@ class Module:
             'KeyChain' : {
                 'Description'   :   'Manual location of keychain to decrypt, otherwise default.',
                 'Required'      :   True,
-                'Value'         :   '/Users/AlexRymdeko-Harvey/Library/Keychains/login.keychain'
+                'Value'         :   '/Users/USER/Library/Keychains/login.keychain'
             },
             'MasterKey' : {
                 'Description'   :   'Masterkey candidate used in memeory to decrypt keychain (recovred via memdum).',
