@@ -104,6 +104,7 @@ c = conn.cursor()
 # try to prevent some of the weird sqlite I/O errors
 c.execute('PRAGMA journal_mode = OFF')
 
+c.execute('DROP TABLE IF EXISTS config')
 c.execute('''CREATE TABLE config (
     "staging_key" text,
     "stage0_uri" text,
@@ -131,6 +132,7 @@ c.execute('''CREATE TABLE config (
 # kick off the config component of the database
 c.execute("INSERT INTO config VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (STAGING_KEY,STAGE0_URI,STAGE1_URI,STAGE2_URI,DEFAULT_DELAY,DEFAULT_JITTER,DEFAULT_PROFILE,DEFAULT_CERT_PATH,DEFAULT_PORT,INSTALL_PATH,SERVER_VERSION,IP_WHITELIST,IP_BLACKLIST, DEFAULT_LOST_LIMIT, "", "", False, API_USERNAME, API_PASSWORD, "", API_PERMANENT_TOKEN))
 
+c.execute('DROP TABLE IF EXISTS "agents"')
 c.execute('''CREATE TABLE "agents" (
     "id" integer PRIMARY KEY,
     "session_id" text,
@@ -162,6 +164,7 @@ c.execute('''CREATE TABLE "agents" (
     "results" text
     )''')
 
+c.execute('DROP TABLE IF EXISTS "listeners"')
 c.execute('''CREATE TABLE "listeners" (
     "id" integer PRIMARY KEY,
     "name" text,
@@ -182,6 +185,7 @@ c.execute('''CREATE TABLE "listeners" (
 
 # type = hash, plaintext, token
 #   for tokens, the data is base64'ed and stored in pass
+c.execute('DROP TABLE IF EXISTS "credentials"')
 c.execute('''CREATE TABLE "credentials" (
     "id" integer PRIMARY KEY,
     "credtype" text,
@@ -195,6 +199,7 @@ c.execute('''CREATE TABLE "credentials" (
 
 
 # event_types -> checkin, task, result, rename
+c.execute('DROP TABLE IF EXISTS "reporting"')
 c.execute('''CREATE TABLE "reporting" (
     "id" integer PRIMARY KEY,
     "name" text,

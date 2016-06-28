@@ -1,6 +1,6 @@
 
 ============
-XX/XX/2016 - RELEASE 1.0.x
+06/17/2016 - RELEASE 1.0.1
 ============
 - Agent now supports python 2.6.x (thanks to calmhavoc <calmhavoc@gmail.com>)
 - Teensy stager for micro controller (@matterpreter)
@@ -14,6 +14,7 @@ XX/XX/2016 - RELEASE 1.0.x
 - Added dylib stagers without LC_REEXPORT_DYLIB load command for use outside of dylib hijacks
 - Added Screensaver Alley-oop to force auth against the OSX keychain.
 - Added GitHub templates
+- Kerberos Keytab Inject module added
 
 - Bug fixes
 -- Allow Pipe within shell commands (thanks to Mewtayshun <mewtayshun@gmail.com> and Michael Butler <michael.butler@defpoint.com>)

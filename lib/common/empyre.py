@@ -9,7 +9,7 @@ menu loops.
 """
 
 # make version for EmPyre
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 from pydispatch import dispatcher
 
