@@ -50,7 +50,7 @@ class Module:
                 'Value'         :   '/Users/USERNAME/Library/Keychains/login.keychain'
             },
             'MasterKey' : {
-                'Description'   :   'Masterkey candidate used in memeory to decrypt keychain (recovred via memdum).',
+                'Description'   :   'Master key candidate used in memory to decrypt keychain (recovered via mem-dump).',
                 'Required'      :   False,
                 'Value'         :   ''
             },
