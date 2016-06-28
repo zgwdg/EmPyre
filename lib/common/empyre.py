@@ -14,6 +14,8 @@ VERSION = "1.0.1"
 from pydispatch import dispatcher
 
 import sys, cmd, sqlite3, os, hashlib, traceback, time
+from zlib_wrapper import compress
+from zlib_wrapper import decompress
 
 # EmPyre imports
 import helpers
@@ -1572,11 +1574,18 @@ class AgentMenu(cmd.Cmd):
                 f = open(parts[0], 'r')
                 fileData = f.read()
                 f.close()
-
+                # Get file size
+                print helpers.color("[*] Starting size of %s for upload: %s" %(uploadname, helpers.get_file_size(fileData)), color="green")
                 msg = "Tasked agent to upload " + parts[0] + " : " + hashlib.md5(fileData).hexdigest()
                 # update the agent log with the filename and MD5
                 self.mainMenu.agents.save_agent_log(self.sessionID, msg)
-
+                # compress data before we base64
+                c = compress.compress()
+                start_crc32 = c.crc32_data(fileData)
+                comp_data = c.comp_data(fileData, 9)
+                fileData = c.build_header(comp_data, start_crc32)
+                # get final file size
+                print helpers.color("[*] Final tasked size of %s for upload: %s" %(uploadname, helpers.get_file_size(fileData)), color="green")
                 fileData = helpers.encode_base64(fileData)
                 # upload packets -> "filename | script data"
                 data = uploadname + "|" + fileData

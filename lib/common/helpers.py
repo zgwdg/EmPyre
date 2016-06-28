@@ -157,6 +157,26 @@ def get_file_datetime():
     """
     return strftime("%Y-%m-%d_%H-%M-%S", localtime())
 
+def get_file_size(file):
+    """
+    Returns a string with the file size and highest rating.
+    """
+    byte_size = sys.getsizeof(file)
+    kb_size = byte_size / 1024
+    if kb_size == 0:
+        byte_size = "%s Bytes" % (byte_size)
+        return byte_size
+    mb_size = kb_size / 1024
+    if mb_size == 0:
+        kb_size = "%s KB" % (kb_size)
+        return kb_size
+    gb_size = mb_size / 1024 % (mb_size)
+    if gb_size == 0:
+        mb_size = "%s MB" %(mb_size)
+        return mb_size
+    return "%s GB" % (gb_size)
+
+
 def lhost():
     """
     Return the local IP.

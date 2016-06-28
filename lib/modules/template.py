@@ -21,6 +21,7 @@ class Module:
             'Background': False,
 
             # File extension to save the file as
+            # no need to base64 return data
             'OutputExtension': None,
 
             # True if the method doesn't touch disk/is reasonably opsec safe

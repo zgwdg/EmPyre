@@ -71,7 +71,7 @@ run_command('screencapture -x /tmp/out.png')
 # base64 up resulting file, delete the file, return the base64 of the png output
 #   mocked from the Empire screenshot module
 f = open('%s', 'rb')
-data = base64.b64encode(f.read())
+data = f.read()
 f.close()
 run_command('rm -f %s')
 print data

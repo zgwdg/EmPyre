@@ -15,7 +15,8 @@ fi
 version=$( lsb_release -r | grep -oP "[0-9]+" | head -1 )
 if lsb_release -d | grep -q "Fedora"; then
 	Release=Fedora
-	dnf install -y python-devel m2crypto python-m2ext swig python-iptools python3-iptools 
+	dnf install -y python-devel m2crypto python-m2ext swig python-iptools python3-iptools
+	pip install zlib_wrapper
 	pip install pycrypto
 	pip install iptools
 	pip install pydispatcher
@@ -27,6 +28,7 @@ elif lsb_release -d | grep -q "Kali"; then
 	apt-get install python-m2crypto
 	apt-get install swig
 	apt-get install python-pip
+	pip install zlib_wrapper
 	pip install pycrypto
 	pip install iptools
 	pip install pydispatcher
@@ -37,6 +39,7 @@ elif lsb_release -d | grep -q "Ubuntu"; then
 	apt-get install python-dev
 	apt-get install python-m2crypto
 	apt-get install swig
+	pip install zlib_wrapper
 	pip install pycrypto
 	pip install iptools
 	pip install pydispatcher
@@ -47,6 +50,7 @@ else
 	 apt-get install python-dev
 	 apt-get install python-m2crypto
 	 apt-get install swig
+	 pip install zlib_wrapper
 	 pip install pycrypto
 	 pip install iptools
 	 pip install pydispatcher

