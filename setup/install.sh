@@ -36,8 +36,6 @@ elif lsb_release -d | grep -q "Ubuntu"; then
 	Release=Ubuntu
 	apt-get install python-pip python-dev build-essential 
 	pip install --upgrade pip 
-	sudo apt-get install python-pip python-dev build-essential 
-	apt-get install python-dev
 	apt-get install python-m2crypto
 	apt-get install swig
 	pip install pycrypto
@@ -49,7 +47,6 @@ else
 	echo "Unknown distro - Debian/Ubuntu Fallback"
 	 apt-get install python-pip python-dev build-essential 
 	 pip install --upgrade pip 
-	 apt-get install python-dev
 	 apt-get install python-m2crypto
 	 apt-get install swig
 	 pip install pycrypto
