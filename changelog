@@ -23,6 +23,10 @@
 -- cross compatibility for obtaining current user (linux)
 -- PowerShell remnant code, fixed by @interference-security
 
+- Patches:
+-- Add pip install first for AWS
+
+
 
 
 ============
