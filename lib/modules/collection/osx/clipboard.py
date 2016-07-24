@@ -44,6 +44,12 @@ class Module:
                 'Description'   :   'Optional file to save the clipboard output to.',
                 'Required'      :   False,
                 'Value'         :   ''
+            },
+            'MonitorTime': {
+                # The 'Agent' option is the only one that MUST be in a module
+                'Description'   :   'Optional for how long you would like to monitor clipboard in (s).',
+                'Required'      :   True,
+                'Value'         :   '0'
             }
         }
 
@@ -65,6 +71,7 @@ class Module:
     def generate(self):
 
         outFile = self.options['OutFile']['Value']
+        monitorTime = self.options['MonitorTime']['Value']
 
         # the Python script itself, with the command to invoke
         #   for execution appended to the end. Scripts should output
@@ -73,31 +80,37 @@ class Module:
         # the script should be stripped of comments, with a link to any
         #   original reference script included in the comments.
         script = """
-def func():
+def func(monitortime=0):
     from AppKit import NSPasteboard, NSStringPboardType
     import time
     import datetime
     import sys
 
-    try:
-        pb = NSPasteboard.generalPasteboard()
-        pbstring = pb.stringForType_(NSStringPboardType)
+    sleeptime = 0
+    last = ''
+    outFile = '%s'
 
-        outFile = '%s'
+    while sleeptime <= monitortime:
+        try:
+            pb = NSPasteboard.generalPasteboard()
+            pbstring = pb.stringForType_(NSStringPboardType)
 
-        if outFile != "":
-            f = file(outFile, 'a+')
-            f.write(pbstring)
-            f.close()
-            print "clipboard written to",outFile
-        else:
-            ts = time.time()
-            st = datetime.datetime.fromtimestamp(ts).strftime('%%Y-%%m-%%d %%H:%%M:%%S')
-            print st + ": %%s".encode("utf-8") %% repr(pbstring)
-    except Exception as e:
-        print e
-    time.sleep(1)
+            if pbstring != last:
+                if outFile != "":
+                    f = file(outFile, 'a+')
+                    f.write(pbstring)
+                    f.close()
+                    print "clipboard written to",outFile
+                else:
+                    ts = time.time()
+                    st = datetime.datetime.fromtimestamp(ts).strftime('%%Y-%%m-%%d %%H:%%M:%%S')
+                    print st + ": %%s".encode("utf-8") %% repr(pbstring)
+            last = pbstring
+            time.sleep(1)
+            sleeptime += 1
+        except Exception as e:
+            print e
 
-func()""" % (outFile)
+func(monitortime=%s)""" % (outFile,monitorTime)
 
         return script
