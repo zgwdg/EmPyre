@@ -1,4 +1,13 @@
-
+============
+07/28/2016 - RELEASE 1.2
+============
+- Revised release revision scheme
+- Upload/Download compression added by @killswitch_gui and @damglorious
+- Chainbreaker added by @killswitch_gui
+- EmPyre listens on 0.0.0.0 when unable to bind to provided IP @imaibou
+- Checks for existing database info when setup is run. Will drop tables and reset with each setup run. @jaredhaight
+- @killswitch_gui updated the clipboard monitor by adding timed runs
+- Fixed pip issue for clean VPS installs
 ============
 06/17/2016 - RELEASE 1.0.1
 ============
@@ -29,4 +38,3 @@
 5/12/2016 - RELEASE 1.0.0
 ============
 -Initial public release of 1.0.0, All components released
-
