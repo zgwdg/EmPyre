@@ -38,7 +38,8 @@ elif lsb_release -d | grep -q "Kali"; then
 	pip install pyinstaller
 elif lsb_release -d | grep -q "Ubuntu"; then
 	Release=Ubuntu
-	apt-get install python-dev
+	apt-get install python-pip python-dev build-essential 
+	pip install --upgrade pip 
 	apt-get install python-m2crypto
 	apt-get install swig
 	pip install zlib_wrapper
@@ -50,7 +51,8 @@ elif lsb_release -d | grep -q "Ubuntu"; then
 	pip install pyinstaller
 else
 	echo "Unknown distro - Debian/Ubuntu Fallback"
-	 apt-get install python-dev
+	 apt-get install python-pip python-dev build-essential 
+	 pip install --upgrade pip 
 	 apt-get install python-m2crypto
 	 apt-get install swig
 	 pip install zlib_wrapper
