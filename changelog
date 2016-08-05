@@ -1,4 +1,9 @@
 ============
+08/05/2016 - RELEASE 1.3
+============
+- DC/OS, Mesos DNS, Mesos Master, Marathon, Chronos modules from BSidesLV 2016 @TweekFawkes talk.
+
+============
 07/28/2016 - RELEASE 1.2
 ============
 - Revised release revision scheme
