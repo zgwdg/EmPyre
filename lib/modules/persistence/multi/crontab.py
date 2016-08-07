@@ -98,17 +98,17 @@ if Remove == "True":
 
 else:
     if Hourly == "True":
-        cmd = 'crontab -l | { cat; echo "0 * * * * /private/tmp/%s"; } | crontab -'
+        cmd = 'crontab -l | { cat; echo "0 * * * * %s"; } | crontab -'
         print subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
         print subprocess.Popen('crontab -l', shell=True, stdout=subprocess.PIPE).stdout.read()
-        print subprocess.Popen('chmod +x /private/tmp/%s', shell=True, stdout=subprocess.PIPE).stdout.read()
+        print subprocess.Popen('chmod +x %s', shell=True, stdout=subprocess.PIPE).stdout.read()
         print "Finished"
 
     elif Hour:
-            cmd = 'crontab -l | { cat; echo "%s * * * * /private/tmp/%s"; } | crontab -'
+            cmd = 'crontab -l | { cat; echo "%s * * * * %s"; } | crontab -'
             print subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
             print subprocess.Popen('crontab -l', shell=True, stdout=subprocess.PIPE).stdout.read()
-            print subprocess.Popen('chmod +x /private/tmp/%s', shell=True, stdout=subprocess.PIPE).stdout.read()
+            print subprocess.Popen('chmod +x %s', shell=True, stdout=subprocess.PIPE).stdout.read()
             print "Finished"
 
 
