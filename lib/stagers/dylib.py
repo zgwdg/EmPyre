@@ -31,8 +31,8 @@ class Stager:
                 'Required'      :   True,
                 'Value'         :   'x86'
             },
-            'SafeChecks' : {
-                'Description'   :   'Switch. Checks for LittleSnitch or a SandBox, exit the staging process if true. Defaults to True.',
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
                 'Required'      :   True,
                 'Value'         :   'True'
             },
@@ -69,7 +69,7 @@ class Stager:
         savePath = self.options['OutFile']['Value']
         userAgent = self.options['UserAgent']['Value']
         arch = self.options['Arch']['Value']
-        SafeChecks = self.options['SafeChecks']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
         hijacker = self.options['Hijacker']['Value']
 
         if arch == "":
@@ -77,7 +77,7 @@ class Stager:
             return ""
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  safechecks=SafeChecks)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  littlesnitch=LittleSnitch)
 
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")

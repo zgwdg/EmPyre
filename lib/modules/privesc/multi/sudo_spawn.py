@@ -51,8 +51,8 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'SafeChecks' : {
-                'Description'   :   'Switch. Checks for LittleSnitch or a SandBox, exit the staging process if true. Defaults to True.',
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
                 'Required'      :   True,
                 'Value'         :   'True'
             },           
@@ -83,7 +83,7 @@ class Module:
         # extract all of our options
         listenerName = self.options['Listener']['Value']
         userAgent = self.options['UserAgent']['Value']
-        SafeChecks = self.options['SafeChecks']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
 
         isEmpire = self.mainMenu.listeners.is_listener_empyre(listenerName)
         if not isEmpire:
@@ -91,7 +91,7 @@ class Module:
             return ""
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, safechecks=SafeChecks)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, littlesnitch=LittleSnitch)
 
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")
