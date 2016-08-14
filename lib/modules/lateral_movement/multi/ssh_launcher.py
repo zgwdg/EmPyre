@@ -57,8 +57,8 @@ class Module:
                 'Required'      :   True,
                 'Value'         :   ''
             },
-            'SafeChecks' : {
-                'Description'   :   'Set for stager SafeChecks checks.',
+            'LittleSnitch' : {
+                'Description'   :   'Set for stager LittleSnitch checks.',
                 'Required'      :   True,
                 'Value'         :   'True'
             },
@@ -89,7 +89,7 @@ class Module:
         password = self.options['Password']['Value']
         listenerName = self.options['Listener']['Value']
         userAgent = self.options['UserAgent']['Value']
-        littleSnitch = self.options['SafeChecks']['Value']
+        littleSnitch = self.options['LittleSnitch']['Value']
 
         isEmpire = self.mainMenu.listeners.is_listener_empyre(listenerName)
         if not isEmpire:
@@ -97,7 +97,7 @@ class Module:
             return ""
 
         # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  safechecks=littleSnitch)
+        launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  littlesnitch=littleSnitch)
         launcher = launcher.replace("'", "\\'")
         launcher = launcher.replace('"', '\\"')
         if launcher == "":

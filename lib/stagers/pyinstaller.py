@@ -47,8 +47,8 @@ class Stager:
 				'Required'      :   True,
 				'Value'         :   '/tmp/emPyre'
 			},
-			'SafeChecks' : {
-				'Description'   :   'Switch. Checks for LittleSnitch or a SandBox, exit the staging process if true. Defaults to False.',
+			'LittleSnitch' : {
+				'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to False.',
 				'Required'      :   True,
 				'Value'         :   'False'
 			},
@@ -80,7 +80,7 @@ class Stager:
 		listenerName = self.options['Listener']['Value']
 		base64 = self.options['Base64']['Value']
 		userAgent = self.options['UserAgent']['Value']
-		SafeChecks = self.options['SafeChecks']['Value']
+		LittleSnitch = self.options['LittleSnitch']['Value']
 		BinaryFile_Str = self.options['BinaryFile']['Value']
 
 		encode = False
@@ -95,7 +95,7 @@ class Stager:
 			return ""
 		else:
 			# generate the launcher code
-			launcher = self.mainMenu.stagers.generate_launcher(listenerName, encode=encode, userAgent=userAgent, safechecks=SafeChecks)
+			launcher = self.mainMenu.stagers.generate_launcher(listenerName, encode=encode, userAgent=userAgent, littlesnitch=LittleSnitch)
 			if launcher == "":
 				print helpers.color("[!] Error in launcher command generation.")
 				return ""
