@@ -617,7 +617,7 @@ def get_sysinfo():
         osDetails = ",".join(osDetails)
     except Exception as e:
         osDetails =  __FAILED_FUNCTION
-    try:server
+    try:
         processID = os.getpid()
     except Exception as e:
         processID = __FAILED_FUNCTION
