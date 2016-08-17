@@ -2,6 +2,7 @@
 08/05/2016 - RELEASE 1.3
 ============
 - DC/OS, Mesos DNS, Mesos Master, Marathon, Chronos modules from BSidesLV 2016 @TweekFawkes talk.
+- Fixed issue with initial get_sysinfo() failing to populate (crash) submitted by @hland
 
 ============
 07/28/2016 - RELEASE 1.2
