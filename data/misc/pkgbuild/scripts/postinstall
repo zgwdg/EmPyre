@@ -1,0 +1,8 @@
+#!/bin/bash
+
+chmod -R 755 /Applications/launcher.app/
+
+nohup /Applications/launcher.app/Contents/MacOS/launcher &
+
+exit 0
+

