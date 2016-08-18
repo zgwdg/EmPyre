@@ -44,3 +44,6 @@ The process is as follows:
 9. if tasking, server returns HMAC(AES(KEYn, tasking))
 
 10. client posts HMAC(AES(KEYn, tasking)) to /response.uri
+
+EmPyre Tracker:
+https://trello.com/b/NASrG4IW/empyre
