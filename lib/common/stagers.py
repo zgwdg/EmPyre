@@ -598,6 +598,6 @@ class Stagers:
         f = open('launcher.pkg','rb')
         package = f.read()
         os.chdir("/tmp/")
-        #shutil.rmtree('pkgbuild')
+        shutil.rmtree('pkgbuild')
         shutil.rmtree(AppName+".app")
         return package
