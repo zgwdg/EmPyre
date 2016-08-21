@@ -32,7 +32,7 @@ class Stager:
                 'Value'         :   ''
             },
             'AppName' : {
-                'Description'   :   'Name of the Application Bundle. This will not change name of the executable in the /MacOS/ directory. Defaults to launcher.app',
+                'Description'   :   'Name of the Application Bundle. This change will reflect in the Info.plist and the name of the binary in Contents/MacOS/.',
                 'Required'      :   False,
                 'Value'         :   ''
             },

