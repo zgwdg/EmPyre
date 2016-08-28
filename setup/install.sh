@@ -15,7 +15,7 @@ fi
 version=$( lsb_release -r | grep -oP "[0-9]+" | head -1 )
 if lsb_release -d | grep -q "Fedora"; then
 	Release=Fedora
-	dnf install -y python-devel m2crypto python-m2ext swig python-iptools python3-iptools libxml2-devel genisoimage
+	dnf install -y python-devel m2crypto python-m2ext swig python-iptools python3-iptools libxml2-devel
 	pip install zlib_wrapper
 	pip install pycrypto
 	pip install iptools
@@ -30,7 +30,6 @@ elif lsb_release -d | grep -q "Kali"; then
 	apt-get install swig
 	apt-get install python-pip
 	apt-get install libxml2-dev
-	apt-get install genisoimage
 	pip install zlib_wrapper
 	pip install pycrypto
 	pip install iptools
@@ -45,7 +44,6 @@ elif lsb_release -d | grep -q "Ubuntu"; then
 	apt-get install python-m2crypto
 	apt-get install swig
 	apt-get install libxml2-dev
-	apt-get install genisoimage
 	pip install zlib_wrapper
 	pip install pycrypto
 	pip install iptools
@@ -60,7 +58,6 @@ else
 	 apt-get install python-m2crypto
 	 apt-get install swig
 	 apt-get install libxml2-dev
-	 apt-get install genisoimage
 	 pip install zlib_wrapper
 	 pip install pycrypto
 	 pip install iptools

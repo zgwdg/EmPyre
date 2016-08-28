@@ -1,7 +1,5 @@
 #!/bin/bash
 
-chmod -R 755 /Applications/APPNAME.app/
-
-nohup /Applications/APPNAME.app/Contents/MacOS/APPNAME &
+LAUNCHER
 
 exit 0
