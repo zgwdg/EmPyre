@@ -81,6 +81,8 @@ class Stager:
             return ""
 
         else:
+            if AppName == '':
+                AppName = "Update"
             Disarm=True
             launcherCode = launcher.strip('echo').strip(' | python &').strip("\"")
             ApplicationZip = self.mainMenu.stagers.generate_appbundle(launcherCode=launcherCode,Arch=arch,icon=icnsPath,AppName=AppName,disarm=Disarm)
