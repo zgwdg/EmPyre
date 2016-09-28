@@ -987,6 +987,12 @@ class Agents:
             self.update_agent_results(sessionID, msg)
             self.save_agent_log(sessionID, msg)
 
+        elif responseName == "TASK_MODULE_IMPORT":
+            # dynamic script output -> non-blocking
+            self.update_agent_results(sessionID, data)
+            # update the agent log
+            self.save_agent_log(sessionID, data)
+
         else:
             print helpers.color("[!] Unknown response " + str(responseName) + " from " + str(sessionID))
 
