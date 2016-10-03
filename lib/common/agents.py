@@ -183,7 +183,7 @@ class Agents:
         filename = parts[-1]
 
         # fix for 'skywalker' exploit by @zeroSteiner
-        safePath = os.path.abspath("%s/downloads/%s/" % (self.installPath, sessionID))
+        safePath = os.path.abspath("%s/downloads/" % self.installPath)
         if not os.path.abspath(savePath+"/"+filename).startswith(safePath):
             dispatcher.send("[!] WARNING: agent %s attempted skywalker exploit!" % (sessionID), sender="Agents")
             dispatcher.send("[!] attempted overwrite of %s with data %s" % (path, data), sender="Agents")
@@ -243,7 +243,7 @@ class Agents:
             print helpers.color("[!] HEADER: Start crc32: %s -- Received crc32: %s -- Crc32 pass: %s!." %(dec_data['header_crc32'],dec_data['dec_crc32'],dec_data['crc32_check']))
         data = dec_data['data']
         # fix for 'skywalker' exploit by @zeroSteiner
-        safePath = os.path.abspath("%s/downloads/%s/" % (self.installPath, sessionID))
+        safePath = os.path.abspath("%s/downloads/" % self.installPath)
         if not os.path.abspath(savePath+"/"+filename).startswith(safePath):
             dispatcher.send("[!] WARNING: agent %s attempted skywalker exploit!" % (sessionID), sender="Agents")
             dispatcher.send("[!] attempted overwrite of %s with data %s" % (path, data), sender="Agents")
