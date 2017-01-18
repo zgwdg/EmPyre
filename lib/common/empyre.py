@@ -1535,6 +1535,26 @@ class AgentMenu(cmd.Cmd):
             msg = "Tasked agent to run Python command %s" % (line)
             self.mainMenu.agents.save_agent_log(self.sessionID, msg)
 
+    def do_pythonscript(self, line):
+        "Load and execute a python script"
+        path = line.strip()
+
+        if os.path.splitext(path)[-1] == '.py' and os.path.isfile(path):
+            filename = os.path.basename(path).rstrip('.py')
+            open_file = open(path, 'r')
+            script = open_file.read()
+            open_file.close()
+            script = script.replace('\r\n', '\n')
+            script = script.replace('\r', '\n')
+
+            msg = "[*] Tasked agent to execute python script: "+filename
+            print helpers.color(msg, color="green")
+            self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_CMD_WAIT", script)
+            #update the agent log
+            self.mainMenu.agents.save_agent_log(self.sessionID, msg)
+        else:
+            print helpers.color("[!] Please provide a valid path", color="red")
+
     def do_sysinfo(self, line):
         "Task an agent to get system information."
 
@@ -1650,9 +1670,10 @@ class AgentMenu(cmd.Cmd):
         else:
             print helpers.color("[!] Please enter a valid module path")
 
-    def do_listrepos(self, line):
+    def do_viewrepo(self, line):
         "View all of the currently modules in the empire repository"
-        self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_MODULE_VIEW")
+        repoName = line.strip()
+        self.mainMenu.agents.add_agent_task(self.sessionID, "TASK_MODULE_VIEW", repoName)
 
     def do_removerepo(self, line):
         "Remove a module repo."
@@ -1661,6 +1682,10 @@ class AgentMenu(cmd.Cmd):
 
     def complete_loadpymodule(self, text, line, begidx, endidx):
         "Tab-complete a module import file path"
+        return helpers.complete_path(text, line)
+
+    def complete_pythonscript(self, text, line, begidx, endidx):
+        "Tab-complete a zip file path"
         return helpers.complete_path(text, line)
 
     def complete_usemodule(self, text, line, begidx, endidx):

